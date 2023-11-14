@@ -27,7 +27,6 @@ import kotlin.time.ExperimentalTime
 @InternalSerializationApi
 @DelicateCoroutinesApi
 fun main(args: Array<String>) {
-    println("NEW MAINNNNNNNNNN")
     val cmd = RunnerCmdConfig(args)
     val properties = cmd.getCmdValue("config", "kex.ini")
     kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
@@ -47,7 +46,6 @@ fun main(args: Array<String>) {
     try {
         val launcher = when (val mode = cmd.getEnumValue("mode", LaunchMode.Concolic, ignoreCase = true)) {
             LaunchMode.Crash -> {
-                println("CRASHHHHHHHHHHHHH")
                 val traceFile = cmd.getCmdValue("trace")
                 require(traceFile != null) {
                     log.error("Option 'trace' is required for the $mode mode")
@@ -64,7 +62,6 @@ fun main(args: Array<String>) {
             }
 
             else -> {
-                println("ELSEEEEEEEEEE")
                 val targetName = cmd.getCmdValue("target")
                 require(targetName != null) {
                     log.error("Option 'target' is required for the $mode mode")
@@ -73,7 +70,6 @@ fun main(args: Array<String>) {
 
                 when (mode) {
                     LaunchMode.LibChecker -> {
-                        println("111111111111111111111111111")
                         val libraryTarget = cmd.getCmdValue("libraryTarget")
                         require(libraryTarget != null) {
                             log.error("Option 'libraryTarget' is required for the $mode mode")
@@ -84,22 +80,18 @@ fun main(args: Array<String>) {
                     }
 
                     LaunchMode.Symbolic -> {
-                        println("2222222222222222222222222222")
                         SymbolicLauncher(classPaths, targetName)
                     }
                     LaunchMode.Concolic -> {
-                        println("3333333333333333333333333333333")
                         ConcolicLauncher(classPaths, targetName)
                     }
                     LaunchMode.DefectChecker -> {
-                        println("4444444444444444444444444444444")
                         DefectCheckerLauncher(classPaths, targetName)
                     }
                     else -> unreachable("")
                 }
             }
         }
-        println("LAAAAAAAAUUUUUUNCHHHHHHHHHHHHHHHHHHHHHHHHH")
         launcher.launch()
     } catch (e: LauncherException) {
         log.error(e.message)

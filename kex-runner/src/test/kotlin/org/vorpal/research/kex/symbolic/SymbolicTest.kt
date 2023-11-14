@@ -34,7 +34,6 @@ abstract class SymbolicTest(
             InstructionSymbolicChecker.run(analysisContext, setOf(method))
         }
 
-        println("Minimizer execution start")
         Minimizer(listOf(jar), klass.cm, ClassLevel(klass)).execute()
 
         val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))
