@@ -4,9 +4,10 @@ import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.container.Container
 import java.io.File
+import java.nio.file.Path
 
 class TestCoverageInfo(
-    val testName: String,
+    val testName: Path,
     val satisfize: List<Int>
 ) {
 }
@@ -16,18 +17,22 @@ class TestwiseCoverageInfo(
     val tests: List<TestCoverageInfo>
 )
 
-public class Minimizer(
-    val jar: List<Container>,
+class Minimizer(
+    private val jar: List<Container>,
     val cm: ClassManager,
-    val analysisLevel: AnalysisLevel
+    private val analysisLevel: AnalysisLevel
 ) {
     fun execute() {
-        val filePath = "minimization-results.txt"
-        val file = File(filePath)
-        if (!file.exists()) {
-            file.createNewFile()
-        }
         val testCoverage = TestwiseCoverage(jar).execute(cm, analysisLevel)
-        val mimimized = GreedyAlgorithm(testCoverage, file).minimized()
+        val excessTests = GreedyAlgorithm(testCoverage).minimized()
+
+        for (classPath in excessTests) {
+            val classFile = classPath.toFile()
+            if (classFile.exists()) {
+                classFile.delete()
+            } else {
+                org.vorpal.research.kthelper.logging.log.error("nonexistent class in Minimizer: $classFile")
+            }
+        }
     }
 }

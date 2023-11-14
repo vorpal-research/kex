@@ -40,7 +40,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
                 InstructionConcolicChecker.run(context, setOfTargets)
             }
         }
-        Minimizer(containers, context.cm, analysisLevel).execute()
+//        Minimizer(containers, context.cm, analysisLevel).execute()
         reportCoverage(containers, context.cm, analysisLevel, "concolic")
     }
 }

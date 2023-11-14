@@ -190,13 +190,10 @@ class TestwiseCoverage(
 
             req = getRequirements(coverageBuilder)
             val satisfied = getSatisfiedLines(coverageBuilder)
-            tests.add(TestCoverageInfo(testClassName, satisfied))
+            tests.add(TestCoverageInfo(testPath, satisfied))
         }
         return TestwiseCoverageInfo(req, tests)
     }
-
-    private val String.fullyQualifiedName: String
-        get() = removeSuffix(".class").javaString
 
     private fun Path.fullyQualifiedName(base: Path): String =
         relativeTo(base).toString()
@@ -204,40 +201,6 @@ class TestwiseCoverage(
             .removePrefix(File.separatorChar.toString())
             .replace(File.separatorChar, Package.CANONICAL_SEPARATOR)
             .removeSuffix(".class")
-
-    private fun getClassCoverage(
-        cm: ClassManager,
-        coverageBuilder: CoverageBuilder
-    ): Set<ClassCoverageInfo> =
-        coverageBuilder.classes.mapTo(mutableSetOf()) {
-            val kfgClass = cm[it.name]
-            val classCov = getCommonCounters<ClassCoverageInfo>(it.name, it)
-            for (mc in it.methods) {
-                val kfgMethod = kfgClass.getMethod(mc.name, mc.desc)
-                classCov.methods += getCommonCounters<MethodCoverageInfo>(kfgMethod.prototype.fullyQualifiedName, mc)
-            }
-            classCov
-        }
-
-    private fun getMethodCoverage(coverageBuilder: CoverageBuilder, method: Method): CommonCoverageInfo? {
-        for (mc in coverageBuilder.classes.iterator().next().methods) {
-            if (mc.name == method.name && mc.desc == method.asmDesc) {
-                return getCommonCounters<MethodCoverageInfo>(method.prototype.fullyQualifiedName, mc)
-            }
-        }
-        return null
-    }
-
-    private fun getPackageCoverage(
-        pkg: Package,
-        cm: ClassManager,
-        coverageBuilder: CoverageBuilder
-    ): PackageCoverageInfo {
-        val pc = PackageCoverageImpl(pkg.canonicalName, coverageBuilder.classes, coverageBuilder.sourceFiles)
-        val packCov = getCommonCounters<PackageCoverageInfo>(pkg.canonicalName, pc)
-        packCov.classes.addAll(getClassCoverage(cm, coverageBuilder))
-        return packCov
-    }
 
     private fun getCounter(unit: CoverageUnit, counter: ICounter): CoverageInfo {
         val covered = counter.coveredCount

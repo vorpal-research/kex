@@ -1,6 +1,6 @@
 package org.vorpal.research.kex.jacoco.minimization
 
-import java.io.File
+import java.nio.file.Path
 
 interface TestReduction
 
@@ -11,26 +11,24 @@ class Test(
 }
 
 class Requirement {
-    val tests: MutableList<String> =mutableListOf<String>()
-    var visited = false
+    private val satisfyTests: MutableList<Path> =mutableListOf<Path>()
+    private var visited = false
 
-    fun addTest(testName: String) {
-        tests.add(testName)
+    fun addTest(testName: Path) {
+        satisfyTests.add(testName)
     }
 
-    fun visit(tests: List<Test>) {
+    fun visit(tests: MutableMap<Path, Test>) {
         if (visited) return
-        tests.forEach{ it.power-- }
+        satisfyTests.forEach{ tests[it]!!.power-- }
         visited = true
     }
 }
 
-public class GreedyAlgorithm(
-    testCoverage: TestwiseCoverageInfo,
-    file: File
+class GreedyAlgorithm(
+    testCoverage: TestwiseCoverageInfo
 ) :TestReduction{
-    private val files = file
-    private var tests: MutableMap<String, Test> = mutableMapOf()
+    private var tests: MutableMap<Path, Test> = mutableMapOf()
     private var requirements: MutableMap<Int, Requirement> = mutableMapOf()
 
     init {
@@ -42,38 +40,30 @@ public class GreedyAlgorithm(
         }
     }
 
-    fun minimized(): List<String> {
-        val reqs_set = mutableSetOf<Int>()
+    fun minimized(): List<Path> {
+        val requestSet = mutableSetOf<Int>()
         for (test in tests) {
-            test.value.reqs.forEach { reqs_set.add(it) }
+            test.value.reqs.forEach { requestSet.add(it) }
         }
 
-        var satisfied_req: Int = 0
-        val result = emptyList<String>().toMutableList()
-        while (satisfied_req < requirements.size) {
-            var max_test: String? = null
-            tests.forEach { if (it.value.power > (tests[max_test]?.power ?: -1)) max_test = it.key }
-            if ((tests[max_test]?.power ?: 0) == 0) break
+        var satisfiedReq = 0
+        val importantTests = emptyList<Path>().toMutableList()
+        while (satisfiedReq < requestSet.size) {
+            var maxTest: Path? = null
+            tests.forEach { if (it.value.power > (tests[maxTest]?.power ?: -1)) maxTest = it.key }
+            if ((tests[maxTest]?.power ?: 0) == 0) break
 
-            satisfied_req += tests[max_test]!!.power
-            tests[max_test]!!.reqs.forEach { requirements[it]!!.tests.forEach{ tests[it]!!.power-- } }
-            result.add(result.size, max_test!!)
+            satisfiedReq += tests[maxTest]!!.power
+            tests[maxTest]!!.reqs.forEach { requirements[it]!!.visit(tests) }
+            importantTests.add(importantTests.size, maxTest!!)
         }
 
-        val fileWriter = files.writer()
+//        println("Result: ${importantTests}")
+//        println("Initial Coverage: ${String.format("%.2f", requestSet.size.toDouble() / requirements.size.toDouble())}")
+//        println("Coverage: ${String.format("%.2f", satisfiedReq.toDouble() / requirements.size.toDouble())}")
+//        println("Reduced: ${String.format("%.2f", importantTests.size.toDouble() / tests.size.toDouble())}")
 
-        // Запишите текст в файл
-        fileWriter.write("Result: ${result}\n")
-        fileWriter.write("Initial Coverage: ${String.format("%.2f", reqs_set.size.toDouble() / requirements.size.toDouble())}\n")
-        fileWriter.write("Coverage: ${String.format("%.2f", satisfied_req.toDouble() / requirements.size.toDouble())}\n")
-        fileWriter.write("Reduced: ${String.format("%.2f", result.size.toDouble() / tests.size.toDouble())}\n")
-
-        // Закройте файл, чтобы сохранить изменения
-        fileWriter.close()
-        println("Result: ${result}")
-        println("Initial Coverage: ${String.format("%.2f", reqs_set.size.toDouble() / requirements.size.toDouble())}")
-        println("Coverage: ${String.format("%.2f", satisfied_req.toDouble() / requirements.size.toDouble())}")
-        println("Reduced: ${String.format("%.2f", result.size.toDouble() / tests.size.toDouble())}")
-        return result
+        val allTests = tests.keys.toList()
+        return allTests.subtract(importantTests.toSet()).toList()
     }
 }
