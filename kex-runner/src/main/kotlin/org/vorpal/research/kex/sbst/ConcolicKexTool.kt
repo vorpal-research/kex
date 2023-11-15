@@ -6,10 +6,8 @@ import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
-import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.asm.transform.SystemExitTransformer
 import org.vorpal.research.kex.asm.util.AccessModifier
-import org.vorpal.research.kex.asm.util.ClassWriter
 import org.vorpal.research.kex.config.FileConfig
 import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.kexConfig
@@ -27,7 +25,6 @@ import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.logging.log
 import java.io.File
 import java.net.URLClassLoader
-import java.nio.file.Path
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -35,10 +32,9 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 class ConcolicKexTool : Tool {
-    val configFile = "kex.ini"
-    val classPath = System.getProperty("java.class.path")
-    lateinit var containers: List<Container>
-    lateinit var containerClassLoader: URLClassLoader
+    private val configFile = "kex.ini"
+    private lateinit var containers: List<Container>
+    private lateinit var containerClassLoader: URLClassLoader
     lateinit var context: ExecutionContext
 
     init {
@@ -49,16 +45,7 @@ class ConcolicKexTool : Tool {
 
     override fun getExtraClassPath(): List<File> = emptyList()
 
-    protected fun updateClassPath(loader: URLClassLoader) {
-        val urlClassPath = loader.urLs.joinToString(separator = getPathSeparator()) { "${it.path}." }
-        System.setProperty("java.class.path", "$classPath${getPathSeparator()}$urlClassPath")
-    }
-
-    protected fun clearClassPath() {
-        System.setProperty("java.class.path", classPath)
-    }
-
-    private fun prepareInstrumentedClasspath(containers: List<Container>, target: Package, path: Path) {
+    private fun prepareInstrumentedClasspath(containers: List<Container>, target: Package) {
         val klassPath = containers.map { it.path }
         for (jar in containers) {
             log.info("Preparing ${jar.path}")
@@ -74,19 +61,13 @@ class ConcolicKexTool : Tool {
             cm.initialize(jar)
             val context = ExecutionContext(
                 cm,
-                target,
                 containerClassLoader,
                 EasyRandomDriver(),
                 klassPath
             )
 
-            jar.unpack(cm, path, true)
-
             executePipeline(cm, target) {
-                +SystemExitTransformer(cm)
                 +ClassInstantiationDetector(context)
-                +SymbolicTraceInstrumenter(context)
-                +ClassWriter(context, path)
             }
         }
         log.debug("Executed instrumentation pipeline")
@@ -101,8 +82,7 @@ class ConcolicKexTool : Tool {
         }.toTypedArray(), getKexRuntime())
         val analysisJars = listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics())
 
-        val instrumentedCodeDir = kexConfig.instrumentedCodeDirectory
-        prepareInstrumentedClasspath(analysisJars, Package.defaultPackage, instrumentedCodeDir)
+        prepareInstrumentedClasspath(analysisJars, Package.defaultPackage)
 
         val cm = ClassManager(
             KfgConfig(
@@ -116,15 +96,10 @@ class ConcolicKexTool : Tool {
         cm.initialize(*analysisJars.toTypedArray())
 
         val accessLevel = AccessModifier.Private
-        log.debug("Access level: $accessLevel")
+        log.debug("Access level: {}", accessLevel)
 
-        // write all classes to output directory, so they will be seen by ClassLoader
-        val classLoader = URLClassLoader(arrayOf(instrumentedCodeDir.toUri().toURL()))
-
-        val klassPath = containers.map { it.path }
-        updateClassPath(classLoader)
         val randomDriver = EasyRandomDriver()
-        context = ExecutionContext(cm, Package.defaultPackage, classLoader, randomDriver, klassPath, accessLevel)
+        context = ExecutionContext(cm, containerClassLoader, randomDriver, containerPaths, accessLevel)
 
         log.debug("Running with class path:\n${containers.joinToString("\n") { it.name }}")
     }
@@ -137,7 +112,7 @@ class ConcolicKexTool : Tool {
 
             val canonicalName = className.replace('.', '/')
             val klass = context.cm[canonicalName]
-            log.debug("Running on klass $klass")
+            log.debug("Running on klass {}", klass)
 
             executePipeline(context.cm, Package.defaultPackage) {
                 +SystemExitTransformer(context.cm)
@@ -149,11 +124,10 @@ class ConcolicKexTool : Tool {
                 log.error("Error: ", e)
             }
 
-            log.debug("Analyzed klass $klass")
+            log.debug("Analyzed klass {}", klass)
         }
     }
 
     override fun finalize() {
-        clearClassPath()
     }
 }

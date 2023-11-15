@@ -36,12 +36,12 @@
     </logger>
 
     <logger name="org.vorpal.research" level="ALL" additivity="false">
-        <appender-ref ref="asyncFileLogger"/>
+        <appender-ref ref="kexSiftingFileLogger"/>
     </logger>
 
     <logger name="ch.qos.logback" level="OFF"/>
 
     <root level="ALL">
-        <appender-ref ref="asyncFileLogger"/>
+        <appender-ref ref="kexSiftingFileLogger"/>
     </root>
 </configuration>

@@ -13,7 +13,7 @@ STACK_MEMORY_SIZE = "1g"
 MODULES_FILE = os.path.join("runtime-deps", "modules.info")
 
 
-def get_jvm_version() -> int:
+def get_jvm_version():
 	pattern = '\"(1.)?(\d+).*\"'
 	runner = subprocess.Popen(
 		["java", "-version"],
@@ -24,7 +24,7 @@ def get_jvm_version() -> int:
 	version = re.search(pattern, stdout.decode()).groups()[1]
 	return int(version)
 
-def get_jvm_args() -> list [str]:
+def get_jvm_args():
 	version = get_jvm_version()
 	if version < 8:
 		print("Only Java version 8+ is supported", file=sys.stderr)
@@ -40,7 +40,7 @@ def get_jvm_args() -> list [str]:
 		args.append("--illegal-access=warn")
 		return args
 
-def run_kex(args: list [str]):
+def run_kex(args):
 	command = ["java",
 		"-Xmx{}".format(HEAP_MEMORY_SIZE),
 		"-Djava.security.manager",
@@ -56,7 +56,7 @@ def run_kex(args: list [str]):
 	kexProcess.wait()
 	return kexProcess.returncode
 
-def main() -> int:
+def main():
 	return run_kex(sys.argv[1:])
 
 if __name__ == "__main__":
