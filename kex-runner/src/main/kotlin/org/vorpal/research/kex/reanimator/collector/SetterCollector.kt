@@ -33,8 +33,8 @@ class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
         get() = ctx.cm
 
     private val KType.kfgType
-        get() = when (val jtype = this.javaType) {
-            is Class<*> -> ctx.types.get(jtype)
+        get() = when (val jType = this.javaType) {
+            is Class<*> -> ctx.types.get(jType)
             else -> TODO()
         }
 
@@ -54,7 +54,7 @@ class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
             }
         }
 
-        log.debug("$klass is not from kotlin")
+        log.debug("{} is not from kotlin", klass)
         super.visit(klass)
     }
 

@@ -67,13 +67,21 @@ class DescriptorGenerator(
     }
 }
 
+class SMTModelALiasAnalysis<T>(
+    private val generator: AbstractGenerator<T>
+) : AliasAnalysis {
+    override fun mayAlias(lhv: Term, rhv: Term): Boolean {
+        return generator.reanimateTerm(lhv) == generator.reanimateTerm(rhv)
+    }
+}
+
 fun generateFinalDescriptors(
     method: Method,
     ctx: ExecutionContext,
     model: SMTModel,
     state: PredicateState
 ): Parameters<Descriptor> {
-    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
+    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(model, ctx))
     generator.apply(state)
     return Parameters(
         generator.instance,
@@ -90,7 +98,7 @@ fun generateFinalTypeInfoMap(
     model: SMTModel,
     state: PredicateState
 ): TypeInfoMap {
-    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(method, model, ctx))
+    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(model, ctx))
     generator.apply(state)
     val params = setOfNotNull(
         generator.instance,
@@ -118,7 +126,7 @@ fun generateInitialDescriptors(
     model: SMTModel,
     state: PredicateState
 ): Parameters<Descriptor> {
-    val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(method, model, ctx))
+    val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
     return Parameters(
         generator.instance,
@@ -127,4 +135,21 @@ fun generateInitialDescriptors(
         },
         generator.staticFields
     )
+}
+
+fun generateInitialDescriptorsAndAA(
+    method: Method,
+    ctx: ExecutionContext,
+    model: SMTModel,
+    state: PredicateState
+): Pair<Parameters<Descriptor>, AliasAnalysis> {
+    val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
+    generator.apply(state)
+    return Parameters(
+        generator.instance,
+        generator.args.mapIndexed { index, arg ->
+            arg ?: descriptor { default(method.argTypes[index].kexType) }
+        },
+        generator.staticFields
+    ) to SMTModelALiasAnalysis(generator)
 }

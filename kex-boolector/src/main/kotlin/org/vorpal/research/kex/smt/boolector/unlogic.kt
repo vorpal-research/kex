@@ -10,7 +10,7 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
 object BoolectorUnlogic {
-    val tf = TermFactory
+    private val tf = TermFactory
 
     fun undo(expr: BoolectorNode): Term = when {
         expr.isBoolNode -> undoBool(expr.toBoolNode())

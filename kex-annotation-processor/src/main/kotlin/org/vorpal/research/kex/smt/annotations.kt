@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.smt
 
 annotation class SMTExpr(
@@ -22,6 +24,7 @@ annotation class SMTExprFactory(
         val solver: String,
         val importPackages: Array<String>,
         val context: String,
+        val contextInitializer: String = "",
         val generateString: Boolean = false
 )
 
@@ -47,5 +50,17 @@ annotation class Solver(
 annotation class AbstractAsyncSolver
 
 annotation class AsyncSolver(
+        val name: String
+)
+
+annotation class AbstractIncrementalSolver
+
+annotation class IncrementalSolver(
+        val name: String
+)
+
+annotation class AbstractAsyncIncrementalSolver
+
+annotation class AsyncIncrementalSolver(
         val name: String
 )

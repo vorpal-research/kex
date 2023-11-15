@@ -1,5 +1,6 @@
-package org.vorpal.research.kex.asm.analysis.concolic
+package org.vorpal.research.kex.asm.analysis.concolic.legacy
 
+import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.state.BasicState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
@@ -17,7 +18,9 @@ interface SearchStrategy {
     fun next(state: PredicateState): PredicateState?
 }
 
+@Suppress("unused")
 class BfsStrategy(override val method: Method, override val paths: Set<PredicateState>) : SearchStrategy {
+    private val random = EasyRandomDriver()
     override fun next(state: PredicateState): PredicateState? {
         val basic = state as? BasicState ?: unreachable { log.error("Only basic states can be mutated") }
         val currentState = StateBuilder()
@@ -26,7 +29,7 @@ class BfsStrategy(override val method: Method, override val paths: Set<Predicate
         for (predicate in basic.predicates) {
             when (predicate.type) {
                 is PredicateType.Path -> {
-                    val inverted = predicate.inverse()
+                    val inverted = predicate.inverse(random)
                     val newPath = currentPath + inverted
                     if (paths.all { !it.startsWith(newPath.apply()) }) {
                         currentState += inverted
@@ -45,10 +48,13 @@ class BfsStrategy(override val method: Method, override val paths: Set<Predicate
     }
 }
 
+@Suppress("unused")
 class DfsStrategy(override val method: Method, override val paths: Set<PredicateState>) : SearchStrategy {
+    private val random = EasyRandomDriver()
+
     override fun next(state: PredicateState): PredicateState? {
-        val currentState = dequeOf(*(state as BasicState).predicates.toTypedArray())
-        val currentPath = dequeOf(*currentState.filter { it.type is PredicateType.Path }.toTypedArray())
+        val currentState = dequeOf((state as BasicState).predicates)
+        val currentPath = dequeOf(currentState.filter { it.type is PredicateType.Path })
         while (currentState.isNotEmpty()) {
             val last = currentState.pollLast()
             if (last == currentPath.peekLast()) {
@@ -56,7 +62,7 @@ class DfsStrategy(override val method: Method, override val paths: Set<Predicate
             }
 
             if (last.type is PredicateType.Path) {
-                val inverted = last.inverse()
+                val inverted = last.inverse(random)
                 val newPath = BasicState(currentPath.toList() + inverted)
 
                 if (paths.all { !it.startsWith(newPath) }) {

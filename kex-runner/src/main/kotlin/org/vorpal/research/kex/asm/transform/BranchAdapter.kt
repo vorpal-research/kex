@@ -15,6 +15,7 @@ import org.vorpal.research.kthelper.graph.DominatorTree
 import org.vorpal.research.kthelper.graph.DominatorTreeBuilder
 import org.vorpal.research.kthelper.logging.log
 
+@Suppress("unused")
 class BranchAdapter(
     override val cm: ClassManager,
 ) : MethodVisitor {
@@ -70,11 +71,11 @@ class BranchAdapter(
         val newTerminator = inst(cm) { ite(inst.cond, trueBranch, falseBranch) }
         val newTerminatorClone = newTerminator.update(ctx, loc = inst.location)
         newTerminator.replaceAllUsesWith(newTerminatorClone)
-        newTerminator.clearUses()
+        newTerminator.clearAllUses()
 
         inst.replaceAllUsesWith(newTerminatorClone)
         parent.replace(inst, newTerminatorClone)
-        inst.clearUses()
+        inst.clearAllUses()
 
         val phis = branch.instructions.takeWhile { it is PhiInst }
         for (phi in phis) {
@@ -85,11 +86,11 @@ class BranchAdapter(
             val newPhi = inst(cm) { phi(phi.type, newIncomings) }
             val newPhiClone = newPhi.update(ctx, loc = phi.location)
             newPhi.replaceAllUsesWith(newPhiClone)
-            newPhi.clearUses()
+            newPhi.clearAllUses()
 
             phi.replaceAllUsesWith(newPhiClone)
             branch.replace(phi, newPhiClone)
-            phi.clearUses()
+            phi.clearAllUses()
         }
 
         parent.parent.add(replacement)

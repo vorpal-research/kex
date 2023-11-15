@@ -3,6 +3,7 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 import org.vorpal.research.kex.asm.util.Visibility
 
 
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 class JavaBuilder(val pkg: String = "") {
     companion object {
         private fun offset(level: Int) = "    ".repeat(level)
@@ -22,6 +23,7 @@ class JavaBuilder(val pkg: String = "") {
             '\u000c' -> "\\f"
             '\'' -> "\\'"
             '\"' -> "\\\""
+            '\\' -> "\\\\"
             else -> char
         }
     }
@@ -396,6 +398,10 @@ class JavaBuilder(val pkg: String = "") {
 
     fun import(name: String) {
         imports += name
+    }
+
+    fun importStatic(name: String) {
+        imports += "static $name"
     }
 
     fun type(name: String): Type = StringType(name)

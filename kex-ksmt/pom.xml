@@ -12,7 +12,7 @@
     <artifactId>kex-ksmt</artifactId>
 
     <properties>
-        <ksmt.version>0.3.1</ksmt.version>
+        <ksmt.version>0.5.8</ksmt.version>
     </properties>
 
     <dependencies>
@@ -30,12 +30,12 @@
 
         <dependency>
             <groupId>org.vorpal.research</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>kex-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.vorpal.research</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>kex-core</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <type>test-jar</type>
@@ -48,17 +48,37 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>io.ksmt</groupId>
             <artifactId>ksmt-core</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>io.ksmt</groupId>
             <artifactId>ksmt-z3</artifactId>
             <version>${ksmt.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.UnitTestBot.ksmt</groupId>
+            <groupId>io.ksmt</groupId>
+            <artifactId>ksmt-bitwuzla</artifactId>
+            <version>${ksmt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.ksmt</groupId>
+            <artifactId>ksmt-cvc5</artifactId>
+            <version>${ksmt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.ksmt</groupId>
+            <artifactId>ksmt-yices</artifactId>
+            <version>${ksmt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.ksmt</groupId>
+            <artifactId>ksmt-symfpu</artifactId>
+            <version>${ksmt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.ksmt</groupId>
             <artifactId>ksmt-runner</artifactId>
             <version>${ksmt.version}</version>
         </dependency>

@@ -3,6 +3,7 @@ package org.vorpal.research.kex.state.transformer
 import org.vorpal.research.kex.annotations.AnnotatedCall
 import org.vorpal.research.kex.annotations.AnnotationsLoader
 import org.vorpal.research.kex.state.BasicState
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.predicate.CallPredicate
@@ -10,16 +11,24 @@ import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.collection.dequeOf
+import ru.spbstu.wheels.mapToArray
 import java.util.*
 
 class AnnotationAdapter(
     val method: Method,
     val annotations: AnnotationsLoader
-) : RecollectingTransformer<AnnotationAdapter> {
+) : RecollectingTransformer<AnnotationAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
 
     private val Method.exactCall: AnnotatedCall?
-        get() = annotations.getExactCall("$klass.$name", *argTypes.map { it.name }.toTypedArray())
+        get() = annotations.getExactCall("$klass.$name", *argTypes.mapToArray { it.name })
+
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries
+        )
+    }
 
     override fun apply(ps: PredicateState): PredicateState {
         method.exactCall?.run {

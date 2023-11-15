@@ -7,29 +7,29 @@ import kotlin.test.Test
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class BasicGenerationTest : KexRunnerTest() {
+class BasicGenerationTest : KexRunnerTest("basic-generation") {
 
     @Test
     fun testBasic() {
-        val `class` = cm["$packageName/generation/BasicGenerationTests"]
+        val `class` = cm["${`package`.concretePackage}/generation/BasicGenerationTests"]
         runPipelineOn(`class`)
     }
 
     @Test
     fun testBasicJava() {
-        val `class` = cm["$packageName/generation/BasicJavaObjectGeneration"]
+        val `class` = cm["${`package`.concretePackage}/generation/BasicJavaObjectGeneration"]
         runPipelineOn(`class`)
     }
 
     @Test
     fun testObjectGeneration() {
-        val `class` = cm["$packageName/generation/ObjectGenerationTests"]
+        val `class` = cm["${`package`.concretePackage}/generation/ObjectGenerationTests"]
         runPipelineOn(`class`)
     }
 
     @Test
     fun testAbstractClassGeneration() {
-        val `class` = cm["$packageName/generation/AbstractClassTests"]
+        val `class` = cm["${`package`.concretePackage}/generation/AbstractClassTests"]
         runPipelineOn(`class`)
     }
 }

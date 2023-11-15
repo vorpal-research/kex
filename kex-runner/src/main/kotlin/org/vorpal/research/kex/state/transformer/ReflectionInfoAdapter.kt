@@ -1,19 +1,32 @@
 package org.vorpal.research.kex.state.transformer
 
-import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
+import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexPointer
+import org.vorpal.research.kex.ktype.KexReference
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.assume
-import org.vorpal.research.kex.state.term.*
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.state.term.ArrayIndexTerm
+import org.vorpal.research.kex.state.term.ArrayLengthTerm
+import org.vorpal.research.kex.state.term.ArrayLoadTerm
+import org.vorpal.research.kex.state.term.CallTerm
+import org.vorpal.research.kex.state.term.FieldLoadTerm
+import org.vorpal.research.kex.state.term.FieldTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.util.getKFunction
+import org.vorpal.research.kex.util.getKProperty
+import org.vorpal.research.kex.util.isElementNullable
+import org.vorpal.research.kex.util.isNonNullable
+import org.vorpal.research.kex.util.loadKClass
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kthelper.collection.dequeOf
-import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
 
@@ -32,21 +45,13 @@ class ReflectionInfoAdapter(
     private val arrayElementInfo = hashMapOf<Term, ArrayElementInfo>()
 
     override fun apply(ps: PredicateState): PredicateState {
-        val (`this`, arguments) = collectArguments(ps)
+        val useReflectionInfo = kexConfig.getBooleanValue("kex", "useReflectionInfo", true)
+        if (!useReflectionInfo) return ps
 
-        if (`this` != null) {
-            currentBuilder += assume { `this` inequality null }
-        } else if (!method.isStatic) {
-            val nThis = term { `this`(method.klass.kexType.rtMapped) }
-            currentBuilder += assume { nThis inequality null }
-        }
-
+        val (_, arguments) = collectArguments(ps)
         val methodClassType = KexClass(method.klass.fullName).getKfgType(types)
         val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
-        val kFunction = klass.getKFunction(method) ?: run {
-            log.warn("Could not load kFunction for $method")
-            return super.apply(ps)
-        }
+        val kFunction = klass.getKFunction(method) ?: return super.apply(ps)
 
         val parameters = when {
             method.isAbstract -> kFunction.parameters.map { it.index to it }
@@ -83,12 +88,9 @@ class ReflectionInfoAdapter(
         if (lhv.type.isNonNullable(kFunction.returnType) && lhv !in ignores)
             currentBuilder += assume { lhv inequality null }
 
-        if (lhv.type is KexArray)
+        if (lhv.type is KexArray) {
             arrayElementInfo[lhv] = ArrayElementInfo(nullable = lhv.type.isElementNullable(kFunction.returnType))
-
-//        call.arguments.filter { it.type is KexPointer }.forEach {
-//            currentBuilder += assume { it equality undef(it.type) }
-//        }
+        }
 
         return nothing()
     }

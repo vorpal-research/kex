@@ -1,15 +1,36 @@
 package org.vorpal.research.kex.smt.boolector
 
 import org.vorpal.research.boolector.Btor
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.*
-import org.vorpal.research.kex.smt.*
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexReal
+import org.vorpal.research.kex.ktype.KexReference
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.isArray
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.smt.AbstractSMTSolver
+import org.vorpal.research.kex.smt.MemoryShape
+import org.vorpal.research.kex.smt.Solver
+import org.vorpal.research.kex.smt.Result
+import org.vorpal.research.kex.smt.SMTModel
 import org.vorpal.research.kex.state.PredicateState
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.ArrayIndexTerm
+import org.vorpal.research.kex.state.term.ArrayLoadTerm
+import org.vorpal.research.kex.state.term.ClassAccessTerm
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.ConstIntTerm
+import org.vorpal.research.kex.state.term.ConstLongTerm
+import org.vorpal.research.kex.state.term.ConstStringTerm
+import org.vorpal.research.kex.state.term.FieldLoadTerm
+import org.vorpal.research.kex.state.term.FieldTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.numericValue
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.collectPointers
 import org.vorpal.research.kex.state.transformer.collectVariables
 import org.vorpal.research.kex.state.transformer.memspace
-import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -22,8 +43,10 @@ private typealias MemoryState = MutableMap<Term, Term>
 private typealias MemoryPair = Pair<MemoryState, MemoryState>
 
 @Solver("boolector")
-class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSMTSolver {
-    val ef = BoolectorExprFactory()
+class BoolectorSolver(
+    private val executionContext: ExecutionContext
+) : BoolectorNativeLoader(), AbstractSMTSolver {
+    private val ef = BoolectorExprFactory()
 
     override fun isReachable(state: PredicateState) =
         isPathPossible(state, state.path)
@@ -41,7 +64,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
 
         val ctx = BoolectorContext(ef)
 
-        val converter = BoolectorConverter(tf)
+        val converter = BoolectorConverter(executionContext)
         converter.init(state, ef)
         val boolectorState = converter.convert(state, ef, ctx)
         val boolectorQuery = converter.convert(query, ef, ctx)
@@ -50,19 +73,17 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
         val result = check(boolectorState, boolectorQuery)
         log.debug("Check finished")
         return when (result) {
-            Btor.Status.UNSAT -> Result.UnsatResult
+            Btor.Status.UNSAT -> Result.UnsatResult()
             Btor.Status.UNKNOWN -> Result.UnknownResult("should not happen")
             Btor.Status.SAT -> Result.SatResult(collectModel(ctx, state))
         }
     }
 
     private fun check(state: Bool_, query: Bool_): Btor.Status {
-        val (state_, query_) = state to query
-
-        state_.asAxiom().assertForm()
+        state.asAxiom().assertForm()
         ef.buildConstClassAxioms().asAxiom().assertForm()
-        query_.axiom.assertForm()
-        query_.expr.assertForm()
+        query.axiom.assertForm()
+        query.expr.assertForm()
 
         if (logFormulae) {
             log.debug(ef.ctx.dumpSmt2())
@@ -80,7 +101,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
         memspace: Int,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val startProp = getBitvectorInitialProperty(memspace, name)
         val endProp = getBitvectorProperty(memspace, name)
@@ -99,7 +120,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
         type: KexType,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val typeSize = BoolectorExprFactory.getTypeSize(type)
         val startProp = when (typeSize) {
@@ -126,7 +147,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
         type: KexType,
         name: String
     ) {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
 
@@ -144,7 +165,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
         memspace: Int,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = BoolectorUnlogic.undo(ptrExpr.expr)
 
@@ -163,7 +184,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
         }
 
         val assignments = vars.associateWith {
-            val expr = BoolectorConverter(tf).convert(it, ef, ctx)
+            val expr = BoolectorConverter(executionContext).convert(it, ef, ctx)
             val boolectorExpr = expr.expr
 
             // this is needed because boolector represents real numbers as integers
@@ -176,6 +197,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
                         log.error("Unexpected Integer term when trying to reanimate floating point value: $undone")
                     }
                 }
+
                 else -> undone
             }
             actualValue
@@ -187,8 +209,7 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
         val typeMap = hashMapOf<Term, KexType>()
 
         for ((type, value) in ef.typeMap) {
-            val actualValue = BoolectorUnlogic.undo(value.expr)
-            val index = when (actualValue) {
+            val index = when (val actualValue = BoolectorUnlogic.undo(value.expr)) {
                 is ConstStringTerm -> term { const(actualValue.value.indexOf('1')) }
                 else -> term { const(log2(actualValue.numericValue.toDouble()).toInt()) }
             }
@@ -201,10 +222,11 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
             when (ptr) {
                 is ArrayLoadTerm -> {
                 }
+
                 is ArrayIndexTerm -> {
-                    val arrayPtrExpr = BoolectorConverter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                    val arrayPtrExpr = BoolectorConverter(executionContext).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-                    val indexExpr = BoolectorConverter(tf).convert(ptr.index, ef, ctx) as? Int_
+                    val indexExpr = BoolectorConverter(executionContext).convert(ptr.index, ef, ctx) as? Int_
                         ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
                     val modelPtr = BoolectorUnlogic.undo(arrayPtrExpr.expr)
@@ -236,18 +258,21 @@ class BoolectorSolver(val tf: TypeFactory) : BoolectorNativeLoader(), AbstractSM
                     arrayPair.first[modelIndex] = initialValue
                     arrayPair.second[modelIndex] = value
                 }
+
                 is FieldLoadTerm -> {
                 }
+
                 is FieldTerm -> {
                     val name = "${ptr.klass}.${ptr.fieldName}"
                     properties.recoverProperty(ctx, ptr.owner, memspace, (ptr.type as KexReference).reference, name)
                     properties.recoverBitvectorProperty(ctx, ptr.owner, memspace, "type")
                 }
+
                 else -> {
                     val startMem = ctx.getWordInitialMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
 
-                    val ptrExpr = BoolectorConverter(tf).convert(ptr, ef, ctx) as? Ptr_
+                    val ptrExpr = BoolectorConverter(executionContext).convert(ptr, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
                     val startV = startMem.load(ptrExpr)

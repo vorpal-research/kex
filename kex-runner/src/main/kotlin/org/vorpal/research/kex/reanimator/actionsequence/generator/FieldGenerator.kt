@@ -3,12 +3,15 @@ package org.vorpal.research.kex.reanimator.actionsequence.generator
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.descriptor.descriptor
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexJavaClass
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kfg.Package
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.stringType
@@ -32,10 +35,18 @@ class FieldGenerator(val fallback: Generator) : Generator {
 
         val klassDescriptor = (descriptor["clazz" to KexJavaClass()] as? ObjectDescriptor)?.also { klassDesc ->
             val klassName = klassDesc["name" to KexString()]?.asStringValue
-            val asmKlassName = klassName?.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
-            klass = asmKlassName?.let { cm[it] } ?: context.cm.concreteClasses.random(context.random).also {
-                klassDesc["name" to KexString()] = descriptor { string(it.canonicalDesc) }
-            }
+            val asmKlassName = klassName?.asmString
+            klass = asmKlassName?.let {
+                val asmKlass = cm[it]
+                when {
+                    asmKlass.fields.isEmpty() -> null
+                    else -> asmKlass
+                }
+            } ?: context.cm.concreteClasses
+                .filter { it.fields.isNotEmpty() }
+                .random(context.random).also {
+                    klassDesc["name" to KexString()] = descriptor { string(it.canonicalDesc) }
+                }
         } ?: descriptor {
             val klassDesc = `object`(KexJavaClass())
             klass = context.cm.concreteClasses.filter { it.fields.isNotEmpty() }.random(context.random)
@@ -54,7 +65,7 @@ class FieldGenerator(val fallback: Generator) : Generator {
         }
         val generatedName = fallback.generate(fixedNameField, generationDepth)
 
-        val getDeclField = kfgJavaClass.getMethod("getDeclaredField", kfgFieldClass.type, types.stringType)
+        val getDeclField = kfgJavaClass.getMethod("getDeclaredField", kfgFieldClass.asType, types.stringType)
 
         actionSequence += ExternalMethodCall(getDeclField, generatedKlass, listOf(generatedName))
 

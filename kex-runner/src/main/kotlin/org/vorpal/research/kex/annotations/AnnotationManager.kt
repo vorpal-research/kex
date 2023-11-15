@@ -6,8 +6,8 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.runtimeDepsPath
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.cast
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.recast
 import org.vorpal.research.kthelper.tryOrNull
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -35,7 +35,7 @@ object AnnotationManager {
                 loadFrom(path.toFile())
             }
             if (printAnnotationInfo) {
-                log.debug("Loaded annotated calls $this")
+                log.debug("Loaded annotated calls {}", this)
             }
         } ?: unreachable {
             log.error("Annotations not loaded")
@@ -95,13 +95,12 @@ object AnnotationManager {
     private inline fun <reified T : Number> getSpecialConstantTyped(value: String): T? =
         when (val result = getSpecialConstant(value)) {
             null -> null
-            is Number -> result.recast()
+            is Number -> result.cast()
             else -> throw IllegalStateException("Constant type is not java.lang.Number")
         }
 
     private fun clearStr(str: String) = str.replace("_", "")
 
-    @Suppress("RemoveExplicitTypeArguments")
     private fun cast(value: String, type: KClass<*>): Any = when (type) {
         Int::class -> getSpecialConstantTyped<Int>(value)
             ?: clearStr(value).toInt()

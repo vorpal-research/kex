@@ -3,14 +3,25 @@ package org.vorpal.research.kex.smt.z3
 import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.ExtendedContext
 import com.microsoft.z3.Status
+import kotlinx.collections.immutable.persistentListOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexTest
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.random.StubRandomizer
+import org.vorpal.research.kex.smt.Result
+import org.vorpal.research.kex.state.PredicateQuery
+import org.vorpal.research.kex.state.basic
+import org.vorpal.research.kex.state.predicate.path
+import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kfg.ClassManager
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-class Z3SolverTest : KexTest() {
+class Z3SolverTest : KexTest("z3-solver") {
 
     @BeforeTest
     fun setup() {
@@ -131,6 +142,116 @@ class Z3SolverTest : KexTest() {
         val d = Long_.makeConst(ctx, 0xFF)
         val e = Word_.makeConst(ctx, 0xFF)
         assertTrue(checkExpr(d eq e))
+    }
+
+    @Test
+    fun testIncremental() {
+        val x = term { generate(KexInt) }
+        val y = term { generate(KexInt) }
+        val z = term { generate(KexInt) }
+        val state = basic {
+            state { x equality (y + z) }
+            state { y equality (2 * z) }
+        }
+        val paths = mutableListOf(
+            PredicateQuery(basic {
+                path { (x eq (3 * z)) equality true }
+            }),
+            PredicateQuery(basic {
+                path { (x neq (3 * z)) equality true }
+            }),
+            PredicateQuery(basic {
+                path { (x eq 0) equality true }
+            }),
+            PredicateQuery(basic {
+                path { (x gt 0) equality true }
+            }),
+            PredicateQuery(basic {
+                path { (x lt 0) equality true }
+            }),
+        )
+
+        val solver = Z3Solver(
+            ExecutionContext(
+                ClassManager(),
+                this.javaClass.classLoader,
+                StubRandomizer(),
+                emptyList()
+            )
+        )
+
+        val results = solver.isSatisfiable(state, paths)
+        assertIs<Result.SatResult>(results[0])
+        assertIs<Result.UnsatResult>(results[1])
+        assertIs<Result.SatResult>(results[2])
+        assertIs<Result.SatResult>(results[3])
+        assertIs<Result.SatResult>(results[4])
+    }
+
+    @Test
+    fun testSoftConstraints() {
+        val x = term { generate(KexInt) }
+        val y = term { generate(KexInt) }
+        val z = term { generate(KexInt) }
+        val state = basic {
+            state { x equality (y + z) }
+            state { y equality (2 * z) }
+        }
+        val paths = mutableListOf(
+            PredicateQuery(
+                basic {
+                    path { (x eq (3 * z)) equality true }
+                },
+                persistentListOf(
+                    path { (y gt 0) equality true },
+                    path { (z gt 0) equality true },
+                    path { (x gt 0) equality true }
+                )
+            ),
+            PredicateQuery(
+                basic {
+                    path { (x neq (3 * z)) equality true }
+                },
+                persistentListOf(
+                    path { (y gt 0) equality true },
+                    path { (z gt 0) equality true },
+                    path { (x gt 0) equality true }
+                )
+            ),
+            PredicateQuery(
+                basic {
+                    path { (x eq (3 * z)) equality true }
+                },
+                persistentListOf(
+                    path { (y gt 0) equality true },
+                    path { (z gt 0) equality true },
+                    path { (x lt 0) equality true }
+                )
+            ),
+            PredicateQuery(
+                basic {
+                    path { (x eq (3 * z)) equality true }
+                }, persistentListOf(
+                    path { (y gt 0) equality true },
+                    path { (y lt 0) equality true },
+                )
+            ),
+        )
+
+        val solver = Z3Solver(
+            ExecutionContext(
+                ClassManager(),
+                this.javaClass.classLoader,
+                StubRandomizer(),
+                emptyList()
+            )
+        )
+
+        val results = solver.isSatisfiable(state, paths)
+        assertIs<Result.SatResult>(results[0])
+        assertIs<Result.UnsatResult>(results[1])
+        assertIs<Result.SatResult>(results[2])
+        assertIs<Result.SatResult>(results[3])
     }
 
 //    @Test
@@ -312,12 +433,5 @@ class Z3SolverTest : KexTest() {
 //                }
 //            )
 //        ))
-//    }
-//
-//    @Test
-//    fun testZ3Lambda() {
-//        val ef = Z3ExprFactory()
-//        val ctx = ef.ctx
-//
 //    }
 }

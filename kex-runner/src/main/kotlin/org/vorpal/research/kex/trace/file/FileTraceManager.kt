@@ -5,6 +5,7 @@ import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import java.util.*
 
+@Suppress("unused")
 class FileTraceManager : TraceManager<FileTrace>() {
     private val methods = hashMapOf<Method, MutableList<FileTrace>>()
 
@@ -15,7 +16,7 @@ class FileTraceManager : TraceManager<FileTrace>() {
         while (queue.isNotEmpty()) {
             val top = queue.pollFirst()!!
             methods.getOrPut(method, ::arrayListOf).add(top)
-            queue.addAll(top.subtraces)
+            queue.addAll(top.subTraces)
         }
     }
 

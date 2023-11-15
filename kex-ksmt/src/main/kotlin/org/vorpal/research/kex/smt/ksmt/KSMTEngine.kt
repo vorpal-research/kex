@@ -1,12 +1,21 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.smt.ksmt
 
-import org.ksmt.KAst
-import org.ksmt.KContext
-import org.ksmt.decl.KDecl
-import org.ksmt.decl.KFuncDecl
-import org.ksmt.expr.KExpr
-import org.ksmt.expr.KFpRoundingMode
-import org.ksmt.sort.*
+import io.ksmt.KAst
+import io.ksmt.KContext
+import io.ksmt.decl.KDecl
+import io.ksmt.decl.KFuncDecl
+import io.ksmt.expr.KExpr
+import io.ksmt.expr.KFpRoundingMode
+import io.ksmt.sort.KArraySort
+import io.ksmt.sort.KBoolSort
+import io.ksmt.sort.KBv1Sort
+import io.ksmt.sort.KBvSort
+import io.ksmt.sort.KFp32Sort
+import io.ksmt.sort.KFp64Sort
+import io.ksmt.sort.KFpSort
+import io.ksmt.sort.KSort
 import org.vorpal.research.kex.smt.SMTEngine
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -112,7 +121,7 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
     }
 
     override fun bv2float(ctx: KContext, expr: KAst, sort: KSort): KExpr<*> {
-        return ctx.mkBvToFpExpr<KFpSort>(
+        return ctx.mkBvToFpExpr(
             sort as KFpSort,
             ctx.mkFpRoundingModeExpr(KFpRoundingMode.RoundTowardZero),
             expr.asExpr(ctx) as KExpr<KBvSort>,
@@ -135,7 +144,6 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
         val exponentBits = fpSort.exponentBits.toInt()
         val size = bv.sort.sizeBits.toInt()
 
-        @Suppress("UNCHECKED_CAST")
         val sign = extract(ctx, bv, size - 1, size - 1) as KExpr<KBv1Sort>
         val exponent = extract(ctx, bv, size - 2, size - exponentBits - 1) as KExpr<out KBvSort>
         val significand = extract(ctx, bv, size - exponentBits - 2, 0) as KExpr<out KBvSort>
@@ -148,7 +156,7 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
     }
 
     override fun float2float(ctx: KContext, expr: KAst, sort: KSort): KExpr<*> {
-        return ctx.mkFpToFpExpr<KFpSort>(
+        return ctx.mkFpToFpExpr(
             sort as KFpSort,
             ctx.mkFpRoundingModeExpr(KFpRoundingMode.RoundTowardZero),
             expr.asExpr(ctx) as KExpr<out KFpSort>
@@ -279,56 +287,146 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
             Opcode.EQ -> eq(ctx, lhvExpr, rhvExpr)
             Opcode.NEQ -> neq(ctx, lhvExpr, rhvExpr)
             Opcode.ADD -> when {
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> add(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
-                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> add(ctx, lhvExpr as KExpr<KFpSort>, rhvExpr as KExpr<KFpSort>)
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> addBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
+                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> addFp(
+                    ctx,
+                    lhvExpr as KExpr<KFpSort>,
+                    rhvExpr as KExpr<KFpSort>
+                )
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhvExpr and $rhv") }
             }
 
             Opcode.SUB -> when {
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> sub(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
-                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> sub(ctx, lhvExpr as KExpr<KFpSort>, rhvExpr as KExpr<KFpSort>)
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> subBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
+                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> subFp(
+                    ctx,
+                    lhvExpr as KExpr<KFpSort>,
+                    rhvExpr as KExpr<KFpSort>
+                )
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhvExpr and $rhvExpr") }
             }
 
             Opcode.MUL -> when {
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> mul(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
-                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> mul(ctx, lhvExpr as KExpr<KFpSort>, rhvExpr as KExpr<KFpSort>)
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> mulBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
+                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> mulFp(
+                    ctx,
+                    lhvExpr as KExpr<KFpSort>,
+                    rhvExpr as KExpr<KFpSort>
+                )
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhvExpr and $rhv") }
             }
 
             Opcode.DIVIDE -> when {
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> sdiv(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
-                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> sdiv(ctx, lhvExpr as KExpr<KFpSort>, rhvExpr as KExpr<KFpSort>)
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> sdivBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
+                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> sdivFp(
+                    ctx,
+                    lhvExpr as KExpr<KFpSort>,
+                    rhvExpr as KExpr<KFpSort>
+                )
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhvExpr and $rhv") }
             }
 
             Opcode.MOD -> when {
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> smod(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
-                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> fmod(ctx, lhvExpr as KExpr<KFpSort>, rhvExpr as KExpr<KFpSort>)
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> smod(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
+                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> fmod(
+                    ctx,
+                    lhvExpr as KExpr<KFpSort>,
+                    rhvExpr as KExpr<KFpSort>
+                )
+
                 else -> unreachable { log.error("Unexpected mod arguments: $lhvExpr and $rhv") }
             }
 
             Opcode.GT -> when {
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> gt(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
-                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> gt(ctx, lhvExpr as KExpr<KFpSort>, rhvExpr as KExpr<KFpSort>)
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> gtBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
+                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> gtFp(
+                    ctx,
+                    lhvExpr as KExpr<KFpSort>,
+                    rhvExpr as KExpr<KFpSort>
+                )
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhvExpr and $rhv") }
             }
 
             Opcode.GE -> when {
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> ge(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
-                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> ge(ctx, lhvExpr as KExpr<KFpSort>, rhvExpr as KExpr<KFpSort>)
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> geBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
+                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> geFp(
+                    ctx,
+                    lhvExpr as KExpr<KFpSort>,
+                    rhvExpr as KExpr<KFpSort>
+                )
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhvExpr and $rhv") }
             }
 
             Opcode.LT -> when {
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> lt(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
-                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> lt(ctx, lhvExpr as KExpr<KFpSort>, rhvExpr as KExpr<KFpSort>)
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> ltBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
+                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> ltFp(
+                    ctx,
+                    lhvExpr as KExpr<KFpSort>,
+                    rhvExpr as KExpr<KFpSort>
+                )
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhvExpr and $rhv") }
             }
 
             Opcode.LE -> when {
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> le(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
-                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> le(ctx, lhvExpr as KExpr<KFpSort>, rhvExpr as KExpr<KFpSort>)
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> leBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
+                lhvExpr.sort is KFpSort && rhvExpr.sort is KFpSort -> leFp(
+                    ctx,
+                    lhvExpr as KExpr<KFpSort>,
+                    rhvExpr as KExpr<KFpSort>
+                )
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhvExpr and $rhv") }
             }
 
@@ -336,20 +434,50 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
             Opcode.SHR -> lshr(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
             Opcode.ASHR -> ashr(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
             Opcode.AND -> when {
-                lhvExpr.sort is KBoolSort && rhvExpr.sort is KBoolSort -> and(ctx, lhvExpr as KExpr<KBoolSort>, rhvExpr as KExpr<KBoolSort>)
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> and(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
+                lhvExpr.sort is KBoolSort && rhvExpr.sort is KBoolSort -> and(
+                    ctx,
+                    lhvExpr as KExpr<KBoolSort>,
+                    rhvExpr as KExpr<KBoolSort>
+                )
+
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> andBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhvExpr and $rhv") }
             }
 
             Opcode.OR -> when {
-                lhvExpr.sort is KBoolSort && rhvExpr.sort is KBoolSort -> or(ctx, lhvExpr as KExpr<KBoolSort>, rhvExpr as KExpr<KBoolSort>)
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> or(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
+                lhvExpr.sort is KBoolSort && rhvExpr.sort is KBoolSort -> or(
+                    ctx,
+                    lhvExpr as KExpr<KBoolSort>,
+                    rhvExpr as KExpr<KBoolSort>
+                )
+
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> orBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
                 else -> unreachable { log.error("Unexpected or arguments: $lhvExpr or $rhv") }
             }
 
             Opcode.XOR -> when {
-                lhvExpr.sort is KBoolSort && rhvExpr.sort is KBoolSort -> xor(ctx, lhvExpr as KExpr<KBoolSort>, rhvExpr as KExpr<KBoolSort>)
-                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> xor(ctx, lhvExpr as KExpr<KBvSort>, rhvExpr as KExpr<KBvSort>)
+                lhvExpr.sort is KBoolSort && rhvExpr.sort is KBoolSort -> xor(
+                    ctx,
+                    lhvExpr as KExpr<KBoolSort>,
+                    rhvExpr as KExpr<KBoolSort>
+                )
+
+                lhvExpr.sort is KBvSort && rhvExpr.sort is KBvSort -> xorBv(
+                    ctx,
+                    lhvExpr as KExpr<KBvSort>,
+                    rhvExpr as KExpr<KBvSort>
+                )
+
                 else -> unreachable { log.error("Unexpected xor arguments: $lhvExpr xor $rhv") }
             }
 
@@ -362,23 +490,23 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
     private fun eq(ctx: KContext, lhv: KExpr<*>, rhv: KExpr<*>) = ctx.mkEq(lhv as KExpr<KSort>, rhv as KExpr<KSort>)
     private fun neq(ctx: KContext, lhv: KExpr<*>, rhv: KExpr<*>) = ctx.mkNot(eq(ctx, lhv, rhv))
 
-    private fun add(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvAddExpr(lhv, rhv)
-    private fun add(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpAddExpr(
+    private fun addBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvAddExpr(lhv, rhv)
+    private fun addFp(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpAddExpr(
         ctx.mkFpRoundingModeExpr(KFpRoundingMode.RoundTowardZero), lhv, rhv
     )
 
-    private fun sub(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSubExpr(lhv, rhv)
-    private fun sub(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpSubExpr(
+    private fun subBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSubExpr(lhv, rhv)
+    private fun subFp(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpSubExpr(
         ctx.mkFpRoundingModeExpr(KFpRoundingMode.RoundTowardZero), lhv, rhv
     )
 
-    private fun mul(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvMulExpr(lhv, rhv)
-    private fun mul(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpMulExpr(
+    private fun mulBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvMulExpr(lhv, rhv)
+    private fun mulFp(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpMulExpr(
         ctx.mkFpRoundingModeExpr(KFpRoundingMode.RoundTowardZero), lhv, rhv
     )
 
-    private fun sdiv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSignedDivExpr(lhv, rhv)
-    private fun sdiv(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpDivExpr(
+    private fun sdivBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSignedDivExpr(lhv, rhv)
+    private fun sdivFp(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpDivExpr(
         ctx.mkFpRoundingModeExpr(KFpRoundingMode.RoundTowardZero), lhv, rhv
     )
 
@@ -387,17 +515,19 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
     private fun umod(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvUnsignedRemExpr(lhv, rhv)
     private fun fmod(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpRemExpr(lhv, rhv)
 
-    private fun gt(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSignedGreaterExpr(lhv, rhv)
-    private fun gt(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpGreaterExpr(lhv, rhv)
+    private fun gtBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSignedGreaterExpr(lhv, rhv)
+    private fun gtFp(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpGreaterExpr(lhv, rhv)
 
-    private fun ge(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSignedGreaterOrEqualExpr(lhv, rhv)
-    private fun ge(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpGreaterOrEqualExpr(lhv, rhv)
+    private fun geBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) =
+        ctx.mkBvSignedGreaterOrEqualExpr(lhv, rhv)
 
-    private fun lt(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSignedLessExpr(lhv, rhv)
-    private fun lt(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpLessExpr(lhv, rhv)
+    private fun geFp(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpGreaterOrEqualExpr(lhv, rhv)
 
-    private fun le(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSignedLessOrEqualExpr(lhv, rhv)
-    private fun le(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpLessOrEqualExpr(lhv, rhv)
+    private fun ltBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSignedLessExpr(lhv, rhv)
+    private fun ltFp(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpLessExpr(lhv, rhv)
+
+    private fun leBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvSignedLessOrEqualExpr(lhv, rhv)
+    private fun leFp(ctx: KContext, lhv: KExpr<KFpSort>, rhv: KExpr<KFpSort>) = ctx.mkFpLessOrEqualExpr(lhv, rhv)
 
     private fun shl(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvShiftLeftExpr(lhv, rhv)
     private fun lshr(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvLogicalShiftRightExpr(lhv, rhv)
@@ -406,21 +536,31 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
     private fun and(ctx: KContext, lhv: KExpr<KBoolSort>, rhv: KExpr<KBoolSort>) = ctx.mkAnd(lhv, rhv)
     private fun or(ctx: KContext, lhv: KExpr<KBoolSort>, rhv: KExpr<KBoolSort>) = ctx.mkOr(lhv, rhv)
     private fun xor(ctx: KContext, lhv: KExpr<KBoolSort>, rhv: KExpr<KBoolSort>) = ctx.mkXor(lhv, rhv)
-    private fun and(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvAndExpr(lhv, rhv)
-    private fun or(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvOrExpr(lhv, rhv)
-    private fun xor(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvXorExpr(lhv, rhv)
+    private fun andBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvAndExpr(lhv, rhv)
+    private fun orBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvOrExpr(lhv, rhv)
+    private fun xorBv(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvXorExpr(lhv, rhv)
     private fun implies(ctx: KContext, lhv: KExpr<KBoolSort>, rhv: KExpr<KBoolSort>) = ctx.mkImplies(lhv, rhv)
     private fun iff(ctx: KContext, lhv: KExpr<KBoolSort>, rhv: KExpr<KBoolSort>) = ctx.mkEq(lhv, rhv)
     private fun concat(ctx: KContext, lhv: KExpr<KBvSort>, rhv: KExpr<KBvSort>) = ctx.mkBvConcatExpr(lhv, rhv)
 
     override fun conjunction(ctx: KContext, vararg exprs: KAst): KExpr<*> {
-        val boolExprs = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
-        return ctx.mkAnd(boolExprs)
+        val boolExpressions = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
+        return ctx.mkAnd(boolExpressions)
     }
 
     override fun conjunction(ctx: KContext, exprs: Collection<KAst>): KExpr<*> {
-        val boolExprs = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
-        return ctx.mkAnd(boolExprs)
+        val boolExpressions = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
+        return ctx.mkAnd(boolExpressions)
+    }
+
+    override fun disjunction(ctx: KContext, vararg exprs: KAst): KExpr<*> {
+        val boolExpressions = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
+        return ctx.mkOr(boolExpressions)
+    }
+
+    override fun disjunction(ctx: KContext, exprs: Collection<KAst>): KExpr<*> {
+        val boolExpressions = exprs.map { it.asExpr(ctx) as KExpr<KBoolSort> }
+        return ctx.mkOr(boolExpressions)
     }
 
     override fun zext(ctx: KContext, n: Int, expr: KAst): KExpr<*> {
@@ -442,12 +582,15 @@ object KSMTEngine : SMTEngine<KContext, KAst, KSort, KFuncDecl<*>, KAst>() {
     }
 
     override fun load(ctx: KContext, array: KAst, index: KAst): KExpr<*> {
-        return ctx.mkArraySelect(array.asExpr(ctx) as KExpr<KArraySort<*, *>>, index.asExpr(ctx) as KExpr<KSort>)
+        return ctx.mkArraySelect(
+            array.asExpr(ctx) as KExpr<KArraySort<KSort, KSort>>,
+            index.asExpr(ctx) as KExpr<KSort>
+        )
     }
 
     override fun store(ctx: KContext, array: KAst, index: KAst, value: KAst): KExpr<*> {
         return ctx.mkArrayStore(
-            array.asExpr(ctx) as KExpr<KArraySort<*, *>>,
+            array.asExpr(ctx) as KExpr<KArraySort<KSort, KSort>>,
             index.asExpr(ctx) as KExpr<KSort>,
             value.asExpr(ctx) as KExpr<KSort>
         )

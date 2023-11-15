@@ -4,15 +4,18 @@ import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Global
 import com.microsoft.z3.Model
 import com.microsoft.z3.Status
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.smt.*
+import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kex.state.transformer.collectPointers
+import org.vorpal.research.kex.state.transformer.collectTypes
 import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.getConstStringMap
 import org.vorpal.research.kex.state.transformer.memspace
-import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
@@ -28,9 +31,14 @@ private val simplifyFormulae = kexConfig.getBooleanValue("smt", "simplifyFormula
 private val maxArrayLength = kexConfig.getIntValue("smt", "maxArrayLength", 1000)
 
 @AsyncSolver("z3")
+@AsyncIncrementalSolver("z3")
 @Solver("z3")
-class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, AbstractAsyncSMTSolver {
-    val ef = Z3ExprFactory()
+@IncrementalSolver("z3")
+class Z3Solver(
+    private val executionContext: ExecutionContext
+) : Z3NativeLoader(), AbstractSMTSolver, AbstractAsyncSMTSolver, AbstractIncrementalSMTSolver,
+    AbstractAsyncIncrementalSMTSolver {
+    private val ef = Z3ExprFactory()
 
     override fun isReachable(state: PredicateState) =
         isPathPossible(state, state.path)
@@ -40,7 +48,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
 
     override fun isViolated(state: PredicateState, query: PredicateState): Result = check(state, query) { !it }
 
-    fun check(state: PredicateState, query: PredicateState, queryBuilder: (Bool_) -> Bool_): Result {
+    private fun check(state: PredicateState, query: PredicateState, queryBuilder: (Bool_) -> Bool_): Result {
         if (logQuery) {
             log.run {
                 debug("Z3 solver check")
@@ -51,7 +59,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
 
         val ctx = Z3Context(ef)
 
-        val converter = Z3Converter(tf)
+        val converter = Z3Converter(executionContext)
         converter.init(state, ef)
         val z3State = converter.convert(state, ef, ctx)
         val z3query = converter.convert(query, ef, ctx)
@@ -60,7 +68,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
         val result = check(z3State, queryBuilder(z3query))
         log.debug("Check finished")
         return when (result.first) {
-            Status.UNSATISFIABLE -> Result.UnsatResult
+            Status.UNSATISFIABLE -> Result.UnsatResult()
             Status.UNKNOWN -> Result.UnknownResult(result.second as String)
             Status.SATISFIABLE -> Result.SatResult(collectModel(ctx, result.second as Model, state))
         }
@@ -69,22 +77,22 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
     private fun check(state: Bool_, query: Bool_): Pair<Status, Any> {
         val solver = buildSolver()
 
-        val (state_, query_) = when {
+        val (simplifiedState, simplifiedQuery) = when {
             simplifyFormulae -> state.simplify() to query.simplify()
             else -> state to query
         }
 
         if (logFormulae) {
             log.run {
-                debug("State: $state_")
-                debug("Query: $query_")
+                debug("State: $simplifiedState")
+                debug("Query: $simplifiedQuery")
             }
         }
 
-        solver.add(state_.asAxiom() as BoolExpr)
+        solver.add(simplifiedState.asAxiom() as BoolExpr)
         solver.add(ef.buildConstClassAxioms().asAxiom() as BoolExpr)
-        solver.add(query_.axiom as BoolExpr)
-        solver.add(query_.expr as BoolExpr)
+        solver.add(simplifiedQuery.axiom as BoolExpr)
+        solver.add(simplifiedQuery.expr as BoolExpr)
 
         log.debug("Running z3 solver")
         if (printSMTLib) {
@@ -100,11 +108,13 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
                 if (logFormulae) log.debug(model)
                 result to model
             }
+
             Status.UNSATISFIABLE -> {
                 val core = solver.unsatCore.toList()
                 log.debug("Unsat core: $core")
                 result to core
             }
+
             Status.UNKNOWN -> {
                 val reason = solver.reasonUnknown
                 log.debug(reason)
@@ -145,7 +155,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
         model: Model,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = Z3Converter(tf).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val startProp = getBitvectorInitialProperty(memspace, name)
         val endProp = getBitvectorProperty(memspace, name)
@@ -165,7 +175,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
         model: Model,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = Z3Converter(tf).convert(ptr, ef, this) as? Ptr_
+        val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, this) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val typeSize = Z3ExprFactory.getTypeSize(type)
         val startProp = when (typeSize) {
@@ -193,7 +203,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
         model: Model,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
 
@@ -213,7 +223,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
         model: Model,
         name: String
     ): Pair<Term, Term> {
-        val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
+        val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, ctx) as? Ptr_
             ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
         val modelPtr = Z3Unlogic.undo(model.evaluate(ptrExpr.expr, true))
 
@@ -232,7 +242,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
         }
 
         val assignments = vars.associateWith {
-            val expr = Z3Converter(tf).convert(it, ef, ctx)
+            val expr = Z3Converter(executionContext, noAxioms = true).convert(it, ef, ctx)
             val z3expr = expr.expr
 
             val evaluatedExpr = model.evaluate(z3expr, true)
@@ -259,9 +269,9 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
             when (ptr) {
                 is ArrayLoadTerm -> {}
                 is ArrayIndexTerm -> {
-                    val arrayPtrExpr = Z3Converter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                    val arrayPtrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-                    val indexExpr = Z3Converter(tf).convert(ptr.index, ef, ctx) as? Int_
+                    val indexExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.index, ef, ctx) as? Int_
                         ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
                     val modelPtr = Z3Unlogic.undo(model.evaluate(arrayPtrExpr.expr, true))
@@ -299,6 +309,7 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
                     arrayPair.first[modelIndex] = initialValue
                     arrayPair.second[modelIndex] = value
                 }
+
                 is FieldLoadTerm -> {}
                 is FieldTerm -> {
                     val name = "${ptr.klass}.${ptr.fieldName}"
@@ -312,11 +323,12 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
                     )
                     properties.recoverBitvectorProperty(ctx, ptr.owner, memspace, model, "type")
                 }
+
                 else -> {
                     val startMem = ctx.getWordInitialMemory(memspace)
                     val endMem = ctx.getWordMemory(memspace)
 
-                    val ptrExpr = Z3Converter(tf).convert(ptr, ef, ctx) as? Ptr_
+                    val ptrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr, ef, ctx) as? Ptr_
                         ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
 
                     val startV = startMem.load(ptrExpr)
@@ -360,7 +372,13 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
                                 indices += indexTerm
                         }
                     } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
-                        properties.recoverBitvectorProperty(ctx, ptr, memspace, model, ConstClassTerm.TYPE_INDEX_PROPERTY)
+                        properties.recoverBitvectorProperty(
+                            ctx,
+                            ptr,
+                            memspace,
+                            model,
+                            ConstClassTerm.TYPE_INDEX_PROPERTY
+                        )
                     }
 
                     properties.recoverBitvectorProperty(ctx, ptr, memspace, model, "type")
@@ -372,9 +390,9 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
         for (ptr in indices) {
             ptr as ArrayIndexTerm
             val memspace = ptr.arrayRef.memspace
-            val arrayPtrExpr = Z3Converter(tf).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+            val arrayPtrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
                 ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
-            val indexExpr = Z3Converter(tf).convert(ptr.index, ef, ctx) as? Int_
+            val indexExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.index, ef, ctx) as? Int_
                 ?: unreachable { log.error("Non integer expr for index in $ptr") }
 
             val modelPtr = Z3Unlogic.undo(model.evaluate(arrayPtrExpr.expr, true))
@@ -432,6 +450,154 @@ class Z3Solver(val tf: TypeFactory) : Z3NativeLoader(), AbstractSMTSolver, Abstr
 
     override suspend fun isViolatedAsync(state: PredicateState, query: PredicateState): Result =
         isViolated(state, query)
+
+    override fun isSatisfiable(state: PredicateState, queries: List<PredicateQuery>): List<Result> {
+        if (logQuery) {
+            log.run {
+                debug("Z3 solver check")
+                debug("State: $state")
+                debug("Queries: ${queries.joinToString("\n")}")
+            }
+        }
+        val allTypes = buildSet {
+            addAll(collectTypes(executionContext, state))
+            for (query in queries) {
+                addAll(collectTypes(executionContext, query.hardConstraints))
+                for (softConstraint in query.softConstraints) {
+                    addAll(collectTypes(executionContext, query.hardConstraints))
+                }
+            }
+        }.filter { it !is KexNull }.mapTo(mutableSetOf()) { it.getKfgType(executionContext.types) }
+        val allConstStrings = buildMap {
+            putAll(getConstStringMap(state))
+            for (query in queries) {
+                putAll(getConstStringMap(query.hardConstraints))
+            }
+        }
+        ef.initTypes(allTypes)
+        ef.initStrings(allConstStrings)
+
+        val ctx = Z3Context(ef)
+        val converter = Z3Converter(executionContext)
+        val z3State = converter.convert(state, ef, ctx)
+        val z3Queries = queries.map { (hard, soft) ->
+            converter.convert(hard, ef, ctx) to soft.map { converter.convert(it, ef, ctx) }
+        }
+
+        log.debug("Check started")
+        val results = checkIncremental(z3State, z3Queries)
+        log.debug("Check finished")
+        return results.mapIndexed { index, (status, any) ->
+            when (status) {
+                Status.UNSATISFIABLE -> Result.UnsatResult()
+                Status.UNKNOWN -> Result.UnknownResult(any as String)
+                Status.SATISFIABLE -> Result.SatResult(
+                    collectModel(
+                        ctx,
+                        any as Model,
+                        state + queries[index].hardConstraints
+                    )
+                )
+            }
+        }
+    }
+
+    private fun checkIncremental(state: Bool_, queries: List<Pair<Bool_, List<Bool_>>>): List<Pair<Status, Any>> {
+        val solver = buildSolver()
+
+        val (simplifiedState, simplifiedQueries) = when {
+            simplifyFormulae -> state.simplify() to queries.map { it.first.simplify() to it.second }
+            else -> state to queries
+        }
+
+        if (logFormulae) {
+            log.run {
+                debug("State: $simplifiedState")
+                debug("Query: ${simplifiedQueries.joinToString("\n")}")
+            }
+        }
+
+        solver.assertAndTrack(simplifiedState.asAxiom() as BoolExpr, ef.ctx.mkBoolConst("State"))
+        solver.assertAndTrack(ef.buildConstClassAxioms().asAxiom() as BoolExpr, ef.ctx.mkBoolConst("ClassAxioms"))
+        solver.push()
+
+        return simplifiedQueries.map { (hardConstraints, softConstraints) ->
+            solver.assertAndTrack(hardConstraints.asAxiom() as BoolExpr, ef.ctx.mkBoolConst("HardConstraints"))
+            val softConstraintsMap = when {
+                softConstraints.isNotEmpty() -> {
+                    solver.push()
+                    softConstraints.withIndex().associate { (index, softConstraint) ->
+                        val expr = ef.ctx.mkBoolConst("SoftConstraint$index")
+                        solver.assertAndTrack(softConstraint.asAxiom() as BoolExpr, expr)
+                        expr to softConstraint.asAxiom() as BoolExpr
+                    }
+                }
+
+                else -> emptyMap()
+            }
+
+            log.debug("Running z3 solver")
+            if (printSMTLib) {
+                log.debug("SMTLib formula:")
+                log.debug(solver)
+            }
+            val result = solver.checkAndMinimize(softConstraintsMap)
+
+            when (result) {
+                Status.SATISFIABLE -> {
+                    val model = solver.model ?: unreachable { log.error("Solver result does not contain model") }
+                    if (logFormulae) log.debug(model)
+                    result to model
+                }
+
+                Status.UNSATISFIABLE -> {
+                    val core = solver.unsatCore.toList()
+                    log.debug("Unsat core: $core")
+                    result to core
+                }
+
+                Status.UNKNOWN -> {
+                    val reason = solver.reasonUnknown
+                    log.debug(reason)
+                    result to reason
+                }
+            }.also {
+                solver.pop()
+                if (softConstraints.isNotEmpty()) {
+                    solver.pop()
+                }
+                solver.push()
+            }
+        }
+    }
+
+    private fun com.microsoft.z3.Solver.checkAndMinimize(softConstraintsMap: Map<BoolExpr, BoolExpr>): Status {
+        var result = this.check() ?: unreachable { log.error("Solver error") }
+        return when (result) {
+            Status.UNSATISFIABLE -> {
+                while (result == Status.UNSATISFIABLE && softConstraintsMap.isNotEmpty()) {
+                    val softCopies = softConstraintsMap.toMutableMap()
+                    val core = this.unsatCore.toSet()
+                    if (core.any { it !in softCopies }) break
+                    else {
+                        this.pop()
+                        this.push()
+                        for (key in core) softCopies.remove(key)
+                        for ((expr, softConstraint) in softCopies) {
+                            this.assertAndTrack(softConstraint, expr)
+                        }
+                        result = this.check() ?: unreachable { log.error("Solver error") }
+                    }
+                }
+                result
+            }
+
+            else -> result
+        }
+    }
+
+    override suspend fun isSatisfiableAsync(state: PredicateState, queries: List<PredicateQuery>) =
+        isSatisfiable(state, queries)
 
     override fun close() {
         ef.ctx.close()

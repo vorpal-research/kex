@@ -10,7 +10,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class PrimitiveSymbolicLongTest : SymbolicTest() {
+class PrimitiveSymbolicLongTest : SymbolicTest("primitive-symbolic") {
     @Test
     fun primitiveConcolicTest() {
         assertCoverage(cm["org/vorpal/research/kex/test/concolic/PrimitiveConcolicTests"], 1.0)

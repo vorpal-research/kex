@@ -4,7 +4,12 @@ import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.ClassDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
+import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldSetter
+import org.vorpal.research.kex.reanimator.actionsequence.StaticMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kex.reanimator.collector.hasSetter
 import org.vorpal.research.kex.reanimator.collector.setter
 import org.vorpal.research.kthelper.assert.ktassert
@@ -33,7 +38,11 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
 
     data class ExecutionStack(val instance: ClassDescriptor, val calls: List<CodeAction>, val depth: Int)
 
-    private fun generateStatics(actionSequence: ActionList, descriptor: ClassDescriptor, generationDepth: Int): Boolean = with(context) {
+    private fun generateStatics(
+        actionSequence: ActionList,
+        descriptor: ClassDescriptor,
+        generationDepth: Int
+    ): Boolean = with(context) {
         val original = descriptor.deepCopy() as ClassDescriptor
         val fallbacks = mutableSetOf<List<CodeAction>>()
 
@@ -42,7 +51,7 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
         descriptor.reduce()
         if (descriptor.isFinal(original)) return true
 
-        log.debug("Generating $descriptor")
+        log.debug("Generating {}", descriptor)
 
         val klass = descriptor.klass.kfgClass(types)
         val setters = descriptor.generateSetters(generationDepth)
@@ -112,13 +121,13 @@ class StaticFieldGenerator(private val fallback: Generator) : Generator {
             val kfgField = kfgKlass.getField(field.first, field.second.getKfgType(types))
 
             if (accessLevel.canAccess(kfgField.accessModifier)) {
-                log.debug("Directly setting field $field value")
+                log.debug("Directly setting field {} value", field)
                 calls += StaticFieldSetter(kfgField, fallback.generate(value, generationDepth + 1))
                 fields.remove(field)
                 reduce()
 
             } else if (kfgField.hasSetter && accessLevel.canAccess(kfgField.setter.accessModifier)) {
-                log.info("Using setter for $field")
+                log.info("Using setter for {}", field)
 
                 val (instance, args, statics) = kfgField.setter.executeAsStaticSetter(this@generateSetters) ?: continue
                 ktassert(instance == null) { log.error("`this` descriptor is not null in static") }

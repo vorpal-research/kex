@@ -2,13 +2,20 @@ package org.vorpal.research.kex.asm.transform
 
 import org.vorpal.research.kex.asm.util.FileOutputStreamWrapper
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.util.javaString
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.analysis.IRVerifier
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.ir.value.instruction.BranchInst
+import org.vorpal.research.kfg.ir.value.instruction.CmpInst
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.JumpInst
+import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import java.io.File
 import java.nio.file.Files
@@ -19,10 +26,10 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
     private lateinit var fos: FileOutputStreamWrapper
 
     companion object {
-        const val TRACE_POSTFIX = ".trace"
+        private const val TRACE_POSTFIX = ".trace"
         val TRACE_DIRECTORY = kexConfig.getStringValue("runner", "trace-directory", "./traces")
 
-        fun generateTraceFileName(method: Method): String {
+        private fun generateTraceFileName(method: Method): String {
             val name = "${method.klass.canonicalDesc}.${method.name}"
             return "$name$TRACE_POSTFIX"
         }
@@ -48,7 +55,7 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
         buildList {
             addAll(fos.println("exit ${bb.name};"))
-            addAll(fos.print("return ${method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}, "))
+            addAll(fos.print("return ${method.prototype.javaString}, "))
 
             when {
                 inst.hasReturnValue -> {
@@ -68,7 +75,7 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
         buildList {
             addAll(fos.println("exit ${bb.name};"))
-            addAll(fos.print("throw ${method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}, "))
+            addAll(fos.print("throw ${method.prototype.javaString}, "))
             addAll(fos.print("${inst.throwable.name} == "))
             addAll(fos.printValue(inst.throwable))
             addAll(fos.println(";"))
@@ -123,8 +130,8 @@ class FileTraceInstrumenter(override val cm: ClassManager) : MethodVisitor {
 
     override fun visit(method: Method) {
         val bb = method.body.entry
-        val startInsts = buildList<Instruction> {
-            val methodName = method.prototype.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
+        val startInsts = buildList {
+            val methodName = method.prototype.javaString
             val traceFileName = getTraceFile(method).absolutePath
 
             fos = FileOutputStreamWrapper(

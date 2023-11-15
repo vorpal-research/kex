@@ -6,12 +6,23 @@ import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.state.predicate.*
+import org.vorpal.research.kex.state.predicate.DefaultSwitchPredicate
+import org.vorpal.research.kex.state.predicate.EqualityPredicate
+import org.vorpal.research.kex.state.predicate.InequalityPredicate
+import org.vorpal.research.kex.state.predicate.Predicate
+import org.vorpal.research.kex.state.predicate.path
+import org.vorpal.research.kex.state.predicate.predicate
 import org.vorpal.research.kex.state.term.ConstBoolTerm
 import org.vorpal.research.kex.state.term.InstanceOfTerm
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.transformer.TermCollector
-import org.vorpal.research.kex.trace.symbolic.*
+import org.vorpal.research.kex.trace.symbolic.PathClause
+import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
+import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
+import org.vorpal.research.kex.trace.symbolic.toPersistentState
 import org.vorpal.research.kex.util.nextOrNull
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
@@ -22,18 +33,19 @@ import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.collection.dequeOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
 
 class ContextGuidedSelector(
     override val ctx: ExecutionContext,
 ) : ConcolicPathSelector {
-    private val executionTree = ExecutionTree()
+    private val executionTree = ExecutionTree(ctx)
     private var currentDepth = 0
     private var k = 1
     private var branchIterator: Iterator<PathVertex> = listOf<PathVertex>().iterator()
     private val visitedContexts = mutableSetOf<Context>()
-    private var state: State? = null
+    private var states = dequeOf<State>()
 
     private class State(
         val context: Context,
@@ -45,29 +57,29 @@ class ContextGuidedSelector(
     override suspend fun isEmpty(): Boolean = executionTree.isEmpty()
 
     override suspend fun hasNext(): Boolean = `try` {
+        if (states.isNotEmpty()) return true
+
         do {
             yield()
             val next = nextEdge() ?: continue
             if (executionTree.isExhausted(next)) continue
-            when (val context = executionTree.contexts(next, k).firstOrNull { it !in visitedContexts }) {
-                null -> continue
-                else -> {
-                    val path = context.fullPath.removeAt(context.fullPath.lastIndex)
-                        .toPathCondition()
-                    val activeClause = context.fullPath.lastOrNull() ?: continue
-                    val revertedClause = activeClause.reversed() ?: continue
-                    state = State(context, path, activeClause, revertedClause)
-                    return true
-                }
+
+            val nonFilteredContexts = executionTree.contexts(next, k)
+            val contexts = nonFilteredContexts.filter { it !in visitedContexts }
+            for (context in contexts) {
+                val path = context.fullPath.removeAt(context.fullPath.lastIndex)
+                val activeClause = context.fullPath.lastOrNull() ?: continue
+                val revertedClause = activeClause.reversed() ?: continue
+                states += State(context, path, activeClause, revertedClause)
             }
+            if (states.isNotEmpty()) return true
         } while (currentDepth <= executionTree.depth && k <= executionTree.depth)
         false
     }.getOrElse { false }
 
     override suspend fun next(): PersistentSymbolicState {
-        val currentState = state!!
+        val currentState = states.pollFirst()!!
         visitedContexts += currentState.context
-        state = null
 
         val currentStateState = currentState.context.symbolicState
         val stateSize = currentStateState.clauses.indexOf(currentState.activeClause)
@@ -76,7 +88,8 @@ class ContextGuidedSelector(
         return persistentSymbolicState(
             state,
             currentState.path + currentState.revertedClause,
-            currentStateState.concreteValueMap,
+            currentStateState.concreteTypes,
+            currentStateState.concreteValues,
             currentStateState.termMap
         )
     }
@@ -104,7 +117,10 @@ class ContextGuidedSelector(
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
         executionTree.addTrace(result.trace.toPersistentState())
+//        executionTree.view()
     }
+
+    override fun reverse(pathClause: PathClause): PathClause? = pathClause.reversed()
 
     private fun PathClause.reversed(): PathClause? = when (type) {
         PathClauseType.NULL_CHECK -> copy(predicate = predicate.reverseBoolCond())
@@ -127,7 +143,6 @@ class ContextGuidedSelector(
                     (lhv.operand `is` newType.kexType) equality true
                 })
             } catch (e: NoConcreteInstanceException) {
-                executionTree.markExhausted(this)
                 null
             }
         }
@@ -220,6 +235,7 @@ class ContextGuidedSelector(
         else -> unreachable { log.error("Unexpected predicate in switch clause: $this") }
     }
 
+    @Suppress("unused")
     fun view() {
         executionTree.view("tree", "/usr/bin/dot", "/usr/bin/firefox")
     }

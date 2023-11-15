@@ -73,7 +73,7 @@ open class $valexpr : ${solver}SMTExpr {
     constructor(other: $valexpr) : this(other.ctx, other.expr, other.axiom)
 
     override fun toString() = engine.toString(ctx, expr)
-    override fun hashCode() = defaultHashCode(engine.hash(ctx, expr), engine.hash(ctx, axiom))
+    override fun hashCode() = 31 * engine.hash(ctx, expr) + engine.hash(ctx, axiom)
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != this.javaClass) return false
@@ -112,20 +112,21 @@ open class $valexpr : ${solver}SMTExpr {
 #foreach($opcode in $opcodes)
     infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
     #foreach($class in $exprClasses)
-    this is $class && other is $class -> ${opcode.toLowerCase()}(other)
+        this is $class && other is $class -> ${opcode.toLowerCase()}(other)
     #end
+        this is $Array< *, * > && other is $Array< *, * > -> ${opcode.toLowerCase()}(other)
         else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
     }
 #end
 
 #set($opcodes = ["GT", "GE", "LT", "LE"])
 #foreach($opcode in $opcodes)
-infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
+    infix fun ${opcode.toLowerCase()}(other: $valexpr): $Bool = when {
     #foreach($class in $numClasses)
-    this is $class && other is $class -> ${opcode.toLowerCase()}(other)
+        this is $class && other is $class -> ${opcode.toLowerCase()}(other)
     #end
-else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
-}
+        else -> unreachable { log.error("Invalid operands of `${opcode.toLowerCase()}`: ${ this } and ${ other }") }
+    }
 #end
 
 #set($opcodes = ["AND", "OR", "XOR"])
@@ -406,6 +407,13 @@ class $self< Element : $valexpr, in Index : $valexpr > : $valexpr {
 
     #constructors("Array")
 
+
+    fun eq(other: $Array< *, * >) =
+        $Bool(ctx, engine.binary(ctx, SMTEngine.Opcode.EQ, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
+
+    fun neq(other: $Array< *, * >) =
+        $Bool(ctx, engine.binary(ctx, SMTEngine.Opcode.NEQ, expr, other.expr), spliceAxioms(ctx, axiom, other.axiom))
+
     fun load(index: Index) = $valexpr(ctx, engine.load(ctx, expr, index.expr))
 
     fun store(index: Index, value: Element): $self< Element, Index > =
@@ -465,8 +473,10 @@ fun ${valexpr}.toBV(sort: $sort): $Bitvector {
         engine.isBool(ctx, expr) -> engine.bool2bv(ctx, expr, sort)
         engine.isBV(ctx, expr) -> engine.bv2bv(ctx, expr, sort)
         engine.isFP(ctx, expr) -> {
-            val bv = engine.float2IEEEbv(ctx, expr, sort)
-            engine.bv2bv(ctx, bv, sort)
+            val temp = $Bitvector(ctx, engine.makeVar(ctx, sort, "to_bv", true))
+            return temp.withAxiom(
+                temp.convert(this.getSort()) eq this
+            ).toBV(sort)
         }
         else -> unreachable { log.debug("Unexpected SMT expr type in cast") }
     }

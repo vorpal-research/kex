@@ -2,6 +2,7 @@ package org.vorpal.research.kex.reanimator.codegen.kotlingen
 
 import org.vorpal.research.kthelper.assert.ktassert
 
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 class KtBuilder(val pkg: String = "") {
     companion object {
         private fun offset(level: Int) = "    ".repeat(level)
@@ -98,7 +99,7 @@ class KtBuilder(val pkg: String = "") {
         }
     }
 
-    class KtConstructor(val klass: KtClass) : KtFunction("constuctor") {
+    class KtConstructor(val klass: KtClass) : KtFunction("constructor") {
         override val signature: String
             get() = "constructor(${arguments.joinToString(", ")})"
     }

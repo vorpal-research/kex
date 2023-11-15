@@ -1,4 +1,5 @@
 package org.vorpal.research.kex.launcher
+
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.config.FileConfig
@@ -10,6 +11,7 @@ import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.worker.ExecutorMaster
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.concurrent.thread
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -45,6 +47,7 @@ class MasterLauncher(args: Array<String>) {
         val logName = kexConfig.getStringValue("kex", "log", "kex-executor-master.log")
         kexConfig.initLog(logName)
     }
+
     fun main() {
         val master = ExecutorMaster(
             MasterProtocolSocketHandler(port),
@@ -53,12 +56,9 @@ class MasterLauncher(args: Array<String>) {
             numberOfWorkers
         )
 
-        val shutdownHook = object : Thread() {
-            override fun run() {
-                master.destroy()
-            }
-        }
-        Runtime.getRuntime().addShutdownHook(shutdownHook)
+        Runtime.getRuntime().addShutdownHook(thread(start = false) {
+            master.destroy()
+        })
 
         master.run()
     }

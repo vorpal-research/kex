@@ -15,6 +15,7 @@ import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
@@ -24,8 +25,8 @@ import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
 
 val ignores by lazy {
-    kexConfig.getMultipleStringValue("inliner", "static-ignore")
-        .mapTo(mutableSetOf()) { it.replace(".", "/") }
+    kexConfig.getMultipleStringValue("inliner", "ignoreStatic")
+        .mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
 }
 
 class StaticFieldInliner(
@@ -64,6 +65,7 @@ class StaticFieldInliner(
             +IntrinsicAdapter
             +KexIntrinsicsAdapter()
             +EqualsTransformer()
+            +BasicInvariantsTransformer(method)
             +ReflectionInfoAdapter(method, ctx.loader, ignores)
             +Optimizer()
             +ConstantPropagator
@@ -73,7 +75,7 @@ class StaticFieldInliner(
             +ArrayBoundsAdapter()
             +NullityInfoAdapter()
             +FieldNormalizer(ctx.cm, ".state.normalized")
-            +TypeNameAdapter(method.cm.type)
+            +TypeNameAdapter(ctx)
         }
 
         private fun generateFinalFieldValues(
@@ -111,9 +113,10 @@ class StaticFieldInliner(
             val checker = Checker(staticInit, ctx, psa)
             val params = when (val result = checker.check(state + query)) {
                 is Result.SatResult -> {
-                    log.debug("Model: ${result.model}")
+                    log.debug("Model: {}", result.model)
                     generateFinalDescriptors(staticInit, ctx, result.model, checker.state)
                 }
+
                 else -> return null
             }
 
@@ -146,7 +149,7 @@ class StaticFieldInliner(
                     }
                 }
             }
-            .filterNotTo(mutableSetOf()) { it.klass.fullName in ignores }
+            .filterNotTo(mutableSetOf()) { field -> ignores.any { filter -> filter.matches(field.klass) } }
         for (field in staticInitializers) {
             val descriptor = getStaticField(ctx, psa, field)
             currentBuilder += descriptor.query

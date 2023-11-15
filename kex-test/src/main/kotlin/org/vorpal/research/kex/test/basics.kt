@@ -1,4 +1,7 @@
-@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE", "KotlinConstantConditions")
+@file:Suppress("UNUSED_VARIABLE", "KotlinConstantConditions", "unused", "ConvertTwoComparisonsToRangeCheck",
+    "MemberVisibilityCanBePrivate", "SpellCheckingInspection"
+)
+
 package org.vorpal.research.kex.test
 
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics.kexAssert
@@ -75,7 +78,7 @@ class BasicTests {
         } else {
             kexAssert(x <= z || x >= 0)
             println("lol2")
-            x- 2 * x
+            x - 2 * x
         }
         kexAssert(true)
         return y
@@ -94,9 +97,9 @@ class BasicTests {
 
     fun testArray(): Int {
         val array = arrayOf(
-                arrayOf(0, 1, 2, 3, 4),
-                arrayOf(5, 6, 7, 8, 9),
-                arrayOf(10, 11, 12, 13, 14)
+            intArrayOf(0, 1, 2, 3, 4),
+            intArrayOf(5, 6, 7, 8, 9),
+            intArrayOf(10, 11, 12, 13, 14)
         )
         if (array[2][4] > 10) {
             kexAssert(true)
@@ -107,27 +110,26 @@ class BasicTests {
         if (array[0].size > 4) {
             kexAssert(true)
         }
-        return array.flatten().reduce { a, b -> a + b}
+        return array[0][0] + array[3][3]
     }
 
     fun testUnreachableArray(): Int {
         val array = arrayOf(
-                arrayOf(0, 1, 2, 3, 4),
-                arrayOf(5, 6, 7, 8, 9),
-                arrayOf(10, 11, 12, 13, 14)
+            intArrayOf(0, 1, 2, 3, 4),
+            intArrayOf(5, 6, 7, 8, 9),
+            intArrayOf(10, 11, 12, 13, 14)
         )
         if (array[4][4] > 10) {
             kexUnreachable()
         }
-        return array.flatten().reduce { a, b -> a + b}
+        return array[0][0] + array[3][3]
     }
 
     fun testSimpleOuterCall(): Int {
         val a = 10
         val b = 42
         val c = abs(a - b)
-        // we don't know anything about function `abs`, so result is unknown
-        if (c < 0) kexAssert(true)
+        if (c < 0) kexUnreachable()
         else kexAssert(true)
         return c
     }
@@ -136,11 +138,10 @@ class BasicTests {
         val max = maxOf(a, b, c)
         if (2 * max > a + b + c)
             return -1.0
-        val res = 2 * max * max - a * a - b * b - c * c
-        return res
+        return 2 * max * max - a * a - b * b - c * c
     }
 
     fun digitNumber(n: Int): Int =
-            if (n in -9..9) 1
-            else digitNumber(n / 10) + digitNumber(n % 10)
+        if (n in -9..9) 1
+        else digitNumber(n / 10) + digitNumber(n % 10)
 }

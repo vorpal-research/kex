@@ -11,7 +11,12 @@ import org.vorpal.research.kex.state.ChoiceState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.emptyState
 import org.vorpal.research.kex.state.predicate.Predicate
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.ConstBoolTerm
+import org.vorpal.research.kex.state.term.ConstIntTerm
+import org.vorpal.research.kex.state.term.ConstLongTerm
+import org.vorpal.research.kex.state.term.FieldTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
@@ -59,7 +64,8 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     fun generate(ps: PredicateState): Pair<T?, List<T?>> {
         val (tempThis, tempArgs) = collectArguments(ps)
         thisTerm = when {
-            !method.isStatic && tempThis == null -> term {
+            method.isStatic -> null
+            tempThis == null -> term {
                 `this`(KexClass(method.klass.fullName).rtMapped)
             }
 
@@ -84,7 +90,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     }
 
     override fun transformBasic(ps: BasicState): PredicateState {
-        val vars = collectPointers(ps)
+        val vars = collectPointers(ps, ignoreLambdaParams = true)
         vars.forEach { ptr ->
             if (ptr is FieldTerm && ptr.isStatic) {
                 staticFieldOwners += ptr.owner

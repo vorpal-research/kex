@@ -19,13 +19,48 @@ import org.vorpal.research.kex.state.predicate.require
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.state.transformer.*
+import org.vorpal.research.kex.state.transformer.AnnotationAdapter
+import org.vorpal.research.kex.state.transformer.BasicInvariantsTransformer
+import org.vorpal.research.kex.state.transformer.BoolTypeAdapter
+import org.vorpal.research.kex.state.transformer.ClassMethodAdapter
+import org.vorpal.research.kex.state.transformer.ConcreteImplInliner
+import org.vorpal.research.kex.state.transformer.ConstEnumAdapter
+import org.vorpal.research.kex.state.transformer.ConstStringAdapter
+import org.vorpal.research.kex.state.transformer.ConstantPropagator
+import org.vorpal.research.kex.state.transformer.DoubleTypeAdapter
+import org.vorpal.research.kex.state.transformer.EqualsTransformer
+import org.vorpal.research.kex.state.transformer.FieldNormalizer
+import org.vorpal.research.kex.state.transformer.IntrinsicAdapter
+import org.vorpal.research.kex.state.transformer.KexIntrinsicsAdapter
+import org.vorpal.research.kex.state.transformer.MemorySpacer
+import org.vorpal.research.kex.state.transformer.NullityAnnotator
+import org.vorpal.research.kex.state.transformer.Optimizer
+import org.vorpal.research.kex.state.transformer.RecursiveConstructorInliner
+import org.vorpal.research.kex.state.transformer.RecursiveInliner
+import org.vorpal.research.kex.state.transformer.ReflectionInfoAdapter
+import org.vorpal.research.kex.state.transformer.Slicer
+import org.vorpal.research.kex.state.transformer.StaticFieldInliner
+import org.vorpal.research.kex.state.transformer.StensgaardAA
+import org.vorpal.research.kex.state.transformer.TermCollector
+import org.vorpal.research.kex.state.transformer.TypeInfoMap
+import org.vorpal.research.kex.state.transformer.TypeNameAdapter
+import org.vorpal.research.kex.state.transformer.collectArguments
+import org.vorpal.research.kex.state.transformer.collectAssumedTerms
+import org.vorpal.research.kex.state.transformer.collectRequiredTerms
+import org.vorpal.research.kex.state.transformer.collectStaticTypeInfo
+import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kex.state.wrap
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.StringConstant
 import org.vorpal.research.kfg.ir.value.Value
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -42,8 +77,8 @@ class DefectChecker                                                             
 ) : MethodVisitor {
     override val cm get() = ctx.cm
     val loader get() = ctx.loader
-    val dm = DefectManager
-    val im = MethodManager.KexIntrinsicManager
+    private val dm = DefectManager
+    private val im = MethodManager.KexIntrinsicManager
     private lateinit var generator: Reanimator
     private var testIndex = 0
     private lateinit var builder: PredicateStateBuilder
@@ -69,7 +104,7 @@ class DefectChecker                                                             
         this.method = method
         if (!method.hasBody) return
 
-        log.debug("Checking method $method")
+        log.debug("Checking method {}", method)
         log.debug(method.print())
 
         initializeGenerator()
@@ -153,7 +188,7 @@ class DefectChecker                                                             
     private fun checkNullity(inst: Instruction, state: PredicateState, `object`: Value): Boolean {
         if (`object` in nonNulls) return true
         log.debug("Checking for null pointer exception: ${inst.print()}")
-        log.debug("State: $state")
+        log.debug("State: {}", state)
         val objectTerm = term { value(`object`) }
         val refQuery = require { objectTerm inequality null }.wrap()
 
@@ -167,7 +202,7 @@ class DefectChecker                                                             
             }
             else -> true
         }.also {
-            // in case of any result this object can be considered non null
+            // in case of any result this object can be considered non-null
             // because further instructions can't fail with NPE if this one did not fail
             nonNulls.add(`object`)
         }
@@ -175,7 +210,7 @@ class DefectChecker                                                             
 
     private fun checkOutOfBounds(inst: Instruction, state: PredicateState, length: Term, index: Term): Boolean {
         log.debug("Checking for out of bounds exception: ${inst.print()}")
-        log.debug("State: $state")
+        log.debug("State: {}", state)
         var indexQuery = require { (index ge 0) equality true }.wrap()
         indexQuery += require { (index lt length) equality true }
 
@@ -197,8 +232,8 @@ class DefectChecker                                                             
         assertions: Set<Term>,
         id: String? = null
     ): Boolean {
-        log.debug("Checking for assertion failure: ${inst.print()}")
-        log.debug("State: $state")
+        log.debug("Checking for assertion failure: {}", inst.print())
+        log.debug("State: {}", state)
         val assertionQuery = assertions.map {
             when (it.type) {
                 is KexBool -> require { it equality true }
@@ -228,7 +263,7 @@ class DefectChecker                                                             
         generator.printer.targetFile.toPath() to testName
     }
 
-    fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
+    private fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +RecursiveInliner(psa) { index, psa ->
             ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
@@ -240,6 +275,7 @@ class DefectChecker                                                             
         +EqualsTransformer()
         +NullityAnnotator(nonNulls.mapTo(mutableSetOf()) { term { value(it) } })
         +DoubleTypeAdapter()
+        +BasicInvariantsTransformer(method)
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
@@ -248,15 +284,15 @@ class DefectChecker                                                             
         +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(ctx.types)
+        +TypeNameAdapter(ctx)
     }
 
     private fun getSearchStrategy(method: Method): SearchStrategy = UnfilteredDfsStrategy(method)
 
-    private fun check(state_: PredicateState, query_: PredicateState): Pair<PredicateState, Result> {
-        val staticTypeInfoMap = collectStaticTypeInfo(types, state_, TypeInfoMap())
-        var state = prepareState(state_, staticTypeInfoMap)
-        var query = query_
+    private fun check(analysisState: PredicateState, analysisQuery: PredicateState): Pair<PredicateState, Result> {
+        val staticTypeInfoMap = collectStaticTypeInfo(types, analysisState, TypeInfoMap())
+        var state = prepareState(analysisState, staticTypeInfoMap)
+        var query = analysisQuery
 
         if (isMemspacingEnabled) {
             log.debug("Memspacing started...")
@@ -294,14 +330,14 @@ class DefectChecker                                                             
         state = Optimizer().apply(state)
         query = Optimizer().apply(query)
         if (logQuery) {
-            log.debug("Simplified state: $state")
-            log.debug("Query: $query")
+            log.debug("Simplified state: {}", state)
+            log.debug("Query: {}", query)
         }
 
-        val result = SMTProxySolver(method.cm.type).use {
+        val result = SMTProxySolver(ctx).use {
             it.isViolated(state, query)
         }
-        log.debug("Acquired $result")
+        log.debug("Acquired {}", result)
         return state to result
     }
 }

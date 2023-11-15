@@ -6,10 +6,10 @@ import kotlin.test.Test
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class ArrayTest : KexRunnerTest() {
+class ArrayTest : KexRunnerTest("array") {
     @Test
     fun testArrays() {
-        val `class` = cm["$packageName/ArrayTests"]
+        val `class` = cm["${`package`.concretePackage}/ArrayTests"]
         testClassReachability(`class`)
 
     }

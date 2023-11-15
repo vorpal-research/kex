@@ -6,8 +6,26 @@ import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.asm.util.accessModifier
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.descriptor.*
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ClassDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.FieldContainingDescriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexReference
+import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
@@ -21,7 +39,40 @@ import org.vorpal.research.kex.state.predicate.axiom
 import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.state.transformer.*
+import org.vorpal.research.kex.state.transformer.AnnotationAdapter
+import org.vorpal.research.kex.state.transformer.ArrayBoundsAdapter
+import org.vorpal.research.kex.state.transformer.BasicInvariantsTransformer
+import org.vorpal.research.kex.state.transformer.BoolTypeAdapter
+import org.vorpal.research.kex.state.transformer.CastTypeInfo
+import org.vorpal.research.kex.state.transformer.ClassAdapter
+import org.vorpal.research.kex.state.transformer.ClassMethodAdapter
+import org.vorpal.research.kex.state.transformer.ConcreteImplInliner
+import org.vorpal.research.kex.state.transformer.ConstEnumAdapter
+import org.vorpal.research.kex.state.transformer.ConstStringAdapter
+import org.vorpal.research.kex.state.transformer.ConstantPropagator
+import org.vorpal.research.kex.state.transformer.EqualsTransformer
+import org.vorpal.research.kex.state.transformer.FieldNormalizer
+import org.vorpal.research.kex.state.transformer.IntrinsicAdapter
+import org.vorpal.research.kex.state.transformer.KexIntrinsicsAdapter
+import org.vorpal.research.kex.state.transformer.KexRtAdapter
+import org.vorpal.research.kex.state.transformer.NullityInfoAdapter
+import org.vorpal.research.kex.state.transformer.Optimizer
+import org.vorpal.research.kex.state.transformer.RecursiveInliner
+import org.vorpal.research.kex.state.transformer.ReflectionInfoAdapter
+import org.vorpal.research.kex.state.transformer.StaticFieldInliner
+import org.vorpal.research.kex.state.transformer.StringMethodAdapter
+import org.vorpal.research.kex.state.transformer.TermRemapper
+import org.vorpal.research.kex.state.transformer.TypeInfo
+import org.vorpal.research.kex.state.transformer.TypeInfoMap
+import org.vorpal.research.kex.state.transformer.TypeNameAdapter
+import org.vorpal.research.kex.state.transformer.collectArguments
+import org.vorpal.research.kex.state.transformer.collectFieldAccesses
+import org.vorpal.research.kex.state.transformer.collectFieldTerms
+import org.vorpal.research.kex.state.transformer.collectPlainTypeInfos
+import org.vorpal.research.kex.state.transformer.collectStaticTypeInfo
+import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
+import org.vorpal.research.kex.state.transformer.transform
+import org.vorpal.research.kex.util.StringInfoContext
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
@@ -29,10 +80,11 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 class GeneratorContext(
     val context: ExecutionContext,
     val psa: PredicateStateAnalysis
-) {
+) : StringInfoContext() {
     private val useRecCtors by lazy {
         kexConfig.getBooleanValue(
             "reanimator",
@@ -82,6 +134,7 @@ class GeneratorContext(
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
+        +BasicInvariantsTransformer(method)
         +ReflectionInfoAdapter(method, context.loader, ignores)
         +Optimizer()
         +ConstantPropagator
@@ -92,7 +145,7 @@ class GeneratorContext(
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +FieldNormalizer(context.cm, ".state.normalized")
-        +TypeNameAdapter(types)
+        +TypeNameAdapter(context)
     }
 
     fun prepareQuery(ps: PredicateState) = transform(ps) {
@@ -115,7 +168,7 @@ class GeneratorContext(
         get() = klass2Constructors.getOrPut(this) {
             val nonRecursiveCtors = nonRecursiveCtors
             val nonRecursiveExtCtors = externalCtors.filter {
-                it.argTypes.all { arg -> !(type.isSupertypeOf(arg) || arg.isSupertypeOf(type)) }
+                it.argTypes.all { arg -> !(asType.isSupertypeOf(arg) || arg.isSupertypeOf(asType)) }
             }
 
             val recursiveCtors = when {
@@ -158,7 +211,7 @@ class GeneratorContext(
 
     val Method.isRecursive
         get() = argTypes.any { arg ->
-            klass.type.isSupertypeOf(arg) || arg.isSupertypeOf(klass.type)
+            klass.asType.isSupertypeOf(arg) || arg.isSupertypeOf(klass.asType)
         }
 
     private val Method.argTypeInfo
@@ -174,7 +227,7 @@ class GeneratorContext(
 
     fun Method.executeAsConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
         if (body.isEmpty()) return null
-        log.debug("Executing constructor $this for $descriptor")
+        log.debug("Executing constructor {} for {}", this, descriptor)
 
         val mapper = descriptor.mapper
         val preState = mapper.apply(descriptor.preState)
@@ -190,7 +243,7 @@ class GeneratorContext(
 
     fun Method.executeAsExternalConstructor(descriptor: ObjectDescriptor): Parameters<Descriptor>? {
         if (body.isEmpty()) return null
-        log.debug("Executing external constructor $this for $descriptor")
+        log.debug("Executing external constructor {} for {}", this, descriptor)
 
         val externalMapper = TermRemapper(
             mapOf(
@@ -211,7 +264,7 @@ class GeneratorContext(
         preStateGetter: (Method, ObjectDescriptor) -> PredicateState?
     ): Parameters<Descriptor>? {
         if (body.isEmpty()) return null
-        log.debug("Executing method $this for $descriptor")
+        log.debug("Executing method {} for {}", this, descriptor)
 
         val mapper = descriptor.mapper
         val preState = preStateGetter(this, descriptor) ?: return null
@@ -225,7 +278,10 @@ class GeneratorContext(
         return execute(preparedState, preparedQuery)
     }
 
-    private fun Method.getStaticPreState(descriptor: ClassDescriptor, initializer: (KexType) -> Term): PredicateState? {
+    private fun <T : FieldContainingDescriptor<T>> Method.getPreStateCommon(
+        descriptor: T,
+        initializer: (KexType) -> Term
+    ): PredicateState? {
         val fieldAccessList = this.collectFieldAccesses(context, psa)
         val intersection = descriptor.fields.filter { (key, _) ->
             fieldAccessList.find { field -> key.first == field.name } != null
@@ -242,12 +298,15 @@ class GeneratorContext(
         return preStateBuilder.apply()
     }
 
+    private fun Method.getStaticPreState(descriptor: ClassDescriptor, initializer: (KexType) -> Term): PredicateState? =
+        this.getPreStateCommon(descriptor, initializer)
+
     private fun Method.executeAsStatic(
         descriptor: ClassDescriptor,
         preStateGetter: (Method, ClassDescriptor) -> PredicateState?
     ): Parameters<Descriptor>? {
         if (body.isEmpty()) return null
-        log.debug("Executing method $this for $descriptor")
+        log.debug("Executing method {} for {}", this, descriptor)
 
         val preState = preStateGetter(this, descriptor) ?: return null
         val preStateFieldTerms = collectFieldTerms(context, preState)
@@ -277,7 +336,7 @@ class GeneratorContext(
         val checkedState = state + query
         return when (val result = checker.check(checkedState)) {
             is Result.SatResult -> {
-                log.debug("Model: ${result.model}")
+                log.debug("Model: {}", result.model)
                 generateInitialDescriptors(this, context, result.model, checker.state)
             }
 
@@ -321,21 +380,11 @@ class GeneratorContext(
         return collectFieldAccesses(context, transformed)
     }
 
+    @Suppress("DuplicatedCode")
     fun Method.getMethodPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? {
         val mapper = descriptor.mapper
-        val fieldAccessList = this.collectFieldAccesses(context, psa)
-        val intersection = descriptor.fields.filter { (key, _) ->
-            fieldAccessList.find { field -> key.first == field.name } != null
-        }.toMap()
-        if (intersection.isEmpty()) return null
 
-        val preStateBuilder = StateBuilder()
-        for ((field, _) in intersection) {
-            val fieldTerm = term { descriptor.term.field(field.second, field.first) }
-            val initializerTerm = initializer(field.second)
-            preStateBuilder += axiom { fieldTerm.initialize(initializerTerm) }
-            preStateBuilder += axiom { initializerTerm equality fieldTerm.load() }
-        }
+        val preStateBuilder = this.getPreStateCommon(descriptor, initializer)?.builder() ?: return null
 
         // experimental check
         val subObjects = linkedSetOf(descriptor.term to descriptor)
@@ -398,23 +447,10 @@ class GeneratorContext(
         return mapper.apply(preStateBuilder.apply())
     }
 
-    fun Method.getPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? {
-        val mapper = descriptor.mapper
-        val fieldAccessList = this.collectFieldAccesses(context, psa)
-        val intersection = descriptor.fields.filter { (key, _) ->
-            fieldAccessList.find { field -> key.first == field.name } != null
-        }.toMap()
-        if (intersection.isEmpty()) return null
-
-        val preStateBuilder = StateBuilder()
-        for ((field, _) in intersection) {
-            val fieldTerm = term { descriptor.term.field(field.second, field.first) }
-            val initializerTerm = initializer(field.second)
-            preStateBuilder += axiom { fieldTerm.initialize(initializerTerm) }
-            preStateBuilder += axiom { initializerTerm equality fieldTerm.load() }
+    fun Method.getPreState(descriptor: ObjectDescriptor, initializer: (KexType) -> Term): PredicateState? =
+        this.getPreStateCommon(descriptor, initializer)?.also {
+            descriptor.mapper.apply(it)
         }
-        return mapper.apply(preStateBuilder.apply())
-    }
 
     val List<CodeAction>.isComplete get() = ActionList("", this.toMutableList()).isComplete
 
@@ -462,10 +498,14 @@ class GeneratorContext(
 
     val Descriptor.asStringValue: String?
         get() = (this as? ObjectDescriptor)?.let { obj ->
-            val valueDescriptor = obj["value", KexChar.asArray()] as? ArrayDescriptor
+            val valueDescriptor = obj[valueArrayName, valueArrayType] as? ArrayDescriptor
             valueDescriptor?.let { array ->
                 (0 until array.length).map {
-                    (array.elements.getOrDefault(it, descriptor { const(' ') }) as ConstantDescriptor.Char).value
+                    when (val value = array.elements.getOrDefault(it, descriptor { const(' ') })) {
+                        is ConstantDescriptor.Char -> value.value
+                        is ConstantDescriptor.Byte -> value.value.toInt().toChar()
+                        else -> unreachable { log.error("Unexpected element type in string: $value") }
+                    }
                 }.joinToString("")
             }
         }

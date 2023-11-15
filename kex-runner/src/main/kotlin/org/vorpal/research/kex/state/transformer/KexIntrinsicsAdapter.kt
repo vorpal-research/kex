@@ -3,6 +3,7 @@ package org.vorpal.research.kex.state.transformer
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.ktype.KexBool
 import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.basic
@@ -14,9 +15,16 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.collection.dequeOf
 
-class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
+class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, IncrementalTransformer {
     override val builders = dequeOf(StateBuilder())
     private val kim = MethodManager.KexIntrinsicManager
+
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries
+        )
+    }
 
     override fun transformCallPredicate(predicate: CallPredicate): Predicate {
         val call = predicate.call as CallTerm
@@ -26,6 +34,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
         val ps = when (call.method.klass) {
             kim.assertionsIntrinsics(cm) -> assertionIntrinsicsAdapter(method, call)
             kim.collectionIntrinsics(cm) -> collectionIntrinsicsAdapter(method, call) { predicate.lhv }
+            kim.objectIntrinsics(cm) -> objectIntrinsicsAdapter(method, call) { predicate.lhv }
             else -> emptyState()
         }
         currentBuilder += ps
@@ -49,6 +58,10 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                     assume { term equality false }
                 )
             }
+            kim.kexAssert(method.cm) -> {
+                val assertion = call.arguments[0]
+                require { assertion equality true }
+            }
             else -> nothing()
         }
     }
@@ -67,13 +80,6 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                 state {
                     lhv() equality (value `in` array)
                 }
-                val temp = generate(KexBool)
-                state {
-                    temp equality (length gt 0)
-                }
-                assume {
-                    temp equality true
-                }
             }
             kim.kexContains(method.cm) -> {
                 val (array, value) = call.arguments
@@ -90,19 +96,19 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter> {
                         }
                     }
                 }
-                val temp = generate(KexBool)
-                state {
-                    temp equality (length gt 0)
-                }
-                assume {
-                    temp equality true
-                }
             }
             in kim.kexGenerateArrayMethods(method.cm) -> {
                 state {
                     generateArray(lhv(), call.arguments[0], call.arguments[1])
                 }
             }
+            else -> nothing()
+        }
+    }
+
+    private fun objectIntrinsicsAdapter(method: Method, call: CallTerm, lhv: () -> Term): PredicateState = basic {
+        when (method) {
+            kim.kexEquals(method.cm) -> state { lhv() equality (call.arguments[0].equls(call.arguments[1]))  }
             else -> nothing()
         }
     }

@@ -1,22 +1,35 @@
 package org.vorpal.research.kex.smt.ksmt
 
+import kotlinx.collections.immutable.persistentListOf
 import org.junit.AfterClass
 import org.junit.BeforeClass
-import org.ksmt.KContext
-import kotlin.test.assertEquals
-import org.ksmt.expr.KExpr
-import org.ksmt.solver.KSolverStatus
-import kotlin.test.Test
-import org.ksmt.solver.runner.KSolverRunnerManager
-import org.ksmt.solver.z3.KZ3Solver
-import org.ksmt.sort.KBoolSort
+import io.ksmt.KContext
+import io.ksmt.expr.KExpr
+import io.ksmt.solver.KSolverStatus
+import io.ksmt.solver.runner.KSolverRunnerManager
+import io.ksmt.solver.z3.KZ3Solver
+import io.ksmt.sort.KBoolSort
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexTest
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.random.StubRandomizer
+import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
+import org.vorpal.research.kex.state.PredicateQuery
+import org.vorpal.research.kex.state.basic
+import org.vorpal.research.kex.state.predicate.path
+import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.util.StringInfoContext
+import org.vorpal.research.kfg.ClassManager
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 @Suppress("UNCHECKED_CAST")
-class KSMTSolverTest : KexTest() {
+class KSMTSolverTest : KexTest("ksmt-solver") {
     companion object {
         private lateinit var solverManager: KSolverRunnerManager
 
@@ -155,6 +168,181 @@ class KSMTSolverTest : KexTest() {
         val d = Long_.makeConst(ctx, 0xFF)
         val e = Word_.makeConst(ctx, 0xFF)
         assertTrue(checkExpr(d eq e))
+    }
+
+    @Test
+    fun testIncremental() {
+        val x = term { generate(KexInt) }
+        val y = term { generate(KexInt) }
+        val z = term { generate(KexInt) }
+        val state = basic {
+            state { x equality (y + z) }
+            state { y equality (2 * z) }
+        }
+        val paths = mutableListOf(
+            PredicateQuery(basic {
+                path { (x eq (3 * z)) equality true }
+            }),
+            PredicateQuery(basic {
+                path { (x neq (3 * z)) equality true }
+            }),
+            PredicateQuery(basic {
+                path { (x eq 0) equality true }
+            }),
+            PredicateQuery(basic {
+                path { (x gt 0) equality true }
+            }),
+            PredicateQuery(basic {
+                path { (x lt 0) equality true }
+            }),
+        )
+
+        val solver = KSMTSolver(
+            ExecutionContext(
+                ClassManager(),
+                this.javaClass.classLoader,
+                StubRandomizer(),
+                emptyList()
+            )
+        )
+
+        val results = solver.isSatisfiable(state, paths)
+        assertIs<Result.SatResult>(results[0])
+        assertIs<Result.UnsatResult>(results[1])
+        assertIs<Result.SatResult>(results[2])
+        assertIs<Result.SatResult>(results[3])
+        assertIs<Result.SatResult>(results[4])
+    }
+
+    @Test
+    fun testSoftConstraints() {
+        val x = term { generate(KexInt) }
+        val y = term { generate(KexInt) }
+        val z = term { generate(KexInt) }
+        val state = basic {
+            state { x equality (y + z) }
+            state { y equality (2 * z) }
+        }
+        val paths = mutableListOf(
+            PredicateQuery(
+                basic {
+                    path { (x eq (3 * z)) equality true }
+                },
+                persistentListOf(
+                    path { (y gt 0) equality true },
+                    path { (z gt 0) equality true },
+                    path { (x gt 0) equality true }
+                )
+            ),
+            PredicateQuery(
+                basic {
+                    path { (x neq (3 * z)) equality true }
+                },
+                persistentListOf(
+                    path { (y gt 0) equality true },
+                    path { (z gt 0) equality true },
+                    path { (x gt 0) equality true }
+                )
+            ),
+            PredicateQuery(
+                basic {
+                    path { (x eq (3 * z)) equality true }
+                },
+                persistentListOf(
+                    path { (y gt 0) equality true },
+                    path { (z gt 0) equality true },
+                    path { (x lt 0) equality true }
+                )
+            ),
+            PredicateQuery(
+                basic {
+                    path { (x eq (3 * z)) equality true }
+                }, persistentListOf(
+                    path { (y gt 0) equality true },
+                    path { (y lt 0) equality true },
+                )
+            ),
+        )
+
+        val solver = KSMTSolver(
+            ExecutionContext(
+                ClassManager(),
+                this.javaClass.classLoader,
+                StubRandomizer(),
+                emptyList()
+            )
+        )
+
+        val results = solver.isSatisfiable(state, paths)
+        assertIs<Result.SatResult>(results[0])
+        assertIs<Result.UnsatResult>(results[1])
+        assertIs<Result.SatResult>(results[2])
+        assertIs<Result.SatResult>(results[3])
+    }
+
+    @Test
+    fun testIncrementalMemory() {
+        with(object : StringInfoContext() {}) {
+            val string = term { generate(KexString()) }
+            val charArray = term { generate(valueArrayType) }
+
+            val state = basic {
+                state { charArray.initializeNew(3, 'a', 'b', 'c') }
+                state { string.new() }
+                state { string.field(valueArrayType, valueArrayName).store(const(null)) }
+            }
+
+            val paths = mutableListOf(
+                PredicateQuery(
+                    basic {
+                        state { string.field(valueArrayType, valueArrayName).store(charArray) }
+                        val field = term { generate(valueArrayType) }
+                        state { field equality string.field(valueArrayType, valueArrayName).load() }
+                        path { field.length() equality 3 }
+                        path { field[0].load() equality 'a' }
+                    }
+                ),
+                PredicateQuery(
+                    basic {
+                        val field = term { generate(valueArrayType) }
+                        val loaded = term { generate(valueArrayType) }
+                        state { field.new(10) }
+                        state { field[0].store(const('0')) }
+                        state { string.field(valueArrayType, valueArrayName).store(field) }
+                        state { loaded equality string.field(valueArrayType, valueArrayName).load() }
+                        path { loaded.length() equality 10 }
+                        path { loaded[0].load() equality '0' }
+                    }
+                ),
+                PredicateQuery(
+                    basic {
+                        path { string.field(valueArrayType, valueArrayName).load() equality null }
+                    }
+                ),
+                PredicateQuery(
+                    basic {
+                        val loaded = term { generate(valueArrayType) }
+                        state { loaded equality string.field(valueArrayType, valueArrayName) }
+                        path { loaded equality charArray }
+                    }
+                ),
+            )
+
+            val solver = KSMTSolver(
+                ExecutionContext(
+                    ClassManager(),
+                    this.javaClass.classLoader,
+                    StubRandomizer(),
+                    emptyList()
+                )
+            )
+
+            val results = solver.isSatisfiable(state, paths)
+            assertIs<Result.SatResult>(results[0])
+            assertIs<Result.SatResult>(results[1])
+            assertIs<Result.SatResult>(results[2])
+            assertIs<Result.UnsatResult>(results[3])
+        }
     }
 }
 

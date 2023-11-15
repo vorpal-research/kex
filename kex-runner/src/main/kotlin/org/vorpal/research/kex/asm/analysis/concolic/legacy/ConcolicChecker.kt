@@ -5,7 +5,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.analysis.concolic.ConcolicStateBuilder
 import org.vorpal.research.kex.asm.manager.wrapper
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.config.kexConfig
@@ -20,7 +19,17 @@ import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.predicate.inverse
 import org.vorpal.research.kex.trace.TraceManager
-import org.vorpal.research.kex.trace.`object`.*
+import org.vorpal.research.kex.trace.`object`.ActionTrace
+import org.vorpal.research.kex.trace.`object`.BlockAction
+import org.vorpal.research.kex.trace.`object`.BlockBranch
+import org.vorpal.research.kex.trace.`object`.BlockJump
+import org.vorpal.research.kex.trace.`object`.BlockSwitch
+import org.vorpal.research.kex.trace.`object`.MethodCall
+import org.vorpal.research.kex.trace.`object`.MethodEntry
+import org.vorpal.research.kex.trace.`object`.MethodReturn
+import org.vorpal.research.kex.trace.`object`.MethodThrow
+import org.vorpal.research.kex.trace.`object`.StaticInitEntry
+import org.vorpal.research.kex.trace.`object`.StaticInitExit
 import org.vorpal.research.kex.trace.runner.ObjectTracingRunner
 import org.vorpal.research.kex.trace.runner.RandomObjectTracingRunner
 import org.vorpal.research.kex.util.TimeoutException
@@ -35,7 +44,6 @@ import org.vorpal.research.kthelper.collection.firstOrElse
 import org.vorpal.research.kthelper.collection.stackOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
-import java.util.*
 
 private val timeLimit by lazy {
     kexConfig.getLongValue("concolic", "timeLimit", 10000L)
@@ -63,7 +71,7 @@ class ConcolicChecker(
     private val paths = mutableSetOf<PredicateState>()
     private var counter = 0
     lateinit var generator: ParameterGenerator
-        protected set
+        private set
 
     override fun cleanup() {
         paths.clear()
@@ -83,12 +91,12 @@ class ConcolicChecker(
                     try {
                         process(method)
                     } catch (e: TimeoutException) {
-                        log.debug("Timeout on running $method")
+                        log.debug("Timeout on running {}", method)
                     }
                 }
             }
         } catch (e: TimeoutCancellationException) {
-            log.debug("Processing of method $method is stopped due timeout")
+            log.debug("Processing of method {} is stopped due timeout", method)
         }
         generator.emit()
     }
@@ -260,8 +268,8 @@ class ConcolicChecker(
             log.debug("Could not generate new trace")
             return null
         }
-        log.debug("Collected trace: $state")
-        log.debug("Mutated trace: $mutated")
+        log.debug("Collected trace: {}", state)
+        log.debug("Mutated trace: {}", mutated)
 
         val checker = Checker(method, ctx, psa)
         val result = checker.prepareAndCheck(mutated)

@@ -4,6 +4,7 @@ internal class PackageTreeNode(
     val name: String,
     private val parentPrivate: PackageTreeNode?
 ) {
+    @Suppress("MemberVisibilityCanBePrivate")
     val isRoot get() = parentPrivate == null
     val parent get() = parentPrivate!!
 

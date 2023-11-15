@@ -5,12 +5,9 @@ import java.io.File
 import javax.annotation.processing.RoundEnvironment
 import javax.annotation.processing.SupportedAnnotationTypes
 import javax.annotation.processing.SupportedOptions
-import javax.annotation.processing.SupportedSourceVersion
-import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("org.vorpal.research.kex.BaseType", "org.vorpal.research.kex.InheritorOf")
 @SupportedOptions(InheritanceInfoProcessor.KEX_RESOURCES)
 class InheritanceInfoProcessor : KexProcessor() {

@@ -12,7 +12,7 @@ import kotlin.test.Test
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class AnnotationsTest : KexRunnerTest() {
+class AnnotationsTest : KexRunnerTest("annotation") {
     companion object {
         val annotationInitializer by lazy {
             (AnnotationManager.defaultLoader as ExternalAnnotationsLoader).loadFrom(
@@ -39,7 +39,7 @@ class AnnotationsTest : KexRunnerTest() {
 
     @Test
     fun `Test reachability with annotations`() {
-        val `class` = cm["$packageName/NotAnnotatedMethods"]
+        val `class` = cm["${`package`.concretePackage}/NotAnnotatedMethods"]
         testClassReachability(`class`)
     }
 }

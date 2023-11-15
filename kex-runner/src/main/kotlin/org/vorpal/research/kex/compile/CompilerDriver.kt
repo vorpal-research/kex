@@ -6,7 +6,7 @@ import org.vorpal.research.kthelper.`try`
 import java.io.ByteArrayOutputStream
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Collections
 import javax.tools.JavaFileObject
 import javax.tools.StandardLocation
 import javax.tools.ToolProvider
@@ -18,6 +18,7 @@ abstract class CompilerDriver(val classPath: List<Path>, val outputDir: Path) {
 
 class CompilationException : KtException {
     constructor(message: String = "") : super(message)
+    @Suppress("unused")
     constructor(message: String = "", throwable: Throwable) : super(message, throwable)
 }
 
@@ -54,6 +55,7 @@ class JavaCompilerDriver(classPath: List<Path>, outputDir: Path) : CompilerDrive
     }
 }
 
+@Suppress("unused")
 class KotlinCompilerDriver(classPath: List<Path>, outputDir: Path) : CompilerDriver(classPath, outputDir) {
     private val kotlinc = "kotlinc"
     override fun compile(sources: List<Path>): List<Path> {

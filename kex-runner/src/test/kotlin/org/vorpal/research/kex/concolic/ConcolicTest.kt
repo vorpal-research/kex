@@ -3,11 +3,9 @@ package org.vorpal.research.kex.concolic
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
-import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
 import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
@@ -22,9 +20,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-abstract class ConcolicTest : KexRunnerTest() {
-
-    override fun createTraceCollector(context: ExecutionContext) = SymbolicTraceInstrumenter(context)
+abstract class ConcolicTest(testDirectoryName: String) : KexRunnerTest(testDirectoryName) {
 
     fun assertCoverage(klass: Class, expectedCoverage: Double = 1.0, eps: Double = 0.0) {
         ExecutorMasterController.use {

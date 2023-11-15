@@ -2,7 +2,7 @@
  * ASM: a very small and fast Java bytecode manipulation framework
  * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
- *
+ * <p>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -36,6 +36,7 @@ package org.vorpal.research.kex.test.javadebug;
  *
  * @author Eric Bruneton
  */
+@SuppressWarnings("ALL")
 public class ByteVector {
 
     /**
@@ -235,6 +236,7 @@ public class ByteVector {
         if (from < 0) throw new IllegalArgumentException();
         if (from1 < 0) throw new IllegalArgumentException();
         if (length > 10000) throw new IllegalArgumentException();
+        //noinspection ManualArrayCopy
         for (int i = 0; i < length; ++i) {
             newData[from1 + i] = data[from + i];
         }

@@ -10,11 +10,11 @@ import org.vorpal.research.kex.reanimator.codegen.javagen.ExecutorAS2JavaPrinter
 import org.vorpal.research.kex.reanimator.codegen.kotlingen.ActionSequence2KotlinPrinter
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
-import org.vorpal.research.kex.util.outputDirectory
+import org.vorpal.research.kex.util.javaString
+import org.vorpal.research.kex.util.testcaseDirectory
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.Package
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
@@ -24,7 +24,6 @@ import kotlin.math.abs
 
 private val useReanimator by lazy { kexConfig.getBooleanValue("reanimator", "enabled", true) }
 private val generateTestCases by lazy { kexConfig.getBooleanValue("testGen", "enabled", false) }
-private val testCaseDirectory by lazy { kexConfig.getPathValue("testGen", "testsDir", "tests") }
 private val testCaseLanguage by lazy { kexConfig.getStringValue("testGen", "testCaseLanguage", "java") }
 
 val Class.validName get() = name.replace("$", "_")
@@ -52,6 +51,7 @@ abstract class TestCasePrinter(
         }
     }
 
+    @Suppress("unused")
     fun checkTestCompiles() {
         if (testCaseLanguage == "java") {
             val compileDir = kexConfig.compiledCodeDirectory
@@ -69,16 +69,16 @@ class JUnitTestCasePrinter(
     packageName: String,
     klassName: String
 ) : TestCasePrinter(ctx, packageName) {
-    private val testDirectory = kexConfig.outputDirectory.resolve(testCaseDirectory)
+    private val testDirectory = kexConfig.testcaseDirectory
     override val printer: ActionSequencePrinter = when (testCaseLanguage) {
         "kotlin" -> ActionSequence2KotlinPrinter(
             ctx,
-            packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR),
+            packageName.javaString,
             klassName
         )
         "java" -> ActionSequence2JavaPrinter(
             ctx,
-            packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR),
+            packageName.javaString,
             klassName
         )
         else -> unreachable { log.error("Unknown target language for test case generation: $testCaseLanguage") }
@@ -107,8 +107,8 @@ class ExecutorTestCasePrinter(
     packageName: String,
     val klassName: String
 ) : TestCasePrinter(ctx, packageName) {
-    private val testDirectory = kexConfig.outputDirectory.resolve(testCaseDirectory)
-    val fullKlassName = "${packageName.replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)}.$klassName"
+    private val testDirectory = kexConfig.testcaseDirectory
+    val fullKlassName = "${packageName.javaString}.$klassName"
     override val printer = ExecutorAS2JavaPrinter(ctx, packageName.replace("/", "."), klassName, SETUP_METHOD)
     override val targetFile: File = run {
         val targetFileName = "$klassName.java"
@@ -134,4 +134,3 @@ class ExecutorTestCasePrinter(
         targetFile.writeText(printer.emit())
     }
 }
-

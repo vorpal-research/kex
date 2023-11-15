@@ -4,6 +4,7 @@ import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.predicate.CallPredicate
@@ -15,6 +16,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.collection.dequeOf
+import org.vorpal.research.kthelper.tryOrNull
 
 private val defaultDepth = kexConfig.getIntValue("inliner", "depth", 5)
 
@@ -73,11 +75,13 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
         val builder = psa.builder(method)
         val endState = builder.methodState ?: return null
 
-        return transform(endState) {
-            +TermRenamer("${inlineSuffix}${inlineIndex++}", mappings)
-            +StringMethodAdapter(method.cm)
-            +KexRtAdapter(method.cm)
-            +ClassAdapter(method.cm)
+        return tryOrNull {
+            transform(endState) {
+                +TermRenamer("${inlineSuffix}${inlineIndex++}", mappings)
+                +StringMethodAdapter(method.cm)
+                +KexRtAdapter(method.cm)
+                +ClassAdapter(method.cm)
+            }
         }
     }
 
@@ -150,7 +154,7 @@ class RecursiveInliner<T>(
     override val inlineSuffix: String = "recursive",
     private val maxDepth: Int = defaultDepth,
     val inlinerBuilder: (Int, PredicateStateAnalysis) -> Inliner<T>
-) : Inliner<RecursiveInliner<T>> {
+) : Inliner<RecursiveInliner<T>>, IncrementalTransformer {
     override var inlineIndex = 0
     override val builders = dequeOf(StateBuilder())
     override var hasInlined: Boolean = false
@@ -168,5 +172,12 @@ class RecursiveInliner<T>(
         } while (hasInlined && depth < maxDepth)
         hasInlined = depth > 1
         return current.simplify()
+    }
+
+    override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
+        return IncrementalPredicateState(
+            apply(state.state),
+            state.queries
+        )
     }
 }

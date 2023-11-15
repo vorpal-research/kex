@@ -6,11 +6,11 @@ import kotlin.test.Test
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
-class BasicLongTest : KexRunnerTest() {
+class BasicLongTest : KexRunnerTest("basic-long") {
 
     @Test
     fun testIcfpc2018() {
-        val `class` = cm["$packageName/Icfpc2018Test"]
+        val `class` = cm["${`package`.concretePackage}/Icfpc2018Test"]
         testClassReachability(`class`)
     }
 

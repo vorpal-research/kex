@@ -11,7 +11,7 @@ import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import java.nio.file.Path
 import java.nio.file.Paths
 
-enum class DefectType(val description: String) {
+enum class DefectType(@Suppress("unused") val description: String) {
     OOB("array index out of bounds"),
     NPE("null pointer exception"),
     ASSERT("assertion violation")
@@ -26,6 +26,7 @@ data class Defect(
     val testFile: Path?,
     val testCaseName: String?
 ) {
+    @Suppress("MemberVisibilityCanBePrivate")
     companion object {
         fun oob(callStack: List<String>, id: String? = null, testFile: Path? = null, testCaseName: String? = null) =
             Defect(DefectType.OOB, callStack, id, testFile, testCaseName)

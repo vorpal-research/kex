@@ -1,7 +1,14 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.state.PredicateState
-import org.vorpal.research.kex.state.predicate.*
+import org.vorpal.research.kex.state.predicate.ArrayInitializerPredicate
+import org.vorpal.research.kex.state.predicate.ArrayStorePredicate
+import org.vorpal.research.kex.state.predicate.EqualityPredicate
+import org.vorpal.research.kex.state.predicate.FieldInitializerPredicate
+import org.vorpal.research.kex.state.predicate.FieldStorePredicate
+import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.ArrayLoadTerm
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.Term
@@ -14,6 +21,7 @@ class TypeInfoDFA(
 ) : Transformer<TypeInfoDFA> {
     private val innerTypeInfo = typeInfo.map { it.key to it.value.toMutableSet() }.toMap().toMutableMap()
 
+    @Suppress("unused")
     val freshTypeInfo: TypeInfoMap get() = TypeInfoMap.create(tf, innerTypeInfo)
 
     override fun apply(ps: PredicateState): PredicateState {

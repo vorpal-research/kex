@@ -9,14 +9,15 @@ import org.vorpal.research.kthelper.logging.log
 
 abstract class BoolectorNativeLoader {
     companion object {
+        @Suppress("MemberVisibilityCanBePrivate")
         const val BOOLECTOR_VERSION = "3.2.7"
         private val libraries = listOf("libboolector", "libboolector-java")
-        private val supportedArchs = setOf("amd64", "x86_64")
+        private val supportedArchitectures = setOf("amd64", "x86_64")
         private val initializeCallback by lazy {
             System.setProperty("boolector.skipLibraryLoad", "true")
 
             val arch = System.getProperty("os.arch")
-            ktassert(arch in supportedArchs) { log.error("Not supported arch: $arch") }
+            ktassert(arch in supportedArchitectures) { log.error("Not supported arch: $arch") }
 
             val osProperty = System.getProperty("os.name").lowercased()
             val (zipName, libraryNames) = when {

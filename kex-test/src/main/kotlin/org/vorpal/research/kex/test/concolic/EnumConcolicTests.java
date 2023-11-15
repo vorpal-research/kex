@@ -2,6 +2,7 @@ package org.vorpal.research.kex.test.concolic;
 
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics;
 
+@SuppressWarnings("ALL")
 public class EnumConcolicTests {
     public void testEnum(TestEnum a) {
         if (a == TestEnum.B) {

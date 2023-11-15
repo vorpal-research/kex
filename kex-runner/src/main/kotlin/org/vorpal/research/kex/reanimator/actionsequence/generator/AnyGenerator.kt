@@ -5,7 +5,15 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
+import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.FieldSetter
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kex.reanimator.collector.hasSetter
 import org.vorpal.research.kex.reanimator.collector.setter
 import org.vorpal.research.kfg.ir.Class
@@ -44,12 +52,38 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
 
             other as StackWrapper
 
-            if (value.instance eq other.value.instance && value.depth <= other.value.depth) return true
-            return false
+            return value.instance eq other.value.instance && value.depth <= other.value.depth
         }
     }
 
-    fun GeneratorContext.ExecutionStack<ObjectDescriptor>.wrap() = StackWrapper(this)
+    private fun GeneratorContext.ExecutionStack<ObjectDescriptor>.wrap() = StackWrapper(this)
+
+
+    protected fun internalCheckConstructors(
+        sequence: ActionList,
+        klass: Class,
+        current: ObjectDescriptor,
+        currentStack: List<CodeAction>,
+        fallbacks: MutableSet<List<CodeAction>>,
+        generationDepth: Int,
+        constructorGetter: () -> List<Method>
+    ): Boolean = with(context) {
+        for (method in constructorGetter()) {
+            val handler = when {
+                method.isConstructor -> { it: Method -> current.checkCtor(klass, it, generationDepth) }
+                else -> { it: Method -> current.checkExternalCtor(it, generationDepth) }
+            }
+            val apiCall = handler(method) ?: continue
+            val result = (currentStack + apiCall).reversed()
+            if (result.isComplete) {
+                sequence += (currentStack + apiCall).reversed()
+                return true
+            } else {
+                fallbacks += result
+            }
+        }
+        return false
+    }
 
     open fun checkCtors(
         sequence: ActionList,
@@ -57,33 +91,17 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         current: ObjectDescriptor,
         currentStack: List<CodeAction>,
         fallbacks: MutableSet<List<CodeAction>>,
-        generationDepth: Int
-    ): Boolean =
-        with(context) {
-            for (method in klass.orderedCtors) {
-                val handler = when {
-                    method.isConstructor -> { it: Method -> current.checkCtor(klass, it, generationDepth) }
-                    else -> { it: Method -> current.checkExternalCtor(it, generationDepth) }
-                }
-                val apiCall = handler(method) ?: continue
-                val result = (currentStack + apiCall).reversed()
-                if (result.isComplete) {
-                    sequence += (currentStack + apiCall).reversed()
-                    return true
-                } else {
-                    fallbacks += result
-                }
-            }
-            return false
-        }
+        generationDepth: Int,
+    ): Boolean = internalCheckConstructors(
+        sequence, klass, current, currentStack, fallbacks, generationDepth
+    ) { with(context) { klass.orderedCtors } }
 
-    open fun applyMethods(
-        sequence: ActionList,
-        klass: Class,
+    protected fun internalApplyMethods(
         current: ObjectDescriptor,
         currentStack: List<CodeAction>,
         searchDepth: Int,
-        generationDepth: Int
+        generationDepth: Int,
+        methodGetter: () -> Set<Method>
     ): List<GeneratorContext.ExecutionStack<ObjectDescriptor>> = with(context) {
         val stackList = mutableListOf<GeneratorContext.ExecutionStack<ObjectDescriptor>>()
         val acceptExecResult = { method: Method, res: Parameters<Descriptor>, oldDepth: Int ->
@@ -99,7 +117,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             }
         }
 
-        for (method in klass.accessibleMethods) {
+        for (method in methodGetter()) {
             method.executeAsSetter(current)?.let {
                 acceptExecResult(method, it, searchDepth)
             }
@@ -110,13 +128,28 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         return stackList
     }
 
-    fun generateObject(sequence: ActionList, descriptor: ObjectDescriptor, generationDepth: Int): Boolean = with(context) {
+    open fun applyMethods(
+        sequence: ActionList,
+        klass: Class,
+        current: ObjectDescriptor,
+        currentStack: List<CodeAction>,
+        searchDepth: Int,
+        generationDepth: Int
+    ): List<GeneratorContext.ExecutionStack<ObjectDescriptor>> = internalApplyMethods(
+        current, currentStack, searchDepth, generationDepth
+    ) { with(context) { klass.accessibleMethods } }
+
+    private fun generateObject(
+        sequence: ActionList,
+        descriptor: ObjectDescriptor,
+        generationDepth: Int
+    ): Boolean = with(context) {
         val fallbacks = mutableSetOf<List<CodeAction>>()
 
         descriptor.concretize(cm, accessLevel, context.random)
         descriptor.reduce()
 
-        log.debug("Generating $descriptor")
+        log.debug("Generating {}", descriptor)
 
         val klass = descriptor.klass.kfgClass(types)
         if (klass.orderedCtors.isEmpty()) {
@@ -176,7 +209,7 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
             val (thisDesc, args) = method.executeAsConstructor(this@checkCtor) ?: return null
 
             if ((thisDesc as ObjectDescriptor).isFinal(this@checkCtor)) {
-                log.debug("Found constructor $method for $this, generating arguments $args")
+                log.debug("Found constructor {} for {}, generating arguments {}", method, this, args)
                 when {
                     method.argTypes.isEmpty() -> DefaultConstructorCall(klass)
                     else -> {
@@ -196,14 +229,17 @@ open class AnyGenerator(private val fallback: Generator) : Generator {
         }
 
     @Suppress("UNUSED_PARAMETER")
-    fun ObjectDescriptor.generateSetters(sequence: ActionList, generationDepth: Int): List<CodeAction> = with(context) {
+    private fun ObjectDescriptor.generateSetters(
+        sequence: ActionList,
+        generationDepth: Int
+    ): List<CodeAction> = with(context) {
         val calls = mutableListOf<CodeAction>()
         val kfgKlass = klass.kfgClass(types)
         for ((field, value) in fields.toMap()) {
             val kfgField = kfgKlass.getField(field.first, field.second.getKfgType(types))
 
             if (accessLevel.canAccess(kfgField.accessModifier)) {
-                log.debug("Directly setting field $field value")
+                log.debug("Directly setting field {} value", field)
                 calls += FieldSetter(kfgField, fallback.generate(value, generationDepth + 1))
                 fields.remove(field)
                 reduce()

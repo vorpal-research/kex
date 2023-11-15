@@ -2,19 +2,65 @@ package org.vorpal.research.kex.reanimator.codegen.kotlingen
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.actionsequence.*
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.ArrayClassConstantGetter
+import org.vorpal.research.kex.reanimator.actionsequence.ArrayWrite
+import org.vorpal.research.kex.reanimator.actionsequence.ClassConstantGetter
+import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
+import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.EnumValueCreation
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.FieldSetter
+import org.vorpal.research.kex.reanimator.actionsequence.InnerClassConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.NewArray
+import org.vorpal.research.kex.reanimator.actionsequence.NewArrayWithInitializer
+import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionArrayWrite
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionCall
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewArray
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewInstance
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetField
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetStaticField
+import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
+import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldSetter
+import org.vorpal.research.kex.reanimator.actionsequence.StaticMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.StringValue
+import org.vorpal.research.kex.reanimator.actionsequence.TestCall
+import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
 import org.vorpal.research.kex.util.getConstructor
 import org.vorpal.research.kex.util.getMethod
+import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kex.util.kex
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.BoolType
+import org.vorpal.research.kfg.type.ByteType
+import org.vorpal.research.kfg.type.CharType
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.DoubleType
+import org.vorpal.research.kfg.type.FloatType
+import org.vorpal.research.kfg.type.IntType
+import org.vorpal.research.kfg.type.LongType
+import org.vorpal.research.kfg.type.NullType
+import org.vorpal.research.kfg.type.ShortType
+import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.VoidType
+import org.vorpal.research.kfg.type.classType
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
-import java.lang.reflect.*
+import java.lang.reflect.Constructor
+import java.lang.reflect.Method
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.TypeVariable
+import java.lang.reflect.WildcardType
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KType
@@ -25,7 +71,7 @@ import java.lang.reflect.Type as JType
 // TODO: this is work of satan, refactor this damn thing
 open class ActionSequence2KotlinPrinter(
     val ctx: ExecutionContext,
-    override val packageName: String,
+    final override val packageName: String,
     override val klassName: String
 ) : ActionSequencePrinter {
     private val printedStacks = mutableSetOf<String>()
@@ -100,11 +146,12 @@ open class ActionSequence2KotlinPrinter(
     ) : ASType {
         override fun isSubtype(other: ASType): Boolean = when (other) {
             is ASClass -> when {
-                !type.isSubtypeOf(other.type) -> false
+                !type.isSubtypeOfCached(other.type) -> false
                 typeParams.size != other.typeParams.size -> false
                 typeParams.zip(other.typeParams).any { (a, b) -> !a.isSubtype(b) } -> false
                 else -> !(!nullable && other.nullable)
             }
+
             is ASStarProjection -> true
             else -> false
         }
@@ -135,6 +182,7 @@ open class ActionSequence2KotlinPrinter(
                 !nullable && other.nullable -> false
                 else -> true
             }
+
             is ASStarProjection -> true
             else -> false
         }
@@ -149,6 +197,7 @@ open class ActionSequence2KotlinPrinter(
             else -> unreachable { }
         }
 
+    @Suppress("RecursivePropertyAccessor")
     val ASType.kfg: Type
         get() = when (this) {
             is ASClass -> type
@@ -167,10 +216,12 @@ open class ActionSequence2KotlinPrinter(
                     type.component.isPrimitive -> ASPrimaryArray(type.component.getAsType(false), nullability)
                     else -> ASArray(args.first(), nullability)
                 }
+
                 else -> ASClass(type, args, nullability)
             }
         }
 
+    @Suppress("RecursivePropertyAccessor")
     private val JType.asType: ASType
         get() = when (this) {
             is java.lang.Class<*> -> when {
@@ -178,8 +229,10 @@ open class ActionSequence2KotlinPrinter(
                     val element = this.componentType.asType
                     ASArray(element)
                 }
+
                 else -> ASClass(this.kex.getKfgType(ctx.types))
             }
+
             is ParameterizedType -> this.ownerType.asType
             is TypeVariable<*> -> this.bounds.first().asType
             is WildcardType -> this.upperBounds.first().asType
@@ -194,6 +247,7 @@ open class ActionSequence2KotlinPrinter(
                 ASClass(type, requiredType.typeParams, false)
             } else TODO()
         }
+
         else -> TODO()
     }
 
@@ -206,6 +260,7 @@ open class ActionSequence2KotlinPrinter(
             this.component.isPrimitive -> ASPrimaryArray(component.getAsType(false), nullable)
             else -> ASArray(this.component.getAsType(nullable), nullable)
         }
+
         else -> ASClass(this, nullable = nullable)
     }
 
@@ -228,6 +283,7 @@ open class ActionSequence2KotlinPrinter(
                     }
                 }
             }
+
             else -> {
                 val params = constructor.genericParameterTypes
                 args.zip(params).forEach { (arg, param) ->
@@ -250,6 +306,7 @@ open class ActionSequence2KotlinPrinter(
                     }
                 }
             }
+
             else -> {
                 val params = method.genericParameterTypes.toList()
                 args.zip(params).forEach { (arg, param) ->
@@ -264,26 +321,31 @@ open class ActionSequence2KotlinPrinter(
     private fun resolveTypes(call: CodeAction) = when (call) {
         is DefaultConstructorCall -> {
         }
+
         is ConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getConstructor(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
+
         is ExternalConstructorCall -> {
             val reflection = ctx.loader.loadClass(call.constructor.klass)
             val constructor = reflection.getMethod(call.constructor, ctx.loader)
             resolveTypes(constructor, call.args)
         }
+
         is MethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
+
         is StaticMethodCall -> {
             val reflection = ctx.loader.loadClass(call.method.klass)
             val method = reflection.getMethod(call.method, ctx.loader)
             resolveTypes(method, call.args)
         }
+
         else -> {
         }
     }
@@ -299,6 +361,7 @@ open class ActionSequence2KotlinPrinter(
             is PrimaryValue<*> -> listOf<String>().also {
                 asConstant
             }
+
             is StringValue -> listOf<String>().also {
                 asConstant
             }
@@ -309,20 +372,21 @@ open class ActionSequence2KotlinPrinter(
         }
     }
 
-    private val Class.kotlinString: String get() = this.type.kotlinString
+    private val Class.kotlinString: String get() = this.asType.kotlinString
 
+    @Suppress("RecursivePropertyAccessor")
     private val Type.kotlinString: String
         get() = when (this) {
             is NullType -> "null"
             is VoidType -> "Unit"
             is BoolType -> "Boolean"
-            ByteType -> "Byte"
-            ShortType -> "Short"
-            CharType -> "Char"
-            IntType -> "Int"
-            LongType -> "Long"
-            FloatType -> "Float"
-            DoubleType -> "Double"
+            is ByteType -> "Byte"
+            is ShortType -> "Short"
+            is CharType -> "Char"
+            is IntType -> "Int"
+            is LongType -> "Long"
+            is FloatType -> "Float"
+            is DoubleType -> "Double"
             is ArrayType -> when (val type = this.component) {
                 BoolType -> "BooleanArray"
                 ByteType -> "ByteArray"
@@ -334,6 +398,7 @@ open class ActionSequence2KotlinPrinter(
                 DoubleType -> "DoubleArray"
                 else -> "Array<${type.kotlinString}>"
             }
+
             else -> {
                 val klass = (this as ClassType).klass
                 val name = klass.canonicalDesc.replace("$", ".")
@@ -349,7 +414,7 @@ open class ActionSequence2KotlinPrinter(
             else -> name
         }
 
-    private fun printApiCall(owner: ActionSequence, codeAction: CodeAction) = when (codeAction) {
+    private fun printApiCall(owner: ActionSequence, codeAction: CodeAction): String = when (codeAction) {
         is DefaultConstructorCall -> printDefaultConstructor(owner, codeAction)
         is ConstructorCall -> printConstructorCall(owner, codeAction)
         is ExternalConstructorCall -> printExternalConstructorCall(owner, codeAction)
@@ -361,10 +426,14 @@ open class ActionSequence2KotlinPrinter(
         is StaticFieldSetter -> printStaticFieldSetter(codeAction)
         is EnumValueCreation -> printEnumValueCreation(owner, codeAction)
         is StaticFieldGetter -> printStaticFieldGetter(owner, codeAction)
-        else -> unreachable { log.error("Unknown call") }
+        is ClassConstantGetter -> printClassConstantGetter(owner, codeAction)
+        is ArrayClassConstantGetter -> printArrayClassConstantGetter(owner, codeAction)
+        is ExternalMethodCall -> TODO()
+        is InnerClassConstructorCall -> TODO()
+        is NewArrayWithInitializer -> TODO()
     }
 
-    protected fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> =
+    private fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> =
         when (reflectionCall) {
             is ReflectionArrayWrite -> printReflectionArrayWrite(owner, reflectionCall)
             is ReflectionNewArray -> printReflectionNewArray(owner, reflectionCall)
@@ -378,12 +447,15 @@ open class ActionSequence2KotlinPrinter(
             null -> "null".also {
                 actualTypes[this] = ASClass(ctx.types.nullType)
             }
+
             is Boolean -> "$value".also {
                 actualTypes[this] = ASClass(ctx.types.boolType, nullable = false)
             }
+
             is Byte -> "${value}.toByte()".also {
                 actualTypes[this] = ASClass(ctx.types.byteType, nullable = false)
             }
+
             is Char -> when (value) {
                 in 'a'..'z' -> "'$value'"
                 in 'A'..'Z' -> "'$value'"
@@ -391,21 +463,27 @@ open class ActionSequence2KotlinPrinter(
             }.also {
                 actualTypes[this] = ASClass(ctx.types.charType, nullable = false)
             }
+
             is Short -> "${value}.toShort()".also {
                 actualTypes[this] = ASClass(ctx.types.shortType, nullable = false)
             }
+
             is Int -> "$value".also {
                 actualTypes[this] = ASClass(ctx.types.intType, nullable = false)
             }
+
             is Long -> "${value}L".also {
                 actualTypes[this] = ASClass(ctx.types.longType, nullable = false)
             }
+
             is Float -> "${value}F".also {
                 actualTypes[this] = ASClass(ctx.types.floatType, nullable = false)
             }
+
             is Double -> "$value".also {
                 actualTypes[this] = ASClass(ctx.types.doubleType, nullable = false)
             }
+
             else -> unreachable { log.error("Unknown primary value $this") }
         }
 
@@ -431,7 +509,7 @@ open class ActionSequence2KotlinPrinter(
     }
 
     private fun printDefaultConstructor(owner: ActionSequence, call: DefaultConstructorCall): String {
-        val actualType = ASClass(call.klass.type, nullable = false)
+        val actualType = ASClass(call.klass.asType, nullable = false)
         return if (resolvedTypes[owner] != null) {
             val rest = resolvedTypes[owner]!!
             val type = actualType.merge(rest)
@@ -448,7 +526,7 @@ open class ActionSequence2KotlinPrinter(
         val args = call.args.joinToString(", ") {
             it.forceCastIfNull(resolvedTypes[it])
         }
-        val actualType = ASClass(call.constructor.klass.type, nullable = false)
+        val actualType = ASClass(call.constructor.klass.asType, nullable = false)
         return if (resolvedTypes[owner] != null) {
             val rest = resolvedTypes[owner]!!
             val type = actualType.merge(rest)
@@ -496,6 +574,7 @@ open class ActionSequence2KotlinPrinter(
                 actualTypes[owner] = ASArray(type.getAsType(), false)
                 "arrayOfNulls<${type.kotlinString}>"
             }
+
             else -> {
                 actualTypes[owner] = call.asArray.getAsType(false)
                 call.asArray.kotlinString
@@ -506,11 +585,10 @@ open class ActionSequence2KotlinPrinter(
 
     private fun printArrayWrite(owner: ActionSequence, call: ArrayWrite): String {
         call.value.printAsKt()
-        val requiredType = run {
-            val resT = resolvedTypes[owner] ?: actualTypes[owner]
-            if (resT is ASArray) resT.element
-            else if (resT is ASPrimaryArray) resT.element
-            else unreachable { }
+        val requiredType = when (val resT = resolvedTypes[owner] ?: actualTypes[owner]) {
+            is ASArray -> resT.element
+            is ASPrimaryArray -> resT.element
+            else -> unreachable { }
         }
         return "${owner.name}[${call.index.stackName}] = ${call.value.cast(requiredType)}"
     }
@@ -526,15 +604,28 @@ open class ActionSequence2KotlinPrinter(
     }
 
     private fun printEnumValueCreation(owner: ActionSequence, call: EnumValueCreation): String {
-        val actualType = call.klass.type.getAsType(false)
+        val actualType = call.klass.asType.getAsType(false)
         actualTypes[owner] = actualType
         return "val ${owner.name} = ${call.klass.kotlinString}.${call.name}"
     }
 
     private fun printStaticFieldGetter(owner: ActionSequence, call: StaticFieldGetter): String {
-        val actualType = call.field.klass.type.getAsType(false)
+        val actualType = call.field.klass.asType.getAsType(false)
         actualTypes[owner] = actualType
         return "val ${owner.name} = ${call.field.klass.kotlinString}.${call.field.name}"
+    }
+
+    protected open fun printClassConstantGetter(owner: ActionSequence, call: ClassConstantGetter): String {
+        val actualType = ASClass(ctx.types.classType)
+        actualTypes[owner] = actualType
+        return "val ${owner.name} = ${call.type.kotlinString}::class.java"
+    }
+
+    protected open fun printArrayClassConstantGetter(owner: ActionSequence, call: ArrayClassConstantGetter): String {
+        call.elementType.printAsKt()
+        val actualType = ASClass(ctx.types.classType)
+        actualTypes[owner] = actualType
+        return "val ${owner.name} =  = Array.newInstance(${call.elementType.stackName}, 0).javaClass"
     }
 
     private fun printTestCall(sequence: TestCall): String {
@@ -565,7 +656,10 @@ open class ActionSequence2KotlinPrinter(
     protected open fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
-    protected open fun printReflectionSetStaticField(owner: ActionSequence, call: ReflectionSetStaticField): List<String> =
+    protected open fun printReflectionSetStaticField(
+        owner: ActionSequence,
+        call: ReflectionSetStaticField
+    ): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =

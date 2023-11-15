@@ -1,13 +1,46 @@
 package org.vorpal.research.kex.smt.ksmt
 
-import org.ksmt.KContext
-import org.ksmt.expr.*
-import org.ksmt.solver.KModel
+import io.ksmt.KContext
+import io.ksmt.expr.KAndExpr
+import io.ksmt.expr.KArrayConst
+import io.ksmt.expr.KArraySelect
+import io.ksmt.expr.KArrayStore
+import io.ksmt.expr.KBitVec16Value
+import io.ksmt.expr.KBitVec1Value
+import io.ksmt.expr.KBitVec32Value
+import io.ksmt.expr.KBitVec64Value
+import io.ksmt.expr.KBitVec8Value
+import io.ksmt.expr.KBitVecCustomValue
+import io.ksmt.expr.KBvExtractExpr
+import io.ksmt.expr.KBvSignedGreaterExpr
+import io.ksmt.expr.KBvSignedGreaterOrEqualExpr
+import io.ksmt.expr.KBvSignedLessExpr
+import io.ksmt.expr.KBvSignedLessOrEqualExpr
+import io.ksmt.expr.KBvUnsignedGreaterExpr
+import io.ksmt.expr.KBvUnsignedGreaterOrEqualExpr
+import io.ksmt.expr.KBvUnsignedLessExpr
+import io.ksmt.expr.KBvUnsignedLessOrEqualExpr
+import io.ksmt.expr.KEqExpr
+import io.ksmt.expr.KExistentialQuantifier
+import io.ksmt.expr.KExpr
+import io.ksmt.expr.KFalse
+import io.ksmt.expr.KFp32Value
+import io.ksmt.expr.KFp64Value
+import io.ksmt.expr.KIteExpr
+import io.ksmt.expr.KNotExpr
+import io.ksmt.expr.KOrExpr
+import io.ksmt.expr.KTrue
+import io.ksmt.expr.KUniversalQuantifier
+import io.ksmt.expr.KXorExpr
+import io.ksmt.solver.KModel
+import org.vorpal.research.kex.ktype.KexNull
+import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.smt.ksmt.KSMTEngine.asExpr
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.boolValue
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.state.transformer.Transformer
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.compareTo
 import org.vorpal.research.kthelper.logging.log
@@ -28,7 +61,7 @@ object KSMTUnlogic {
             is KBitVec16Value -> const(expr.numberValue)
             is KBitVec32Value -> const(expr.numberValue)
             is KBitVec64Value -> const(expr.numberValue)
-            is KBitVecCustomValue -> const(expr.binaryStringValue)
+            is KBitVecCustomValue -> const(expr.stringValue)
             is KFp32Value -> const(expr.value)
             is KFp64Value -> const(expr.value)
             is KExistentialQuantifier -> {
@@ -38,7 +71,9 @@ object KSMTUnlogic {
             }
 
             is KUniversalQuantifier -> {
-                TODO()
+                val bounds = expr.bounds.map { it.asExpr(ctx) }
+                    .associateWith { undo(model.eval(it, true), ctx, model, mappings) }
+                undo(expr.body, ctx, model, mappings + bounds)
             }
 
             in mappings -> mappings.getValue(expr)
@@ -85,10 +120,97 @@ object KSMTUnlogic {
                 const(lhv.numericValue >= rhv.numericValue)
             }
 
+            is KBvUnsignedLessExpr<*> -> {
+                val lhv = undo(expr.args[0], ctx, model, mappings)
+                val rhv = undo(expr.args[1], ctx, model, mappings)
+                const(lhv.numericValue < rhv.numericValue)
+            }
+
+            is KBvUnsignedLessOrEqualExpr<*> -> {
+                val lhv = undo(expr.args[0], ctx, model, mappings)
+                val rhv = undo(expr.args[1], ctx, model, mappings)
+                const(lhv.numericValue <= rhv.numericValue)
+            }
+
+            is KBvUnsignedGreaterExpr<*> -> {
+                val lhv = undo(expr.args[0], ctx, model, mappings)
+                val rhv = undo(expr.args[1], ctx, model, mappings)
+                const(lhv.numericValue > rhv.numericValue)
+            }
+
+            is KBvUnsignedGreaterOrEqualExpr<*> -> {
+                val lhv = undo(expr.args[0], ctx, model, mappings)
+                val rhv = undo(expr.args[1], ctx, model, mappings)
+                const(lhv.numericValue >= rhv.numericValue)
+            }
+
             is KNotExpr -> const(!undo(expr.args[0], ctx, model, mappings).boolValue)
+
+            is KEqExpr<*> -> {
+                val lhv = undo(expr.lhs, ctx, model, mappings)
+                val rhv = undo(expr.rhs, ctx, model, mappings)
+                const(lhv == rhv)
+            }
+
+            is KIteExpr<*> -> {
+                val cond = undo(expr.condition, ctx, model, mappings)
+                when {
+                    cond.boolValue -> undo(expr.trueBranch, ctx, model, mappings)
+                    else -> undo(expr.falseBranch, ctx, model, mappings)
+                }
+            }
+
+            is KBvExtractExpr -> {
+                val value = undo(expr.value, ctx, model, mappings)
+                val valueStr = when (expr.value.sort.sizeBits) {
+                    64U -> value.numericValue.toLong().toString(2)
+                    else -> value.numericValue.toInt().toString(2)
+                }
+                val paddedValue = valueStr.padStart(expr.value.sort.sizeBits.toInt(), '0').reversed()
+                val extracted = paddedValue.substring(expr.low, expr.high - expr.low).reversed()
+                term {
+                    const(
+                        when (expr.sort.sizeBits) {
+                            64U -> extracted.toLong(2)
+                            else -> extracted.toInt(2)
+                        }
+                    )
+                }
+            }
+
+            is KArraySelect<*, *> -> {
+                val array = undo(expr.array, ctx, model, mappings) as ArrayTerm
+                when (val index = undo(expr.index, ctx, model, mappings)) {
+                    in array.array -> array.array[index]!!
+                    else -> array.default
+                }
+            }
+
+            is KArrayStore<*, *> -> {
+                val array = undo(expr.array, ctx, model, mappings) as ArrayTerm
+                val index = undo(expr.index, ctx, model, mappings)
+                val value = undo(expr.value, ctx, model, mappings)
+                ArrayTerm(array.array + (index to value), array.default)
+            }
+
+            is KArrayConst<*, *> -> {
+                val default = undo(expr.value, ctx, model, mappings)
+                ArrayTerm(emptyMap(), default)
+            }
 
             else -> unreachable { log.error("Unexpected expr in unlogic: $expr") }
         }
+    }
+
+
+    private class ArrayTerm(val array: Map<Term, Term>, val default: Term) : Term() {
+        override val name: String = "ConstArray"
+        override val subTerms: List<Term> = (array.keys + array.values).toList()
+        override val type: KexType = KexNull()
+        override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
+            TODO("Not yet implemented")
+        }
+
     }
 
 }

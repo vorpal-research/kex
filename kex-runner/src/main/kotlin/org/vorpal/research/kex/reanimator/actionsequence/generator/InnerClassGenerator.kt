@@ -5,7 +5,6 @@ import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
@@ -18,10 +17,12 @@ import org.vorpal.research.kthelper.logging.log
 
 class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
 
-    val KexClass.isInnerClass: Boolean
+    private val KexClass.isInnerClass: Boolean
         get() {
             val kfgClass = context.cm[klass] as? ConcreteClass ?: return false
-            return kfgClass.outerClass != null && kfgClass.fields.any { it.name == "this\$0" && it.type == kfgClass.outerClass!!.type }
+            return kfgClass.outerClass != null && kfgClass.fields.any {
+                it.name == "this\$0" && it.type == kfgClass.outerClass!!.asType
+            }
         }
 
     override fun supports(descriptor: Descriptor): Boolean {
@@ -34,7 +35,9 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
         descriptor as ObjectDescriptor
         val klass = (descriptor.type as KexClass).klass
         val kfgClass = context.cm[klass] as ConcreteClass
-        val outerField = kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.type }
+        val outerField = kfgClass.fields.first {
+            it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.asType
+        }
         val fieldKey = outerField.name to outerField.type.kexType
         if (fieldKey !in descriptor.fields) {
             descriptor[fieldKey] = descriptor { `object`(kfgClass.outerClass!!.kexType) }
@@ -68,12 +71,12 @@ class InnerClassGenerator(fallback: Generator) : AnyGenerator(fallback) {
             return false
         }
 
-    fun ObjectDescriptor.checkInnerCtor(method: Method, generationDepth: Int): CodeAction? =
+    private fun ObjectDescriptor.checkInnerCtor(method: Method, generationDepth: Int): CodeAction? =
         with(context) {
             val (thisDesc, args) = method.executeAsConstructor(this@checkInnerCtor) ?: return null
 
             if ((thisDesc as ObjectDescriptor).isFinal(this@checkInnerCtor)) {
-                log.debug("Found constructor $method for $this, generating arguments $args")
+                log.debug("Found constructor {} for {}, generating arguments {}", method, this, args)
                 val generatedArgs = generateArgs(args, generationDepth + 1) ?: return null
                 ktassert(generatedArgs.size > 1) { log.error("Unknown number of arguments of inner class") }
                 InnerClassConstructorCall(method, generatedArgs.first(), generatedArgs.drop(1))

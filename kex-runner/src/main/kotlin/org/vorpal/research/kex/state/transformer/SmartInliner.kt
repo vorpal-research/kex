@@ -1,4 +1,4 @@
-//package org.vorpal.research.kex.state.transformer
+package org.vorpal.research.kex.state.transformer
 //
 //import org.vorpal.research.kex.asm.manager.MethodManager
 //import org.vorpal.research.kex.asm.state.PredicateStateAnalysis

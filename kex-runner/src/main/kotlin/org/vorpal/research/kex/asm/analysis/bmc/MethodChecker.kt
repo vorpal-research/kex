@@ -54,6 +54,7 @@ data class Failure(
         val state: PredicateState
 )
 
+@Suppress("MemberVisibilityCanBePrivate")
 @ExperimentalSerializationApi
 @InternalSerializationApi
 open class MethodChecker(
@@ -93,7 +94,7 @@ open class MethodChecker(
 
         if (!MethodManager.canBeImpacted(method, ctx.accessLevel) || !method.hasBody) return
 
-        log.debug("Checking method $method")
+        log.debug("Checking method {}", method)
         log.debug(method.print())
         log.debug()
 
@@ -118,7 +119,7 @@ open class MethodChecker(
             }
 
             val coverageResult = try {
-                log.debug("Checking reachability of ${block.name}")
+                log.debug("Checking reachability of {}", block.name)
                 coverBlock(method, block)
             } catch (e: TimeoutException) {
                 log.warn("Timeout exception when running method $method, skipping it")
@@ -134,7 +135,7 @@ open class MethodChecker(
                 break
             }
 
-            log.debug("Block ${block.name} is covered = ${tm.isCovered(block)}")
+            log.debug("Block {} is covered = {}", block.name, tm.isCovered(block))
             log.debug()
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block

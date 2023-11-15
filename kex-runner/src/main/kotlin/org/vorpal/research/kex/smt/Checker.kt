@@ -10,8 +10,36 @@ import org.vorpal.research.kex.state.term.ArgumentTerm
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.ValueTerm
-import org.vorpal.research.kex.state.transformer.*
-import org.vorpal.research.kfg.ir.BasicBlock
+import org.vorpal.research.kex.state.transformer.AnnotationAdapter
+import org.vorpal.research.kex.state.transformer.ArrayBoundsAdapter
+import org.vorpal.research.kex.state.transformer.BasicInvariantsTransformer
+import org.vorpal.research.kex.state.transformer.BoolTypeAdapter
+import org.vorpal.research.kex.state.transformer.ClassAdapter
+import org.vorpal.research.kex.state.transformer.ClassMethodAdapter
+import org.vorpal.research.kex.state.transformer.ConcreteImplInliner
+import org.vorpal.research.kex.state.transformer.ConstEnumAdapter
+import org.vorpal.research.kex.state.transformer.ConstStringAdapter
+import org.vorpal.research.kex.state.transformer.ConstantPropagator
+import org.vorpal.research.kex.state.transformer.EqualsTransformer
+import org.vorpal.research.kex.state.transformer.FieldNormalizer
+import org.vorpal.research.kex.state.transformer.IntrinsicAdapter
+import org.vorpal.research.kex.state.transformer.KexIntrinsicsAdapter
+import org.vorpal.research.kex.state.transformer.KexRtAdapter
+import org.vorpal.research.kex.state.transformer.MemorySpacer
+import org.vorpal.research.kex.state.transformer.NullityInfoAdapter
+import org.vorpal.research.kex.state.transformer.Optimizer
+import org.vorpal.research.kex.state.transformer.RecursiveInliner
+import org.vorpal.research.kex.state.transformer.ReflectionInfoAdapter
+import org.vorpal.research.kex.state.transformer.Slicer
+import org.vorpal.research.kex.state.transformer.StaticFieldInliner
+import org.vorpal.research.kex.state.transformer.StensgaardAA
+import org.vorpal.research.kex.state.transformer.StringMethodAdapter
+import org.vorpal.research.kex.state.transformer.TermCollector
+import org.vorpal.research.kex.state.transformer.TypeInfoMap
+import org.vorpal.research.kex.state.transformer.TypeNameAdapter
+import org.vorpal.research.kex.state.transformer.collectRequiredTerms
+import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kthelper.logging.log
@@ -21,7 +49,6 @@ class Checker(
     val ctx: ExecutionContext,
     private val psa: PredicateStateAnalysis
 ) {
-    private val isInliningEnabled = kexConfig.getBooleanValue("smt", "psInlining", true)
     private val isMemspacingEnabled = kexConfig.getBooleanValue("smt", "memspacing", true)
     private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
     private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
@@ -31,10 +58,10 @@ class Checker(
     private val builder get() = psa.builder(method)
     lateinit var state: PredicateState
         private set
+    @Suppress("MemberVisibilityCanBePrivate")
     lateinit var query: PredicateState
         private set
 
-    fun createState(block: BasicBlock) = createState(block.terminator)
     fun createState(inst: Instruction) = builder.getInstructionState(inst)
 
     fun checkReachable(inst: Instruction): Result {
@@ -45,7 +72,7 @@ class Checker(
         return prepareAndCheck(state)
     }
 
-    fun prepareState(ps: PredicateState) = transform(ps) {
+    private fun prepareState(ps: PredicateState) = transform(ps) {
         +KexRtAdapter(ctx.cm)
         +StringMethodAdapter(ctx.cm)
         if (annotationsEnabled) {
@@ -59,6 +86,7 @@ class Checker(
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
+        +BasicInvariantsTransformer(method)
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
@@ -69,7 +97,7 @@ class Checker(
         +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(method.cm.type)
+        +TypeNameAdapter(ctx)
     }
 
     fun prepareState(method: Method, ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
@@ -84,6 +112,7 @@ class Checker(
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
+        +BasicInvariantsTransformer(method)
         +ReflectionInfoAdapter(method, loader)
         +Optimizer()
         +ConstantPropagator
@@ -93,7 +122,7 @@ class Checker(
         +ArrayBoundsAdapter()
         +NullityInfoAdapter()
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(method.cm.type)
+        +TypeNameAdapter(ctx)
     }
 
     fun prepareAndCheck(ps: PredicateState): Result {
@@ -101,12 +130,11 @@ class Checker(
         return check(state, state.path)
     }
 
-    fun prepareAndCheck(ps: PredicateState, qry: PredicateState) = check(prepareState(ps), qry)
 
     fun check(ps: PredicateState, qry: PredicateState = emptyState()): Result {
         state = ps
         query = qry
-        if (logQuery) log.debug("State: $state")
+        if (logQuery) log.debug("State: {}", state)
 
         if (isMemspacingEnabled) {
             log.debug("Memspacing started...")
@@ -144,16 +172,16 @@ class Checker(
         state = Optimizer().apply(state)
         query = Optimizer().apply(query)
         if (logQuery) {
-            log.debug("Simplified state: $state")
+            log.debug("Simplified state: {}", state)
             log.debug("State size: ${state.size}")
-            log.debug("Query: $query")
+            log.debug("Query: {}", query)
             log.debug("Query size: ${query.size}")
         }
 
-        val result = SMTProxySolver(method.cm.type).use {
+        val result = SMTProxySolver(ctx).use {
             it.isPathPossible(state, query)
         }
-        log.debug("Acquired $result")
+        log.debug("Acquired {}", result)
         return result
     }
 }

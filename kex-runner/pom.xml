@@ -19,6 +19,7 @@
         <junit.version>4.13.2</junit.version>
 
         <commons-text.version>1.10.0</commons-text.version>
+        <java-stack-trace-parser.version>v1.0.1</java-stack-trace-parser.version>
     </properties>
 
     <dependencies>
@@ -47,12 +48,12 @@
 
         <dependency>
             <groupId>org.vorpal.research</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>kex-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.vorpal.research</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>kex-core</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <type>test-jar</type>

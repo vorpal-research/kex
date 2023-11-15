@@ -7,7 +7,11 @@ import org.vorpal.research.kex.ktype.KexBool
 import org.vorpal.research.kex.ktype.KexInt
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
-import org.vorpal.research.kex.state.predicate.*
+import org.vorpal.research.kex.state.predicate.CallPredicate
+import org.vorpal.research.kex.state.predicate.assume
+import org.vorpal.research.kex.state.predicate.axiom
+import org.vorpal.research.kex.state.predicate.path
+import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
@@ -21,14 +25,17 @@ class Range(val from: Long, val to: Long) : AnnotationInfo() {
             assume { (value ge from) equality true }.wrap() + assume { (value le to) equality true }
 }
 
+@Suppress("unused")
 @AnnotationFunctionality("org.jetbrains.annotations.NotNull")
 class NotNull : AnnotationInfo() {
     override fun preciseValue(value: Term) = assume { value inequality null }.wrap()
 }
 
+@Suppress("unused")
 @AnnotationFunctionality("org.jetbrains.annotations.Nullable")
 class Nullable : AnnotationInfo()
 
+@Suppress("unused")
 @AnnotationFunctionality("org.jetbrains.annotations.Contract")
 class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationInfo() {
 
@@ -38,7 +45,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         New("new"), This("this"), Param("param"), Empty("empty");
 
         companion object {
-            private val byLiteral = values().associateBy { it.literal }
+            private val byLiteral = entries.associateBy { it.literal }
             operator fun get(literal: String) = byLiteral[literal]
                     ?: throw AnnotationParserException("Unsupported value constraint \"$literal\"")
         }

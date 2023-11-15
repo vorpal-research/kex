@@ -2,6 +2,7 @@ package org.vorpal.research.kex.test.concolic;
 
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics;
 
+@SuppressWarnings("ALL")
 public class PrimitiveConcolicTests {
     public void testInt(int a) {
         if (a > 0) {
@@ -18,7 +19,7 @@ public class PrimitiveConcolicTests {
             AssertIntrinsics.kexAssert(true);
         } else if (d == 0.0) {
             AssertIntrinsics.kexAssert(true);
-        } else {
+        } else if (d < 0.0) {
             AssertIntrinsics.kexAssert(true);
         }
     }

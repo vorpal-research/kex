@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.annotations
 
+import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kfg.Package
 import org.w3c.dom.Element
@@ -12,6 +13,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
     private val root = PackageTreeNode("", null)
 
     fun loadFrom(path: File) = scanSubTree(path)
+    @Suppress("unused")
     fun loadFrom(stream: InputStream) = loadAnnotations(stream, "[stream source]")
     fun loadFrom(url: URL) = loadAnnotations(url.openStream(), url.toString())
 
@@ -104,7 +106,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
 
     private fun transformTypeName(name: String) = when (name) {
         "boolean" -> "bool"
-        else -> name.replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+        else -> name.asmString
             .replace("///", "...")
             .replace(" ", "")
             .takeWhile { it != '<' }
@@ -146,7 +148,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                 // this is not a call
                     continue
                 val packageName = nameAttr.substring(0 until delimiter)
-                    .replace(Package.CANONICAL_SEPARATOR, Package.SEPARATOR)
+                    .asmString
                 while (nameAttr[delimiter] == ' ') delimiter++
                 var j = nameAttr.indexOfAny(charArrayOf(' ', '('), delimiter)
                 var returnType = nameAttr.substring(delimiter until j)

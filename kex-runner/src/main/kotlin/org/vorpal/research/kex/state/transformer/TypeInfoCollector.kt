@@ -5,13 +5,34 @@ import org.vorpal.research.kex.ktype.KexReal
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.smt.SMTModel
-import org.vorpal.research.kex.state.*
-import org.vorpal.research.kex.state.predicate.*
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.BasicState
+import org.vorpal.research.kex.state.ChainState
+import org.vorpal.research.kex.state.ChoiceState
+import org.vorpal.research.kex.state.PredicateState
+import org.vorpal.research.kex.state.emptyState
+import org.vorpal.research.kex.state.predicate.ArrayInitializerPredicate
+import org.vorpal.research.kex.state.predicate.ArrayStorePredicate
+import org.vorpal.research.kex.state.predicate.EqualityPredicate
+import org.vorpal.research.kex.state.predicate.FieldInitializerPredicate
+import org.vorpal.research.kex.state.predicate.FieldStorePredicate
+import org.vorpal.research.kex.state.predicate.InequalityPredicate
+import org.vorpal.research.kex.state.predicate.NewArrayInitializerPredicate
+import org.vorpal.research.kex.state.predicate.NewArrayPredicate
+import org.vorpal.research.kex.state.predicate.NewInitializerPredicate
+import org.vorpal.research.kex.state.predicate.NewPredicate
+import org.vorpal.research.kex.state.predicate.Predicate
+import org.vorpal.research.kex.state.predicate.path
+import org.vorpal.research.kex.state.term.ArrayLoadTerm
+import org.vorpal.research.kex.state.term.CastTerm
+import org.vorpal.research.kex.state.term.FieldLoadTerm
+import org.vorpal.research.kex.state.term.InstanceOfTerm
+import org.vorpal.research.kex.state.term.NullTerm
+import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kthelper.logging.log
 
+@Suppress("unused")
 enum class Nullability {
     UNKNOWN, NULLABLE, NON_NULLABLE
 }
@@ -201,6 +222,7 @@ class PlainTypeInfoCollector(
         get() = TypeInfoMap.create(tf, typeInfos)
 
     override fun transformEquality(predicate: EqualityPredicate): Predicate {
+        @Suppress("unused")
         when (val rhv = predicate.rhv) {
             is InstanceOfTerm -> {
                 val checkedType = CastTypeInfo(rhv.checkedType)
@@ -285,6 +307,7 @@ fun collectStaticTypeInfo(tf: TypeFactory, state: PredicateState, tip: TypeInfoM
     return TypeInfoMap.create(typeInfoCollector.typeInfoMap)
 }
 
+@Suppress("unused")
 fun collectTypeInfos(model: SMTModel, tf: TypeFactory, ps: PredicateState): TypeInfoMap {
     val tic = TypeInfoCollector(model, tf)
     tic.apply(ps)

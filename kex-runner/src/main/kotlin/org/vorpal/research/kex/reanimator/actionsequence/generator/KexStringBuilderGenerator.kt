@@ -7,7 +7,6 @@ import org.vorpal.research.kex.ktype.KexChar
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
@@ -41,7 +40,7 @@ class KexStringBuilderGenerator(val fallback: Generator) : Generator {
         if (value != null) {
             val appendMethod = kfgClass.getMethod(
                 "append",
-                kfgClass.type,
+                kfgClass.asType,
                 cm.type.getArrayType(cm.type.charType)
             )
             val valueAS = fallback.generate(value, generationDepth)

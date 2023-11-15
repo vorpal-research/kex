@@ -7,8 +7,8 @@ internal class MutableAnnotatedCall(
     override val returnType: String,
     override val params: MutableList<MutableAnnotatedParam>
 ) : AnnotatedCall {
-    override fun equals(other: Any?) = other is AnnotatedCall
-            && name == other && type == other.type && params == other.params
+    override fun equals(other: Any?) =
+        other is AnnotatedCall && name == other.name && type == other.type && params == other.params
 
     override fun hashCode(): Int {
         var result = name.hashCode()

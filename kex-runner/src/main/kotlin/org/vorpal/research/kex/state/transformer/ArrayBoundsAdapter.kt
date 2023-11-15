@@ -6,7 +6,12 @@ import org.vorpal.research.kex.state.ChoiceState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.basic
-import org.vorpal.research.kex.state.predicate.*
+import org.vorpal.research.kex.state.predicate.GenerateArrayPredicate
+import org.vorpal.research.kex.state.predicate.NewArrayPredicate
+import org.vorpal.research.kex.state.predicate.Predicate
+import org.vorpal.research.kex.state.predicate.assume
+import org.vorpal.research.kex.state.predicate.hasReceiver
+import org.vorpal.research.kex.state.predicate.receiver
 import org.vorpal.research.kex.state.term.ArrayIndexTerm
 import org.vorpal.research.kex.state.term.ConstIntTerm
 import org.vorpal.research.kex.state.term.Term

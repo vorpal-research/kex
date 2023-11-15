@@ -2,22 +2,31 @@ package org.vorpal.research.kex.asm.analysis.concolic.cgs
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
-import org.vorpal.research.kex.state.predicate.EqualityPredicate
+import org.vorpal.research.kex.ExecutionContext
+import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.state.predicate.PredicateType
-import org.vorpal.research.kex.state.predicate.receiver
-import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.trace.symbolic.*
-import org.vorpal.research.kfg.ir.value.instruction.BranchInst
+import org.vorpal.research.kex.state.predicate.state
+import org.vorpal.research.kex.trace.symbolic.Clause
+import org.vorpal.research.kex.trace.symbolic.PathClause
+import org.vorpal.research.kex.trace.symbolic.PathClauseType
+import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
+import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.StateClause
+import org.vorpal.research.kfg.ir.value.EmptyUsageContext
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
+import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.collection.queueOf
-import org.vorpal.research.kthelper.graph.*
-import org.vorpal.research.kthelper.logging.log
-
+import org.vorpal.research.kthelper.graph.DominatorTree
+import org.vorpal.research.kthelper.graph.DominatorTreeBuilder
+import org.vorpal.research.kthelper.graph.GraphView
+import org.vorpal.research.kthelper.graph.PredecessorGraph
+import org.vorpal.research.kthelper.graph.Viewable
 
 sealed class Vertex(val clause: Clause) : PredecessorGraph.PredecessorVertex<Vertex> {
-    val upEdges = mutableSetOf<Vertex>()
+    private val upEdges = mutableSetOf<Vertex>()
     val downEdges = mutableSetOf<Vertex>()
     val states = mutableMapOf<PersistentPathCondition, PersistentSymbolicState>()
 
@@ -54,45 +63,74 @@ data class Context(
     val fullPath: PersistentPathCondition,
     val symbolicState: PersistentSymbolicState
 ) {
+    @Suppress("unused")
     val condition get() = context.last()
     val size get() = context.size
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Context
+
+        return context == other.context
+    }
+
+    override fun hashCode(): Int {
+        return context.hashCode()
+    }
 }
 
 private typealias Branch = Pair<Instruction, PathClauseType>
 
 private val PathVertex.branch get() = Branch(pathClause.instruction, pathClause.type)
 
-class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
-    private val _nodes = mutableMapOf<Clause, Vertex>()
-    private var _root: Vertex? = null
+class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewable {
+    private val root: Vertex = ClauseVertex(
+        StateClause(
+            ctx.cm.instruction.getUnreachable(EmptyUsageContext),
+            state { const(true) equality true })
+    )
+    private val _nodes = mutableMapOf(root.clause to root)
     private var dominators: DominatorTree<Vertex>? = null
     private val edges = mutableMapOf<Clause, PathVertex>()
-    private val exhaustedVertices = mutableSetOf<PathVertex>()
     private val exhaustiveness = mutableMapOf<Branch, MutableSet<PathVertex>>()
-    private val hasEntry get() = _root != null
 
-    override val entry get() = _root!!
+    override val entry get() = root
     override val nodes: Set<Vertex>
         get() = _nodes.values.toSet()
     var depth: Int = 0
         private set
 
-    fun isEmpty(): Boolean = _root == null
+    fun isEmpty(): Boolean = root.downEdges.isEmpty()
 
     fun getPathVertex(clause: Clause) = edges.getValue(clause)
 
+    @Suppress("unused")
     fun isExhausted(clause: Clause) = isExhausted(getPathVertex(clause))
-    fun isExhausted(vertex: PathVertex) = vertex in exhaustedVertices
+    fun isExhausted(vertex: PathVertex): Boolean {
+        val branch = vertex.branch
+        val branches = exhaustiveness.getOrDefault(branch, emptySet())
+        return branches.size == when (branch.second) {
+            PathClauseType.NULL_CHECK -> 2
+            PathClauseType.TYPE_CHECK -> 2
+            PathClauseType.OVERLOAD_CHECK -> instantiationManager.getAllConcreteSubtypes(
+                ((vertex.pathClause.instruction as CallInst).callee.type as ClassType).klass, ctx.accessLevel
+            ).size
 
-    fun markExhausted(clause: Clause) {
-        exhaustedVertices += getPathVertex(clause)
+            PathClauseType.CONDITION_CHECK -> when (val inst = branch.first) {
+                is SwitchInst -> inst.branches.size + 1
+                is TableSwitchInst -> inst.branches.size + 1
+                else -> 2
+            }
+
+            PathClauseType.BOUNDS_CHECK -> 2
+        }
     }
 
     fun getBranches(depth: Int): Set<PathVertex> = getBranchDepths().filter { it.value == depth }.keys
 
     fun addTrace(symbolicState: PersistentSymbolicState) {
-        var prevVertex: Vertex? = null
-
+        var prevVertex = root
         var pathClauses = 1
         for (current in symbolicState.clauses) {
             val currentVertex = _nodes.getOrPut(current) {
@@ -101,26 +139,19 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
                         edges[current] = it
                     }
 
-                    else -> ClauseVertex(current).also {
-                        if (_root == null) {
-                            _root = it
-                        }
-                    }
+                    else -> ClauseVertex(current)
                 }
             }
             if (currentVertex is PathVertex) {
                 currentVertex[symbolicState.path.subPath(0, pathClauses++)] = symbolicState
             }
 
-            prevVertex?.let { prev ->
+            prevVertex.let { prev ->
                 prev.addDownEdge(currentVertex)
                 currentVertex.addUpEdge(prev)
             }
 
             if (currentVertex is PathVertex) {
-                if (!isExhausted(currentVertex) && currentVertex.isInstructionExhaustive) {
-                    exhaustedVertices += currentVertex
-                }
                 exhaustiveness
                     .getOrPut(currentVertex.branch, ::mutableSetOf)
                     .add(currentVertex)
@@ -135,16 +166,16 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
         dominators = DominatorTreeBuilder(this).build()
     }
 
-    fun Vertex.dominates(other: Vertex) = dominators?.let { tree ->
+    private fun Vertex.dominates(other: Vertex) = dominators?.let { tree ->
         tree[this]?.dominates(other)
     } ?: false
 
-    fun contexts(pathVertex: PathVertex, k: Int): List<Context> = pathVertex.states.map { (path, state) ->
+    fun contexts(pathVertex: PathVertex, k: Int): Set<Context> = pathVertex.states.mapTo(mutableSetOf()) { (path, state) ->
         Context(
             path.builder()
                 .map { edges[it]!! }
                 .filter { !it.dominates(pathVertex) }
-                .take(k)
+                .takeLast(k)
                 .toPersistentList(),
             path,
             state
@@ -152,8 +183,6 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
     }
 
     private fun getBranchDepths(): Map<PathVertex, Int> {
-        if (!hasEntry) return emptyMap()
-
         val search = mutableMapOf<PathVertex, Int>()
         val visited = mutableSetOf<Vertex>()
         val queue = queueOf<Pair<Vertex, Int>>()
@@ -174,55 +203,6 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
         return search
     }
 
-    private val PathVertex.isInstructionExhaustive: Boolean
-        get() {
-            val pathClause = clause as PathClause
-
-            val allNeighbours = exhaustiveness.getOrDefault(branch, mutableSetOf())
-            val allPredicates = allNeighbours.map {
-                it.clause.predicate
-            }
-
-            return when (pathClause.type) {
-                PathClauseType.OVERLOAD_CHECK -> false
-                PathClauseType.TYPE_CHECK -> allPredicates.map { it as EqualityPredicate }
-                    .mapTo(mutableSetOf()) { it.rhv }.size == 2
-
-                PathClauseType.NULL_CHECK -> allPredicates.map { it as EqualityPredicate }
-                    .mapTo(mutableSetOf()) { it.rhv }.size == 2
-
-                PathClauseType.BOUNDS_CHECK -> allPredicates.mapTo(mutableSetOf()) { it as EqualityPredicate }.size == 2
-                PathClauseType.CONDITION_CHECK -> when (val inst = clause.instruction) {
-                    is BranchInst -> allPredicates.mapTo(mutableSetOf()) { it as EqualityPredicate }.size == 2
-                    is SwitchInst -> {
-                        val visitedValues = allPredicates.mapTo(mutableSetOf()) {
-                            when (it) {
-                                is EqualityPredicate -> it.rhv
-                                else -> it.receiver
-                            }
-                        }
-                        val keys = inst.branches.keys.mapTo(mutableSetOf()) { term { value(it) } }
-                        keys.all { it in visitedValues } && visitedValues.size >= keys.size + 1
-                    }
-
-                    is TableSwitchInst -> {
-                        val visitedValues = allPredicates.mapTo(mutableSetOf()) {
-                            when (it) {
-                                is EqualityPredicate -> it.rhv
-                                else -> it.receiver
-                            }
-                        }
-                        val keys = inst.range.mapTo(mutableSetOf()) { term { const(it) } }
-                        keys.all { it in visitedValues } && visitedValues.size >= keys.size + 1
-                    }
-
-                    else -> false.also {
-                        log.error("Unknown instruction in condition check ${inst.print()}")
-                    }
-                }
-            }
-        }
-
     override val graphView: List<GraphView>
         get() {
             val graphNodes = mutableMapOf<Vertex, GraphView>()
@@ -230,7 +210,23 @@ class ExecutionTree : PredecessorGraph<Vertex>, Viewable {
 
             var i = 0
             for (vertex in nodes) {
-                graphNodes[vertex] = GraphView("${i++}", "$vertex")
+                graphNodes[vertex] = GraphView("${i++}", "$vertex") {
+                    it.setColor(
+                        when {
+                            vertex is PathVertex && isExhausted(vertex) -> {
+                                info.leadinglight.jdot.enums.Color.X11.green
+                            }
+
+                            vertex is PathVertex -> {
+                                info.leadinglight.jdot.enums.Color.X11.red
+                            }
+
+                            else -> {
+                                info.leadinglight.jdot.enums.Color.X11.blue
+                            }
+                        }
+                    )
+                }
             }
 
             for (vertex in nodes) {

@@ -22,7 +22,36 @@ import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.state.transformer.*
+import org.vorpal.research.kex.state.transformer.AnnotationAdapter
+import org.vorpal.research.kex.state.transformer.BasicInvariantsTransformer
+import org.vorpal.research.kex.state.transformer.BoolTypeAdapter
+import org.vorpal.research.kex.state.transformer.ClassMethodAdapter
+import org.vorpal.research.kex.state.transformer.ConcreteImplInliner
+import org.vorpal.research.kex.state.transformer.ConstEnumAdapter
+import org.vorpal.research.kex.state.transformer.ConstStringAdapter
+import org.vorpal.research.kex.state.transformer.ConstantPropagator
+import org.vorpal.research.kex.state.transformer.DoubleTypeAdapter
+import org.vorpal.research.kex.state.transformer.EqualsTransformer
+import org.vorpal.research.kex.state.transformer.FieldNormalizer
+import org.vorpal.research.kex.state.transformer.IntrinsicAdapter
+import org.vorpal.research.kex.state.transformer.KexIntrinsicsAdapter
+import org.vorpal.research.kex.state.transformer.MemorySpacer
+import org.vorpal.research.kex.state.transformer.Optimizer
+import org.vorpal.research.kex.state.transformer.RecursiveInliner
+import org.vorpal.research.kex.state.transformer.ReflectionInfoAdapter
+import org.vorpal.research.kex.state.transformer.Slicer
+import org.vorpal.research.kex.state.transformer.StaticFieldInliner
+import org.vorpal.research.kex.state.transformer.StensgaardAA
+import org.vorpal.research.kex.state.transformer.TermCollector
+import org.vorpal.research.kex.state.transformer.TermRenamer
+import org.vorpal.research.kex.state.transformer.TypeInfoMap
+import org.vorpal.research.kex.state.transformer.TypeNameAdapter
+import org.vorpal.research.kex.state.transformer.collectArguments
+import org.vorpal.research.kex.state.transformer.collectAssumedTerms
+import org.vorpal.research.kex.state.transformer.collectRequiredTerms
+import org.vorpal.research.kex.state.transformer.collectStaticTypeInfo
+import org.vorpal.research.kex.state.transformer.collectVariables
+import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.ConcreteClass
@@ -46,7 +75,7 @@ private val isSlicingEnabled by lazy { kexConfig.getBooleanValue("smt", "slicing
 
 class CallCiteChecker(
     val ctx: ExecutionContext,
-    val callCiteTarget: Package,
+    private val callCiteTarget: Package,
     val psa: PredicateStateAnalysis
 ) : MethodVisitor {
     override val cm: ClassManager
@@ -184,7 +213,7 @@ class CallCiteChecker(
         id: String? = null
     ): Boolean {
         log.debug("Checking for assertion failure: ${inst.print()} at ${callCite.print()}")
-        log.debug("State: $state")
+        log.debug("State: {}", state)
         val assertionQuery = assertions.map {
             when (it.type) {
                 is KexBool -> require { it equality true }
@@ -212,7 +241,7 @@ class CallCiteChecker(
         }
     }
 
-    fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
+    private fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +RecursiveInliner(psa) { index, psa ->
             ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
@@ -222,6 +251,7 @@ class CallCiteChecker(
         +KexIntrinsicsAdapter()
         +EqualsTransformer()
         +DoubleTypeAdapter()
+        +BasicInvariantsTransformer(method)
         +ReflectionInfoAdapter(method, ctx.loader)
         +Optimizer()
         +ConstantPropagator
@@ -230,7 +260,7 @@ class CallCiteChecker(
         +ConstEnumAdapter(ctx)
         +ConstStringAdapter(method.cm.type)
         +FieldNormalizer(method.cm)
-        +TypeNameAdapter(ctx.types)
+        +TypeNameAdapter(ctx)
     }
 
     private fun getTest(
@@ -244,10 +274,10 @@ class CallCiteChecker(
         generator.printer.targetFile.toPath() to testName
     }
 
-    private fun check(state_: PredicateState, query_: PredicateState): Pair<PredicateState, Result> {
-        val staticTypeInfoMap = collectStaticTypeInfo(types, state_, TypeInfoMap())
-        var state = prepareState(state_, staticTypeInfoMap)
-        var query = query_
+    private fun check(analysisState: PredicateState, analysisQuery: PredicateState): Pair<PredicateState, Result> {
+        val staticTypeInfoMap = collectStaticTypeInfo(types, analysisState, TypeInfoMap())
+        var state = prepareState(analysisState, staticTypeInfoMap)
+        var query = analysisQuery
 
         // memspacing
         runIf(isMemspacingEnabled) {
@@ -287,14 +317,14 @@ class CallCiteChecker(
         state = Optimizer().apply(state)
         query = Optimizer().apply(query)
         if (logQuery) {
-            log.debug("Simplified state: $state")
-            log.debug("Query: $query")
+            log.debug("Simplified state: {}", state)
+            log.debug("Query: {}", query)
         }
 
-        val result = SMTProxySolver(method.cm.type).use {
+        val result = SMTProxySolver(ctx).use {
             it.isViolated(state, query)
         }
-        log.debug("Acquired $result")
+        log.debug("Acquired {}", result)
         return state to result
     }
 

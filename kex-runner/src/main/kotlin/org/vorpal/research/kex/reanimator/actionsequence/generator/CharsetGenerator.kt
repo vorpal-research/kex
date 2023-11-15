@@ -1,8 +1,8 @@
 package org.vorpal.research.kex.reanimator.actionsequence.generator
 
-import org.vorpal.research.kex.descriptor.*
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.ktype.KexString
-import org.vorpal.research.kex.ktype.type
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
@@ -34,10 +34,10 @@ class CharsetGenerator(private val fallback: Generator) : Generator {
         val nameDescriptor = descriptor["name", KexString()] as? ObjectDescriptor
         val actualName = nameDescriptor?.asStringValue ?: DEFAULT_CHARSET
         actionSequence += if (actualName in existingCharsets) {
-            StaticFieldGetter(charsetsClass.getField(actualName, charsetClass.type))
+            StaticFieldGetter(charsetsClass.getField(actualName, charsetClass.asType))
         } else {
             log.warn("Could not generate charset with name $actualName, falling back to default $DEFAULT_CHARSET")
-            StaticFieldGetter(charsetsClass.getField(DEFAULT_CHARSET, charsetClass.type))
+            StaticFieldGetter(charsetsClass.getField(DEFAULT_CHARSET, charsetClass.asType))
         }
         return actionSequence
     }

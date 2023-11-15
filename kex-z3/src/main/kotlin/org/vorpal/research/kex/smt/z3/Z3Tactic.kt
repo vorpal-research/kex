@@ -14,7 +14,7 @@ private val tacticsFile by lazy {
 }
 
 @Serializable
-class Z3Tactics(private val elements: List<Z3Tactic>) : List<Z3Tactic> by elements {
+class Z3Tactics(private val elements: List<Z3Tactic>) : Iterable<Z3Tactic> {
     fun toJson() = Json.encodeToString(this)
 
     companion object {
@@ -28,6 +28,8 @@ class Z3Tactics(private val elements: List<Z3Tactic>) : List<Z3Tactic> by elemen
 
         fun fromJson(json: String) = Json.decodeFromString<Z3Tactics>(json)
     }
+
+    override fun iterator() = elements.iterator()
 }
 
 @Serializable

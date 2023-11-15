@@ -8,7 +8,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class BoolectorSolverTest : KexTest() {
+class BoolectorSolverTest : KexTest("boolector-solver") {
 
     @BeforeTest
     fun setup() {

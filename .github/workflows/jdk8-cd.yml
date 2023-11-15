@@ -1,0 +1,39 @@
+name: Java CD
+
+on:
+  release:
+    types: [ published ]
+
+jobs:
+  publish:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Build sources
+        id: build
+        run: |
+          mvn versions:set -DnewVersion=${{ github.event.release.tag_name }}
+          mvn package --file pom.xml -s .github/github-settings.xml
+
+      - name: Clean temporary files after the tests
+        run: rm -rf test-temp/
+
+      - name: Create zip archive with the release
+        run: zip release.zip ./* -r
+
+      - name: Attach zip archive to the release
+        id: upload-source-asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: release.zip
+          asset_name: ${{ github.event.repository.name }}-${{ github.event.release.tag_name }}.zip
+          asset_content_type: application/zip

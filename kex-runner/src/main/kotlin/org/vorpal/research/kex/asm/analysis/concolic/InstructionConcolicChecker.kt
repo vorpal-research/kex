@@ -1,11 +1,18 @@
 package org.vorpal.research.kex.asm.analysis.concolic
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.yield
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorImpl
 import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
+import org.vorpal.research.kex.asm.analysis.concolic.gui.GUIProxySelector
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.compile.CompilerHelper
@@ -19,9 +26,10 @@ import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.trace.runner.SymbolicExternalTracingRunner
 import org.vorpal.research.kex.trace.runner.generateDefaultParameters
 import org.vorpal.research.kex.trace.runner.generateParameters
-import org.vorpal.research.kex.trace.symbolic.ExecutionCompletedResult
-import org.vorpal.research.kex.trace.symbolic.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
+import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
+import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
@@ -44,6 +52,8 @@ class InstructionConcolicChecker(
     private val compilerHelper = CompilerHelper(ctx)
 
     private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
+    private val guiEnabled = kexConfig.getBooleanValue("gui", "enabled", false)
+
     private var testIndex = AtomicInteger(0)
 
     companion object {
@@ -57,7 +67,7 @@ class InstructionConcolicChecker(
             log.debug("Time budget: $timeLimit")
 
             val actualNumberOfExecutors = maxOf(1, minOf(executors, targets.size))
-            val coroutineContext = newFixedThreadPoolContext(actualNumberOfExecutors, "concolic-dispatcher")
+            val coroutineContext = newFixedThreadPoolContextWithMDC(actualNumberOfExecutors, "concolic-dispatcher")
             runBlocking(coroutineContext) {
                 withTimeoutOrNull(timeLimit.seconds) {
                     targets.map {
@@ -107,14 +117,23 @@ class InstructionConcolicChecker(
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
 
-    private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? = tryOrNull {
-        method.checkAsync(ctx, state)?.let { collectTrace(method, it) }
+    private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? = try {
+        method.checkAsync(ctx, state, enableInlining = true)?.let { collectTrace(method, it) }
+    } catch (e: Throwable) {
+        if (e !is TimeoutCancellationException) {
+            log.error("Exception during asyncCheck:", e)
+        }
+        null
     }
 
-    private fun buildPathSelector() = when (searchStrategy) {
-        "bfs" -> BfsPathSelectorImpl(ctx)
-        "cgs" -> ContextGuidedSelector(ctx)
-        else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
+    private fun buildPathSelector(): ConcolicPathSelector {
+        val pathSelector = when (searchStrategy) {
+            "bfs" -> BfsPathSelectorImpl(ctx)
+            "cgs" -> ContextGuidedSelector(ctx)
+            else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
+        }
+
+        return if (guiEnabled) GUIProxySelector(pathSelector) else pathSelector
     }
 
     private suspend fun handleStartingTrace(
