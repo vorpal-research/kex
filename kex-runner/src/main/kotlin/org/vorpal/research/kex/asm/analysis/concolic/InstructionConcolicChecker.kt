@@ -113,18 +113,23 @@ class InstructionConcolicChecker(
 
         compilerHelper.compileFile(testFile)
         val result = collectTrace(generator.testKlassName)
+        if (result is ExecutionCompletedResult) {
+            val executionFinalInfoGenerator = ExecutionFinalInfoGenerator(ctx, method)
+            val testWithAssertionsGenerator =
+                UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
+            val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
+            val finalInfoActionSequences = finalInfoDescriptors?.let {
+                executionFinalInfoGenerator.generateFinalInfoActionSequences(it)
+            }
+            testWithAssertionsGenerator.generate(parameters, finalInfoActionSequences)
+            val testFile2 = testWithAssertionsGenerator.emit()
 
-        val executionFinalInfoGenerator = ExecutionFinalInfoGenerator(ctx, method)
-        val testWithAssertionsGenerator = UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
-        val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
-        val finalInfoActionSequences = finalInfoDescriptors?.let {
-            executionFinalInfoGenerator.generateFinalInfoActionSequences(it)
+            compilerHelper.compileFile(testFile2)
+            collectTrace(testWithAssertionsGenerator.testKlassName)
         }
-        testWithAssertionsGenerator.generate(parameters, finalInfoActionSequences)
-        val testFile2 = testWithAssertionsGenerator.emit()
-
-        compilerHelper.compileFile(testFile2)
-        collectTrace(testWithAssertionsGenerator.testKlassName)
+        else {
+            result
+        }
     }
 
     private suspend fun collectTrace(klassName: String): ExecutionResult {

@@ -97,6 +97,16 @@ class JavaBuilder(val pkg: String = "") {
             return doStatement
         }
 
+        fun anAssertThrows(exception: String, lambdaStatement: LambdaStatement): AssertThrowsStatement =
+            AssertThrowsStatement(StringType(exception), lambdaStatement).also { subStatements += it }
+
+        fun aLambda(body: LambdaStatement.() -> Unit): LambdaStatement {
+            val lambdaStatement = LambdaStatement()
+            lambdaStatement.body()
+            // TODO: think about adding in subStatements
+            return lambdaStatement
+        }
+
         fun aTry(body: TryCatchStatement.() -> Unit): TryCatchStatement {
             val tryStatement = TryCatchStatement()
             tryStatement.body()
@@ -213,6 +223,31 @@ class JavaBuilder(val pkg: String = "") {
 
         fun aWhile(condition: String) {
             this.condition = StringConditionStatement(condition)
+        }
+    }
+
+    data class LambdaStatement(
+        val arguments: MutableList<JavaFunction.JavaArgument> = mutableListOf(),
+        override val subStatements: MutableList<JavaStatement> = mutableListOf()
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}(${arguments.joinToString(", ")}) -> {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            appendLine("${level.asOffset}}")
+        }
+    }
+
+    data class AssertThrowsStatement(
+        val exception: Type,
+        val lambdaStatement: LambdaStatement
+    ) : JavaStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}$exception thrown = assertThrows(")
+            appendLine("${(level+1).asOffset}$exception.class,")
+            append(lambdaStatement.print(level+1))
+            append("${level.asOffset});")
         }
     }
 

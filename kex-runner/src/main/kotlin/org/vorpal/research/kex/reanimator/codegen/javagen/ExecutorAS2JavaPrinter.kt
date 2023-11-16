@@ -3,6 +3,7 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asserter.ExecutionExceptionFinalInfo
 import org.vorpal.research.kex.asserter.ExecutionFinalInfo
+import org.vorpal.research.kex.asserter.ExecutionSuccessFinalInfo
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexBool
 import org.vorpal.research.kex.ktype.KexByte
@@ -101,8 +102,12 @@ class ExecutorAS2JavaPrinter(
             import("java.lang.reflect.Constructor")
             import("java.lang.reflect.Field")
             import("java.lang.reflect.Array")
-            exception?.let { import(it.javaClass) }
+            exception?.let {
+                import(it.javaClass)
+                importStatic("org.junit.Assert.assertThrows")
+            }
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
+            importStatic("${equalityUtils.klass.pkg}.${equalityUtils.klass.name}.*")
 
             with(klass) {
                 if (generateSetup) {
@@ -112,11 +117,14 @@ class ExecutorAS2JavaPrinter(
                                 testParams += field(it.name, type("Object"))
                         }
                     }
-                    actionSequences.arguments.plus(executionFinalInfo?.args ?: listOf())
-                        .forEach { arg ->
-                        val type = when (arg) {
-                            is UnknownSequence -> arg.type
-                            is ActionList -> arg.firstNotNullOfOrNull {
+                    actionSequences.arguments
+                        .plus(executionFinalInfo?.args ?: listOf())
+                        .plus(listOfNotNull(executionFinalInfo?.instance))
+                        .plus(listOfNotNull((executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue))
+                        .forEach { descriptor ->
+                        val type = when (descriptor) {
+                            is UnknownSequence -> descriptor.type
+                            is ActionList -> descriptor.firstNotNullOfOrNull {
                                 when (it) {
                                     is DefaultConstructorCall -> it.klass.asType
                                     is ConstructorCall -> it.constructor.klass.asType
@@ -130,7 +138,7 @@ class ExecutorAS2JavaPrinter(
                                 }
                             } ?: unreachable { log.error("Unexpected call in arg") }
 
-                            is ReflectionList -> arg.firstNotNullOfOrNull {
+                            is ReflectionList -> descriptor.firstNotNullOfOrNull {
                                 when (it) {
                                     is ReflectionNewInstance -> it.type
                                     is ReflectionNewArray -> it.type
@@ -143,8 +151,8 @@ class ExecutorAS2JavaPrinter(
                             else -> unreachable { log.error("Unexpected call in arg") }
                         }
                         val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
-                        if (testParams.all { it.name != arg.name }) {
-                            testParams += field(arg.name, fieldType)
+                        if (testParams.all { it.name != descriptor.name }) {
+                            testParams += field(descriptor.name, fieldType)
                         }
                     }
                 }
@@ -170,6 +178,8 @@ class ExecutorAS2JavaPrinter(
                 cs.printAsJava()
 
             executionFinalInfo?.args?.forEach { it.printAsJava() }
+            executionFinalInfo?.instance?.printAsJava()
+            (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue?.printAsJava()
 
             if (surroundInTryCatch) statement("} catch (${exceptionClassName ?: "Throwable"} e) {}")
         }
@@ -181,23 +191,14 @@ class ExecutorAS2JavaPrinter(
                     current = method(testName) {
                         returnType = void
                         annotations += "Test"
-                        if (executionFinalInfo == null) exceptions += "Throwable"
                     }
                 }
             }
         }
 
         with(current) {
-            if (executionFinalInfo != null) {
-                aTry {
-                    printTestCall(method, actionSequences, executionFinalInfo, this)
-                }.catch {
-                    exceptions += JavaBuilder.StringType("Throwable")
-                    if (exceptionClassName != null)
-                        +"assert(e instanceof $exceptionClassName)"
-                }
-            }
-            else printTestCall(method, actionSequences, executionFinalInfo, current)
+            exceptions += if (exception != null) "ClassNotFoundException" else "Throwable"
+            printTestCall(method, actionSequences, executionFinalInfo, this)
         }
     }
 
@@ -222,6 +223,9 @@ class ExecutorAS2JavaPrinter(
         methodBuilder: JavaBuilder.ControlStatement
     ) =
         with(methodBuilder) {
+            val exception = (executionFinalInfo as? ExecutionExceptionFinalInfo)
+            val exceptionClassName = exception?.javaClass?.split('.')?.last()
+
             +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
             +"Class<?>[] argTypes = new Class<?>[${method.argTypes.size}]"
             for ((index, type) in method.argTypes.withIndex()) {
@@ -231,18 +235,40 @@ class ExecutorAS2JavaPrinter(
             for ((index, arg) in actionSequences.arguments.withIndex()) {
                 +"args[$index] = ${arg.stackName}"
             }
-            +when {
+
+            val methodInvocation = when {
                 method.isConstructor -> "${reflectionUtils.callConstructor.name}(klass, argTypes, args)"
+                (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue != null ->
+                    "Object retValue = ${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
                 else -> "${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
+            }
+            if (exceptionClassName != null) {
+                anAssertThrows(
+                    exceptionClassName,
+                    aLambda {
+                        +methodInvocation
+                    }
+                )
+            }
+            else {
+                +methodInvocation
+            }
+            executionFinalInfo?.instance?.let { instanceInfo ->
+                if (!instanceInfo.isConstantValue) {
+                    +"assert(${actionSequences.instance?.stackName}.equals(${instanceInfo.stackName}))"
+                    +"${equalityUtils.customEquals.name}(${actionSequences.instance?.stackName}, ${instanceInfo.stackName})"
+                }
             }
             if (executionFinalInfo?.isException() == false) {
                 for ((i, arg) in actionSequences.arguments.withIndex()) {
-                    if (!arg.isConstantValue)
-                        +"assert(${arg.stackName} == ${executionFinalInfo.args[i].stackName})"
+                    if (!arg.isConstantValue) {
+                        +"assert(${arg.stackName}.equals(${executionFinalInfo.args[i].stackName}))"
+                        +"${equalityUtils.customEquals.name}(${arg.stackName}, ${executionFinalInfo.args[i].stackName})"
+                    }
                 }
-                executionFinalInfo.instance?.let { instanceInfo ->
-                    if (!instanceInfo.isConstantValue)
-                        +"assert(${actionSequences.instance?.stackName} == ${instanceInfo.stackName})"
+                (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue?.let { retValueInfo ->
+                    +"assert(retValue.equals(${retValueInfo.stackName}))"
+                    +"${equalityUtils.customEquals.name}(retValue, ${retValueInfo.stackName})"
                 }
             }
         }

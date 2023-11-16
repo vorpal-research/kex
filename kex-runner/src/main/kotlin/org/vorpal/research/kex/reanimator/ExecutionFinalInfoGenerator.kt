@@ -45,10 +45,10 @@ class ExecutionFinalInfoGenerator(val ctx: ExecutionContext, val method: Method)
                     ExecutionExceptionFinalInfo(instance, args, executionResult.cause, exceptionClassName)
                 }
                 is SuccessResult -> {
-                    val retValue = method.body.bodyBlocks
+                    val retInst = method.body.bodyBlocks
                             .map { it.instructions }.flatten()
                             .filterIsInstance<ReturnInst>().firstOrNull()
-                            ?.returnValue
+                    val retValue = if (retInst?.hasReturnValue == true) retInst.returnValue else null
                     val retDescriptor = if (retValue is Constant) {
                         DescriptorBuilder().const(retValue)
                     } else {

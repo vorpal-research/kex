@@ -1,9 +1,9 @@
-package org.vorpal.research.kex.reanimator.codegen.javagen;
+package org.vorpal.research.kex.equtils;
 
 import java.util.*;;
 import java.lang.reflect.Field;
 
-public class RecursiveEquivalent {
+public class EqualityUtils {
 
     public static boolean equalsBoolean(boolean t1, boolean t2) {
         return t1 == t2;
@@ -209,7 +209,7 @@ public class RecursiveEquivalent {
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
             field.setAccessible(true);
-            try {
+             try {
                 result.put(field.getName(), field.get(obj));
             }
             catch (IllegalAccessException e) {
