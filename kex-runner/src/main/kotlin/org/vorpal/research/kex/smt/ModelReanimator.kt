@@ -141,7 +141,7 @@ class ObjectReanimator(
         return when (type) {
             is KexBool -> (value as ConstBoolTerm).value
             is KexByte -> value.numericValue.toByte()
-            is KexChar -> value.numericValue.toChar()
+            is KexChar -> value.numericValue.toInt().toChar()
             is KexShort -> value.numericValue.toShort()
             is KexInt -> value.numericValue.toInt()
             is KexLong -> value.numericValue.toLong()
@@ -379,7 +379,7 @@ abstract class DescriptorReanimator(
         else when (term.type) {
             is KexBool -> const((value as ConstBoolTerm).value)
             is KexByte -> const(value.numericValue.toByte())
-            is KexChar -> const(value.numericValue.toChar())
+            is KexChar -> const(value.numericValue.toInt().toChar())
             is KexShort -> const(value.numericValue.toShort())
             is KexInt -> const(value.numericValue.toInt())
             is KexLong -> const(value.numericValue.toLong())
@@ -579,7 +579,7 @@ abstract class DescriptorReanimator(
                     is KexPointer -> reanimateReferencePointer(term, value)
                     is KexBool -> const(intVal.toBoolean())
                     is KexByte -> const(intVal.toByte())
-                    is KexChar -> const(intVal.toChar())
+                    is KexChar -> const(intVal.toInt().toChar())
                     is KexShort -> const(intVal.toShort())
                     is KexInt -> const(intVal)
                     is KexLong -> const(intVal.toLong())
