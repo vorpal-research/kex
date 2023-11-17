@@ -32,6 +32,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import java.util.stream.Collectors
 import kotlin.io.path.*
 import kotlin.streams.toList
 import kotlin.time.Duration
@@ -62,7 +63,7 @@ class TestwiseCoverage(
         cm: ClassManager,
         analysisLevel: AnalysisLevel,
     ): TestwiseCoverageInfo {
-        val testClasses = Files.walk(compileDir).filter { it.isClass }.toList()
+        val testClasses = Files.walk(compileDir).filter { it.isClass }.collect(Collectors.toList())
         val result = when (analysisLevel) {
             is PackageLevel -> {
                 val classes = Files.walk(jacocoInstrumentedDir)
@@ -73,7 +74,7 @@ class TestwiseCoverage(
                                 .asmString
                         )
                     }
-                    .toList()
+                    .collect(Collectors.toList())
                 getTestwiseCoverage(classes, testClasses)
             }
 
@@ -138,6 +139,7 @@ class TestwiseCoverage(
         val tests = mutableListOf<TestCoverageInfo>()
 
         for (testPath in testClasses) {
+            if (testPath.toString().endsWith("ReflectionUtils.class", ignoreCase = true)) continue
             val runtime = LoggerRuntime()
             val originalClasses = mutableMapOf<Path, ByteArray>()
             for (classPath in classes) {

@@ -34,9 +34,14 @@ abstract class SymbolicTest(
             InstructionSymbolicChecker.run(analysisContext, setOf(method))
         }
 
+//        val coverage_before = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass)) //TODO(Don't forget to delete this comments)
+//        println("CoverageReporter Before: $coverage_before.instructionCoverage.ratio")
+
         Minimizer(listOf(jar), klass.cm, ClassLevel(klass)).execute()
 
         val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))
+//        println("CoverageReporter After: $coverage.instructionCoverage.ratio") // TODO(Don't forget to delete this comments)
+
         log.debug(coverage.print(true))
         assertEquals(expectedCoverage, coverage.instructionCoverage.ratio, eps)
     }
