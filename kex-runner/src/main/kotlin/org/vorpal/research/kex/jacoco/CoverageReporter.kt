@@ -19,6 +19,7 @@ import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
+import org.vorpal.research.kex.util.PathClassLoader
 import org.vorpal.research.kex.util.PermanentCoverageInfo
 import org.vorpal.research.kex.util.PermanentSaturationCoverageInfo
 import org.vorpal.research.kex.util.asArray
@@ -489,29 +490,34 @@ class CoverageReporter(
         } as T
     }
 
-    class PathClassLoader(val paths: List<Path>) : ClassLoader() {
-        private val cache = hashMapOf<String, Class<*>>()
-        override fun loadClass(name: String): Class<*> {
-            synchronized(this.getClassLoadingLock(name)) {
-                if (name in cache) return cache[name]!!
-
-                val fileName = name.replace(Package.CANONICAL_SEPARATOR, File.separatorChar) + ".class"
-                for (path in paths) {
-                    val resolved = path.resolve(fileName)
-                    if (resolved.exists()) {
-                        val bytes = resolved.readBytes()
-                        val klass = defineClass(name, bytes, 0, bytes.size)
-                        cache[name] = klass
-                        return klass
-                    }
-                }
-            }
-            return parent?.loadClass(name) ?: throw ClassNotFoundException()
-        }
-    }
+//    class PathClassLoader(val paths: List<Path>) : ClassLoader() {
+//        private val cache = hashMapOf<String, Class<*>>()
+//        override fun loadClass(name: String): Class<*> {
+//            synchronized(this.getClassLoadingLock(name)) {
+//                if (name in cache) return cache[name]!!
+//
+//                val fileName = name.replace(Package.CANONICAL_SEPARATOR, File.separatorChar) + ".class"
+//                for (path in paths) {
+//                    val resolved = path.resolve(fileName)
+//                    if (resolved.exists()) {
+//                        val bytes = resolved.readBytes()
+//                        val klass = defineClass(name, bytes, 0, bytes.size)
+//                        cache[name] = klass
+//                        return klass
+//                    }
+//                }
+//            }
+//            return parent?.loadClass(name) ?: throw ClassNotFoundException()
+//        }
+//    }
 }
 
-fun reportCoverage(containers: List<Container>, cm: ClassManager, analysisLevel: AnalysisLevel) {
+fun reportCoverage(
+    containers: List<Container>,
+    cm: ClassManager,
+    analysisLevel: AnalysisLevel,
+    mode: String
+) {
     if (kexConfig.getBooleanValue("kex", "computeCoverage", true)) {
         val coverageInfo = when {
             kexConfig.getBooleanValue("kex", "computeSaturationCoverage", true) -> {
@@ -533,7 +539,7 @@ fun reportCoverage(containers: List<Container>, cm: ClassManager, analysisLevel:
             coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
         )
 
-        PermanentCoverageInfo.putNewInfo("concolic", analysisLevel.toString(), coverageInfo)
+        PermanentCoverageInfo.putNewInfo(mode, analysisLevel.toString(), coverageInfo)
         PermanentCoverageInfo.emit()
     }
 }

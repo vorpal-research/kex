@@ -15,7 +15,7 @@ import org.vorpal.research.kex.state.StateBuilder
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.util.asmString
+import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
@@ -26,7 +26,7 @@ import org.vorpal.research.kthelper.tryOrNull
 
 val ignores by lazy {
     kexConfig.getMultipleStringValue("inliner", "ignoreStatic")
-        .mapTo(mutableSetOf()) { it.asmString }
+        .mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
 }
 
 class StaticFieldInliner(
@@ -116,6 +116,7 @@ class StaticFieldInliner(
                     log.debug("Model: {}", result.model)
                     generateFinalDescriptors(staticInit, ctx, result.model, checker.state)
                 }
+
                 else -> return null
             }
 
@@ -148,7 +149,7 @@ class StaticFieldInliner(
                     }
                 }
             }
-            .filterNotTo(mutableSetOf()) { it.klass.fullName in ignores }
+            .filterNotTo(mutableSetOf()) { field -> ignores.any { filter -> filter.matches(field.klass) } }
         for (field in staticInitializers) {
             val descriptor = getStaticField(ctx, psa, field)
             currentBuilder += descriptor.query

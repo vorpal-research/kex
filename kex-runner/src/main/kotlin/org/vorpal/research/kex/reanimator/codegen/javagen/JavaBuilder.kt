@@ -23,6 +23,7 @@ class JavaBuilder(val pkg: String = "") {
             '\u000c' -> "\\f"
             '\'' -> "\\'"
             '\"' -> "\\\""
+            '\\' -> "\\\\"
             else -> char
         }
     }

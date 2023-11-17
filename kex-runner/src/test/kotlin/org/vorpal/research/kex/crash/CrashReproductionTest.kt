@@ -5,20 +5,17 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.KexRunnerTest
-import org.vorpal.research.kex.asm.analysis.crash.CrashReproductionChecker
 import org.vorpal.research.kex.asm.analysis.crash.StackTrace
 import org.vorpal.research.kex.asm.manager.ClassInstantiationDetector
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.util.PathClassLoader
 import org.vorpal.research.kex.util.compiledCodeDirectory
-import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
-import org.vorpal.research.kfg.visitor.MethodVisitor
 import org.vorpal.research.kfg.visitor.executePipeline
 import org.vorpal.research.kthelper.assert.unreachable
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.reflect.InvocationTargetException
-import java.net.URLClassLoader
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
@@ -37,13 +34,6 @@ abstract class CrashReproductionTest(
         private const val TEST_METHOD = "test"
     }
 
-    override fun createTraceCollector(context: ExecutionContext) = object : MethodVisitor {
-        override val cm: ClassManager
-            get() = context.cm
-
-        override fun cleanup() {}
-    }
-
     fun assertCrash(expectedStackTrace: StackTrace) = withConfigOption("testGen", "surroundInTryCatch", "false") {
         executePipeline(analysisContext.cm, Package.defaultPackage) {
             +ClassInstantiationDetector(analysisContext)
@@ -59,7 +49,7 @@ abstract class CrashReproductionTest(
     }
 
     private fun executeTest(testKlass: String): StackTrace {
-        val loader = URLClassLoader(arrayOf(kexConfig.compiledCodeDirectory.toUri().toURL()))
+        val loader = PathClassLoader(listOf(kexConfig.compiledCodeDirectory))
         val actualClass = loader.loadClass(testKlass)
         val instance = actualClass.getConstructor().newInstance()
 

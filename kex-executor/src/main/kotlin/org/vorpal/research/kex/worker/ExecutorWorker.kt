@@ -21,7 +21,7 @@ class ExecutorWorker(
             val result = try {
                 executor.executeTest(request)
             } catch (e: Throwable) {
-                log.error("Failed: $e")
+                log.error("Failed:", e)
                 ExecutionFailedResult(e.message ?: "")
             }
             if (!connection.send(result)) {

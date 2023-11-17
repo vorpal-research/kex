@@ -53,8 +53,7 @@ suspend fun Method.checkAsync(
     val checker = AsyncChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
-    val concreteTypeInfo = state.concreteValueMap
-        .mapValues { it.value.type }
+    val concreteTypeInfo = state.concreteTypes
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
@@ -89,8 +88,7 @@ suspend fun Method.checkAsyncAndSlice(
     val checker = AsyncChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
-    val concreteTypeInfo = state.concreteValueMap
-        .mapValues { it.value.type }
+    val concreteTypeInfo = state.concreteTypes
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
@@ -132,8 +130,7 @@ suspend fun Method.checkAsyncIncremental(
     val checker = AsyncIncrementalChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
-    val concreteTypeInfo = state.concreteValueMap
-        .mapValues { it.value.type }
+    val concreteTypeInfo = state.concreteTypes
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
@@ -179,8 +176,7 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
     val checker = AsyncIncrementalChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
-    val concreteTypeInfo = state.concreteValueMap
-        .mapValues { it.value.type }
+    val concreteTypeInfo = state.concreteTypes
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()

@@ -4,7 +4,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asserter.ExecutionFinalInfo
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.UnsafeGenerator
+
 import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
 import org.vorpal.research.kex.util.getConstructor
@@ -26,6 +26,7 @@ import org.vorpal.research.kfg.type.NullType
 import org.vorpal.research.kfg.type.ShortType
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.VoidType
+import org.vorpal.research.kfg.type.classType
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.lang.reflect.Constructor
@@ -389,7 +390,7 @@ open class ActionSequence2KotlinPrinter(
             else -> name
         }
 
-    private fun printApiCall(owner: ActionSequence, codeAction: CodeAction) = when (codeAction) {
+    private fun printApiCall(owner: ActionSequence, codeAction: CodeAction): String = when (codeAction) {
         is DefaultConstructorCall -> printDefaultConstructor(owner, codeAction)
         is ConstructorCall -> printConstructorCall(owner, codeAction)
         is ExternalConstructorCall -> printExternalConstructorCall(owner, codeAction)
@@ -401,7 +402,11 @@ open class ActionSequence2KotlinPrinter(
         is StaticFieldSetter -> printStaticFieldSetter(codeAction)
         is EnumValueCreation -> printEnumValueCreation(owner, codeAction)
         is StaticFieldGetter -> printStaticFieldGetter(owner, codeAction)
-        else -> unreachable { log.error("Unknown call") }
+        is ClassConstantGetter -> printClassConstantGetter(owner, codeAction)
+        is ArrayClassConstantGetter -> printArrayClassConstantGetter(owner, codeAction)
+        is ExternalMethodCall -> TODO()
+        is InnerClassConstructorCall -> TODO()
+        is NewArrayWithInitializer -> TODO()
     }
 
     private fun printReflectionCall(owner: ActionSequence, reflectionCall: ReflectionCall): List<String> =
@@ -584,6 +589,19 @@ open class ActionSequence2KotlinPrinter(
         val actualType = call.field.klass.asType.getAsType(false)
         actualTypes[owner] = actualType
         return "val ${owner.name} = ${call.field.klass.kotlinString}.${call.field.name}"
+    }
+
+    protected open fun printClassConstantGetter(owner: ActionSequence, call: ClassConstantGetter): String {
+        val actualType = ASClass(ctx.types.classType)
+        actualTypes[owner] = actualType
+        return "val ${owner.name} = ${call.type.kotlinString}::class.java"
+    }
+
+    protected open fun printArrayClassConstantGetter(owner: ActionSequence, call: ArrayClassConstantGetter): String {
+        call.elementType.printAsKt()
+        val actualType = ASClass(ctx.types.classType)
+        actualTypes[owner] = actualType
+        return "val ${owner.name} =  = Array.newInstance(${call.elementType.stackName}, 0).javaClass"
     }
 
     private fun printTestCall(sequence: TestCall): String {

@@ -12,7 +12,7 @@
     <artifactId>kex-ksmt</artifactId>
 
     <properties>
-        <ksmt.version>0.5.7</ksmt.version>
+        <ksmt.version>0.5.8</ksmt.version>
     </properties>
 
     <dependencies>
@@ -30,12 +30,12 @@
 
         <dependency>
             <groupId>org.vorpal.research</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>kex-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.vorpal.research</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>kex-core</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <type>test-jar</type>

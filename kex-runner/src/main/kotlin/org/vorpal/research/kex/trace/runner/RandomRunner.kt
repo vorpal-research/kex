@@ -10,6 +10,7 @@ import org.vorpal.research.kex.util.isStatic
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.tryOrNull
 import sun.misc.Unsafe
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
@@ -67,7 +68,7 @@ private fun defaultNotNull(klass: Class<*>): Any? = when (klass) {
     Long::class.javaPrimitiveType -> 0L
     Float::class.javaPrimitiveType -> 0.0f
     Double::class.javaPrimitiveType -> 0.0
-    else -> UNSAFE.allocateInstance(klass)
+    else -> tryOrNull { UNSAFE.allocateInstance(klass) }
 }
 
 fun generateDefaultParameters(method: Constructor<*>): Parameters<Any?>? = try {

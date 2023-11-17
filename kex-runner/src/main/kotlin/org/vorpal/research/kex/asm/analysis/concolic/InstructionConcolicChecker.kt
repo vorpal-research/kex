@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.asm.analysis.concolic
 
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
@@ -113,21 +114,27 @@ class InstructionConcolicChecker(
 
         compilerHelper.compileFile(testFile)
         val result = collectTrace(generator.testKlassName)
-        if (result is ExecutionCompletedResult) {
-            val executionFinalInfoGenerator = ExecutionFinalInfoGenerator(ctx, method)
-            val testWithAssertionsGenerator =
-                UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
-            val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
-            val finalInfoActionSequences = finalInfoDescriptors?.let {
-                executionFinalInfoGenerator.generateFinalInfoActionSequences(it)
-            }
-            testWithAssertionsGenerator.generate(parameters, finalInfoActionSequences)
-            val testFile2 = testWithAssertionsGenerator.emit()
+        try {
+            if (result is ExecutionCompletedResult) {
+                val executionFinalInfoGenerator = ExecutionFinalInfoGenerator(ctx, method)
+                val testWithAssertionsGenerator =
+                    UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
+                val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
+                val finalInfoActionSequences = finalInfoDescriptors?.let {
+                    executionFinalInfoGenerator.generateFinalInfoActionSequences(it)
+                }
+                testWithAssertionsGenerator.generate(parameters, finalInfoActionSequences)
+                val testFile2 = testWithAssertionsGenerator.emit()
 
-            compilerHelper.compileFile(testFile2)
-            collectTrace(testWithAssertionsGenerator.testKlassName)
-        }
-        else {
+                compilerHelper.compileFile(testFile2)
+                collectTrace(testWithAssertionsGenerator.testKlassName)
+            } else {
+                result
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println(method.name)
+            println((result as? ExecutionCompletedResult)?.trace)
             result
         }
     }
@@ -138,8 +145,13 @@ class InstructionConcolicChecker(
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
 
-    private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? = tryOrNull {
+    private suspend fun check(method: Method, state: SymbolicState): ExecutionResult? = try {
         method.checkAsync(ctx, state, enableInlining = true)?.let { collectTrace(method, it) }
+    } catch (e: Throwable) {
+        if (e !is TimeoutCancellationException) {
+            log.error("Exception during asyncCheck:", e)
+        }
+        null
     }
 
     private fun buildPathSelector(): ConcolicPathSelector {

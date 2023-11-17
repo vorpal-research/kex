@@ -156,7 +156,7 @@ class KSMTSolver(
         val result = check(ksmtState, queryBuilder(ksmtQuery))
         log.debug("Check finished")
         when (result.first) {
-            KSolverStatus.UNSAT -> Result.UnsatResult
+            KSolverStatus.UNSAT -> Result.UnsatResult()
             KSolverStatus.UNKNOWN -> Result.UnknownResult(result.second as String)
             KSolverStatus.SAT -> Result.SatResult(collectModel(ctx, result.second as KModel, state))
         }
@@ -673,7 +673,7 @@ class KSMTSolver(
         log.debug("Check finished")
         results.mapIndexed { index, (status, any, ctx) ->
             when (status) {
-                KSolverStatus.UNSAT -> Result.UnsatResult
+                KSolverStatus.UNSAT -> Result.UnsatResult()
                 KSolverStatus.UNKNOWN -> Result.UnknownResult(any as String)
                 KSolverStatus.SAT -> Result.SatResult(
                     collectModel(

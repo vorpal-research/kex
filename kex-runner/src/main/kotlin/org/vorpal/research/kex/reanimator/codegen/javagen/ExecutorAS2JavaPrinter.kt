@@ -237,7 +237,7 @@ class ExecutorAS2JavaPrinter(
             }
 
             val methodInvocation = when {
-                method.isConstructor -> "${reflectionUtils.callConstructor.name}(klass, argTypes, args)"
+                method.isConstructor -> "Object instance = ${reflectionUtils.callConstructor.name}(klass, argTypes, args)"
                 (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue != null ->
                     "Object retValue = ${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
                 else -> "${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
@@ -253,13 +253,14 @@ class ExecutorAS2JavaPrinter(
             else {
                 +methodInvocation
             }
-            executionFinalInfo?.instance?.let { instanceInfo ->
-                if (!instanceInfo.isConstantValue) {
-                    +"assert(${actionSequences.instance?.stackName}.equals(${instanceInfo.stackName}))"
-                    +"${equalityUtils.customEquals.name}(${actionSequences.instance?.stackName}, ${instanceInfo.stackName})"
-                }
-            }
             if (executionFinalInfo?.isException() == false) {
+                executionFinalInfo.instance?.let { instanceInfo ->
+                    val instanceName = if (method.isConstructor) "instance" else actionSequences.instance?.stackName
+                    if (!instanceInfo.isConstantValue && instanceName != null) {
+                        +"assert($instanceName.equals(${instanceInfo.stackName}))"
+                        +"${equalityUtils.customEquals.name}(${actionSequences.instance?.stackName}, ${instanceInfo.stackName})"
+                    }
+                }
                 for ((i, arg) in actionSequences.arguments.withIndex()) {
                     if (!arg.isConstantValue) {
                         +"assert(${arg.stackName}.equals(${executionFinalInfo.args[i].stackName}))"

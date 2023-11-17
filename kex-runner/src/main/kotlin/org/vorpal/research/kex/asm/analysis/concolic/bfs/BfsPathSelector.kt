@@ -14,8 +14,8 @@ import org.vorpal.research.kex.trace.symbolic.PersistentClauseList
 import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
-import org.vorpal.research.kex.trace.symbolic.toPersistentState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
+import org.vorpal.research.kex.trace.symbolic.toPersistentState
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.IntConstant
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
@@ -61,7 +61,8 @@ class BfsPathSelectorImpl(
                         val new = persistentSymbolicState(
                             currentState + reversed,
                             newPath,
-                            state.concreteValueMap,
+                            state.concreteTypes,
+                            state.concreteValues,
                             state.termMap
                         )
                         deque += new

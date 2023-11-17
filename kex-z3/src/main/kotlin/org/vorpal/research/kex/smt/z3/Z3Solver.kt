@@ -68,7 +68,7 @@ class Z3Solver(
         val result = check(z3State, queryBuilder(z3query))
         log.debug("Check finished")
         return when (result.first) {
-            Status.UNSATISFIABLE -> Result.UnsatResult
+            Status.UNSATISFIABLE -> Result.UnsatResult()
             Status.UNKNOWN -> Result.UnknownResult(result.second as String)
             Status.SATISFIABLE -> Result.SatResult(collectModel(ctx, result.second as Model, state))
         }
@@ -489,7 +489,7 @@ class Z3Solver(
         log.debug("Check finished")
         return results.mapIndexed { index, (status, any) ->
             when (status) {
-                Status.UNSATISFIABLE -> Result.UnsatResult
+                Status.UNSATISFIABLE -> Result.UnsatResult()
                 Status.UNKNOWN -> Result.UnknownResult(any as String)
                 Status.SATISFIABLE -> Result.SatResult(
                     collectModel(

@@ -67,7 +67,8 @@ class ContextGuidedSelector(
             val next = nextEdge() ?: continue
             if (executionTree.isExhausted(next)) continue
 
-            val contexts = executionTree.contexts(next, k).filter { it !in visitedContexts }
+            val nonFilteredContexts = executionTree.contexts(next, k)
+            val contexts = nonFilteredContexts.filter { it !in visitedContexts }
             for (context in contexts) {
                 val path = context.fullPath.removeAt(context.fullPath.lastIndex)
                 val activeClause = context.fullPath.lastOrNull() ?: continue
@@ -90,7 +91,8 @@ class ContextGuidedSelector(
         return persistentSymbolicState(
             state,
             currentState.path + currentState.revertedClause,
-            currentStateState.concreteValueMap,
+            currentStateState.concreteTypes,
+            currentStateState.concreteValues,
             currentStateState.termMap
         )
     }
@@ -118,6 +120,7 @@ class ContextGuidedSelector(
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
         executionTree.addTrace(result.trace.toPersistentState())
+//        executionTree.view()
     }
 
     override fun reverse(pathClause: PathClause): PathClause? = pathClause.reversed()

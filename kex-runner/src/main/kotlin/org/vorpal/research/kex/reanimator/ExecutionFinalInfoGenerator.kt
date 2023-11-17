@@ -9,7 +9,6 @@ import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorBuilder
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.ktype.KexClass
-import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.generator.ConcolicSequenceGenerator
@@ -21,16 +20,15 @@ import org.vorpal.research.kex.trace.symbolic.protocol.SuccessResult
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Constant
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
-import org.vorpal.research.kthelper.logging.log
 
 class ExecutionFinalInfoGenerator(val ctx: ExecutionContext, val method: Method) {
     private val asGenerator = ConcolicSequenceGenerator(ctx, PredicateStateAnalysis(ctx.cm))
 
     fun extractFinalInfo(executionResult: ExecutionResult): ExecutionFinalInfo<Descriptor>? = when (executionResult) {
         is ExecutionCompletedResult -> {
-            val instance = executionResult.trace.concreteValueMap.entries
+            val instance = executionResult.trace.concreteValues.entries
                     .firstOrNull { it.key.name == "this" }?.value?.deepCopy()
-            val args = executionResult.trace.concreteValueMap
+            val args = executionResult.trace.concreteValues
                     .filterKeys { it is ArgumentTerm }.map { it.value.deepCopy() }
 
             when(executionResult) {
@@ -53,7 +51,7 @@ class ExecutionFinalInfoGenerator(val ctx: ExecutionContext, val method: Method)
                         DescriptorBuilder().const(retValue)
                     } else {
                         val retTerm = executionResult.trace.termMap.entries.firstOrNull { it.value.value == retValue }?.key
-                        executionResult.trace.concreteValueMap[retTerm]
+                        executionResult.trace.concreteValues[retTerm]
                     }
                     ExecutionSuccessFinalInfo(instance, args, retDescriptor)
                 }

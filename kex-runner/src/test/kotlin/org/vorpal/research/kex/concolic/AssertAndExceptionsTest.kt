@@ -20,4 +20,9 @@ class AssertAndExceptionsTest : ConcolicTest("assert-and-exceptions")  {
     fun assertAndExceptionsTest2() {
         assertCoverage(cm["org/vorpal/research/kex/test/concolic/AssertAndExceptionsTests2"], 1.0)
     }
+
+    @Test
+    fun assertAndExceptionsTest3() {
+        assertCoverage(cm["org/vorpal/research/kex/test/concolic/AssertAndExceptionsTests3"], 1.0)
+    }
 }

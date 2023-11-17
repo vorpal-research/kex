@@ -53,7 +53,7 @@ class RunnerCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-runner", arg
     options += outputDirOpt
 
     val mode = Option("m", "mode", true, "run mode: ${
-        LaunchMode.values().joinToString(", ") { it.toString().lowercase() }
+        LaunchMode.entries.joinToString(", ") { it.toString().lowercase() }
     }")
     mode.isRequired = false
     options += mode
