@@ -1,0 +1,59 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-56
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.criteria.pnl.NetLossCriterion
+
+---Compilation---
+Compiled 'org/ta4j/core/criteria/pnl/EqualityUtils.java'
+Compiled 'org/ta4j/core/criteria/pnl/NetLossCriterion_betterThan_10599591230.java'
+Compiled 'org/ta4j/core/criteria/pnl/NetLossCriterion_betterThan_10599591231.java'
+Compiled 'org/ta4j/core/criteria/pnl/NetLossCriterion_calculate_7852599760.java'
+Compiled 'org/ta4j/core/criteria/pnl/NetLossCriterion_calculate_7852599761.java'
+Compiled 'org/ta4j/core/criteria/pnl/NetLossCriterion_calculate_9121650110.java'
+Compiled 'org/ta4j/core/criteria/pnl/NetLossCriterion_calculate_9121650111.java'
+Compiled 'org/ta4j/core/criteria/pnl/NetLossCriterion_init_16010097300.java'
+Compiled 'org/ta4j/core/criteria/pnl/NetLossCriterion_init_16010097301.java'
+Compiled 'org/ta4j/core/criteria/pnl/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 7 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.criteria.pnl.NetLossCriterion, method=calculate, methodDesc=(Lorg/ta4j/core/BarSeries;Lorg/ta4j/core/Position;)Lorg/ta4j/core/num/Num;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=NetLossCriterion.java, block=1, lineNumber=43, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-56
+	Class Under Test: org.ta4j.core.criteria.pnl.NetLossCriterion
+	Run number: 1
+	Tool preparation time (ms): 6197
+	Tool test cases generation time (ms): 1262597
+	Test cases execution time (ms): 197
+	Test case number: 8
+	Uncompilable Test Classes: 0
+	Broken tests number: 8
+	Failing tests number: 0
+	Lines total: 11
+	Lines covered: 2
+	Lines coverage ratio (%): 18.181818
+	Conditions total: 4
+	Conditions covered: 1
+	Conditions coverage ratio (%): 25.0
+	Mutants total: 7
+	Mutants covered: 1
+	Mutants coverage ratio (%): 14.285715
+	Mutants killed: 1
+	Mutants killed ratio (%): 14.285715
+	Mutants alive: 6

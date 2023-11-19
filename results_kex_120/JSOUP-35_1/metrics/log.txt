@@ -1,0 +1,77 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-35
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.jsoup.safety.Cleaner
+
+---Compilation---
+Compiled 'org/jsoup/safety/Cleaner_clean_17149344720.java'
+Compiled 'org/jsoup/safety/Cleaner_clean_17149344721.java'
+Compiled 'org/jsoup/safety/Cleaner_copySafeNodes_15577442520.java'
+Compiled 'org/jsoup/safety/Cleaner_copySafeNodes_15577442521.java'
+Compiled 'org/jsoup/safety/Cleaner_createSafeElement_5064628040.java'
+Compiled 'org/jsoup/safety/Cleaner_createSafeElement_5064628041.java'
+Compiled 'org/jsoup/safety/Cleaner_init_3886454980.java'
+Compiled 'org/jsoup/safety/Cleaner_init_3886454981.java'
+Compiled 'org/jsoup/safety/Cleaner_isValidBodyHtml_5074134310.java'
+Compiled 'org/jsoup/safety/Cleaner_isValidBodyHtml_5074134311.java'
+Compiled 'org/jsoup/safety/Cleaner_isValid_17071088490.java'
+Compiled 'org/jsoup/safety/Cleaner_isValid_17071088491.java'
+Compiled 'org/jsoup/safety/EqualityUtils.java'
+Compiled 'org/jsoup/safety/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 21 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.safety.Cleaner, method=copySafeNodes, methodDesc=(Lorg/jsoup/nodes/Element;Lorg/jsoup/nodes/Element;)I], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Cleaner.java, block=10, lineNumber=176, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.safety.Cleaner, method=<init>, methodDesc=(Lorg/jsoup/safety/Safelist;)V], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=Cleaner.java, block=0, lineNumber=43, description=removed call to org/jsoup/helper/Validate::notNull, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.safety.Cleaner, method=isValid, methodDesc=(Lorg/jsoup/nodes/Document;)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=Cleaner.java, block=2, lineNumber=87, description=removed call to org/jsoup/helper/Validate::notNull, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.safety.Cleaner, method=copySafeNodes, methodDesc=(Lorg/jsoup/nodes/Element;Lorg/jsoup/nodes/Element;)I], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=Cleaner.java, block=10, lineNumber=175, description=removed call to org/jsoup/select/NodeTraversor::traverse, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.safety.Cleaner, method=isValidBodyHtml, methodDesc=(Ljava/lang/String;)Z], indexes=[48], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=Cleaner.java, block=7, lineNumber=123, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.safety.Cleaner, method=isValidBodyHtml, methodDesc=(Ljava/lang/String;)Z], indexes=[45], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=Cleaner.java, block=6, lineNumber=123, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.safety.Cleaner, method=isValidBodyHtml, methodDesc=(Ljava/lang/String;)Z], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Cleaner.java, block=9, lineNumber=123, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.safety.Cleaner, method=clean, methodDesc=(Lorg/jsoup/nodes/Document;)Lorg/jsoup/nodes/Document;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=Cleaner.java, block=1, lineNumber=55, description=removed call to org/jsoup/helper/Validate::notNull, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-35
+	Class Under Test: org.jsoup.safety.Cleaner
+	Run number: 1
+	Tool preparation time (ms): 3233
+	Tool test cases generation time (ms): 134506
+	Test cases execution time (ms): 531
+	Test case number: 12
+	Uncompilable Test Classes: 0
+	Broken tests number: 11
+	Failing tests number: 0
+	Lines total: 41
+	Lines covered: 18
+	Lines coverage ratio (%): 43.90244
+	Conditions total: 16
+	Conditions covered: 2
+	Conditions coverage ratio (%): 12.5
+	Mutants total: 21
+	Mutants covered: 8
+	Mutants coverage ratio (%): 38.095238
+	Mutants killed: 8
+	Mutants killed ratio (%): 38.095238
+	Mutants alive: 13

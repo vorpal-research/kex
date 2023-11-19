@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,TA4J-53,org.ta4j.core.criteria.SqnCriterion,1,6759,150575,223,12,0,8,0,29,10,34.482758,10,0,0.0,11,0,0.0,0,0.0,11,120,14
+ 
+ 
+ 
+

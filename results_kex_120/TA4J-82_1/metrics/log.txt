@@ -1,0 +1,75 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-82
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.analysis.Returns
+
+---Compilation---
+Compiled 'org/ta4j/core/analysis/EqualityUtils.java'
+Compiled 'org/ta4j/core/analysis/ReflectionUtils.java'
+Compiled 'org/ta4j/core/analysis/Returns_calculate_10761367180.java'
+Compiled 'org/ta4j/core/analysis/Returns_calculate_10761367181.java'
+Compiled 'org/ta4j/core/analysis/Returns_calculate_17353189720.java'
+Compiled 'org/ta4j/core/analysis/Returns_calculate_17353189721.java'
+Compiled 'org/ta4j/core/analysis/Returns_calculate_18622240070.java'
+Compiled 'org/ta4j/core/analysis/Returns_calculate_18622240071.java'
+Compiled 'org/ta4j/core/analysis/Returns_fillToTheEnd_5666455000.java'
+Compiled 'org/ta4j/core/analysis/Returns_fillToTheEnd_5666455001.java'
+Compiled 'org/ta4j/core/analysis/Returns_getBarSeries_18753731350.java'
+Compiled 'org/ta4j/core/analysis/Returns_getBarSeries_18753731351.java'
+Compiled 'org/ta4j/core/analysis/Returns_getSize_11774498330.java'
+Compiled 'org/ta4j/core/analysis/Returns_getSize_11774498331.java'
+Compiled 'org/ta4j/core/analysis/Returns_getValue_12430431790.java'
+Compiled 'org/ta4j/core/analysis/Returns_getValue_12430431791.java'
+Compiled 'org/ta4j/core/analysis/Returns_getValues_14335670180.java'
+Compiled 'org/ta4j/core/analysis/Returns_getValues_14335670181.java'
+Compiled 'org/ta4j/core/analysis/Returns_init_3721354780.java'
+Compiled 'org/ta4j/core/analysis/Returns_init_3721354781.java'
+Compiled 'org/ta4j/core/analysis/Returns_init_7330466890.java'
+Compiled 'org/ta4j/core/analysis/Returns_init_7330466891.java'
+Compiled 'org/ta4j/core/analysis/Returns_numOf_19974519520.java'
+Compiled 'org/ta4j/core/analysis/Returns_numOf_19974519521.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 27 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.analysis.Returns, method=getValues, methodDesc=()Ljava/util/List;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Returns.java, block=2, lineNumber=118, description=mutated return of Object value for org/ta4j/core/analysis/Returns::getValues to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.analysis.Returns, method=getBarSeries, methodDesc=()Lorg/ta4j/core/BarSeries;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Returns.java, block=4, lineNumber=132, description=mutated return of Object value for org/ta4j/core/analysis/Returns::getBarSeries to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-82
+	Class Under Test: org.ta4j.core.analysis.Returns
+	Run number: 1
+	Tool preparation time (ms): 18256
+	Tool test cases generation time (ms): 164546
+	Test cases execution time (ms): 319
+	Test case number: 22
+	Uncompilable Test Classes: 0
+	Broken tests number: 20
+	Failing tests number: 0
+	Lines total: 57
+	Lines covered: 5
+	Lines coverage ratio (%): 8.77193
+	Conditions total: 12
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 27
+	Mutants covered: 2
+	Mutants coverage ratio (%): 7.4074073
+	Mutants killed: 2
+	Mutants killed ratio (%): 7.4074073
+	Mutants alive: 25

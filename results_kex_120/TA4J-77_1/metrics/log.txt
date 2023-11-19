@@ -1,0 +1,57 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-77
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.criteria.helpers.VarianceCriterion
+
+---Compilation---
+Compiled 'org/ta4j/core/criteria/helpers/EqualityUtils.java'
+Compiled 'org/ta4j/core/criteria/helpers/ReflectionUtils.java'
+Compiled 'org/ta4j/core/criteria/helpers/VarianceCriterion_betterThan_15665678830.java'
+Compiled 'org/ta4j/core/criteria/helpers/VarianceCriterion_betterThan_15665678831.java'
+Compiled 'org/ta4j/core/criteria/helpers/VarianceCriterion_calculate_7562752790.java'
+Compiled 'org/ta4j/core/criteria/helpers/VarianceCriterion_calculate_7562752791.java'
+Compiled 'org/ta4j/core/criteria/helpers/VarianceCriterion_calculate_8831803140.java'
+Compiled 'org/ta4j/core/criteria/helpers/VarianceCriterion_calculate_8831803141.java'
+Compiled 'org/ta4j/core/criteria/helpers/VarianceCriterion_init_13643530680.java'
+Compiled 'org/ta4j/core/criteria/helpers/VarianceCriterion_init_13643530681.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 6 mutants 
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-77
+	Class Under Test: org.ta4j.core.criteria.helpers.VarianceCriterion
+	Run number: 1
+	Tool preparation time (ms): 11542
+	Tool test cases generation time (ms): 163307
+	Test cases execution time (ms): 149
+	Test case number: 8
+	Uncompilable Test Classes: 0
+	Broken tests number: 8
+	Failing tests number: 0
+	Lines total: 25
+	Lines covered: 4
+	Lines coverage ratio (%): 16.0
+	Conditions total: 4
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 6
+	Mutants covered: 0
+	Mutants coverage ratio (%): 0.0
+	Mutants killed: 0
+	Mutants killed ratio (%): 0.0
+	Mutants alive: 6

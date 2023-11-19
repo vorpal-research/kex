@@ -1,0 +1,1323 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-16
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+Creating directory ./temp
+Creating directory ./temp/data
+Creating directory ./temp/testcases
+Executing /home/kex/./runtool
+>> BENCHMARK
+>> /var/benchmarks/projects/commons-collections/src/main/java
+>> /var/benchmarks/projects/commons-collections/target/classes
+>> 23
+>> /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar
+>> /var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar
+>> 0
+expecting CLASSPATH or READY
+<< READY
+>> 120
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.sequence.ReplacementsFinder
+
+
+Starting class org.apache.commons.collections4.sequence.ReplacementsFinder
+
+
+Ending class org.apache.commons.collections4.sequence.ReplacementsFinder
+Creating directory results_kex_120/COLLECTIONS-16_1/temp/testcases/bin
+Creating dummy JUnit test file
+
+---Compilation---
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/SBSTDummyForCoverageAndMutationCalculation.java
+
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/EqualityUtils.java
+
+Compiled 'org/apache/commons/collections4/sequence/EqualityUtils.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java
+
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/apache/commons/collections4/sequence/ReflectionUtils.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReplacementsFinder_init_2788347750.java
+
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/apache/commons/collections4/sequence/ReplacementsFinder_init_2788347750.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReplacementsFinder_init_2788347751.java
+
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/apache/commons/collections4/sequence/ReplacementsFinder_init_2788347751.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReplacementsFinder_visitDeleteCommand_20154642350.java
+
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/apache/commons/collections4/sequence/ReplacementsFinder_visitDeleteCommand_20154642350.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReplacementsFinder_visitDeleteCommand_20154642351.java
+
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/apache/commons/collections4/sequence/ReplacementsFinder_visitDeleteCommand_20154642351.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReplacementsFinder_visitInsertCommand_4353537210.java
+
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/apache/commons/collections4/sequence/ReplacementsFinder_visitInsertCommand_4353537210.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReplacementsFinder_visitInsertCommand_4353537211.java
+
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/apache/commons/collections4/sequence/ReplacementsFinder_visitInsertCommand_4353537211.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReplacementsFinder_visitKeepCommand_3372517070.java
+
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/apache/commons/collections4/sequence/ReplacementsFinder_visitKeepCommand_3372517070.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases -cp /var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/COLLECTIONS-16_1/temp/testcases/bin /home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReplacementsFinder_visitKeepCommand_3372517071.java
+
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/org/apache/commons/collections4/sequence/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/apache/commons/collections4/sequence/ReplacementsFinder_visitKeepCommand_3372517071.java'
+
+---Timing Information---
+Running tests with the following classpath: 
+/var/benchmarks/projects/commons-collections/target/commons-collections4-4.5-SNAPSHOT.jar:/var/benchmarks/projects/commons-collections/target/dependency/error_prone_annotations-2.18.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-core-1.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/easymock-5.1.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/checker-qual-3.33.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-lang3-3.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-codec-1.16.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/failureaccess-1.0.1.jar:/var/benchmarks/projects/commons-collections/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/objenesis-3.3.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-testlib-32.1.2-jre.jar:/var/benchmarks/projects/commons-collections/target/dependency/j2objc-annotations-2.8.jar:/var/benchmarks/projects/commons-collections/target/dependency/hamcrest-2.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/junit-4.13.2.jar:/var/benchmarks/projects/commons-collections/target/dependency/commons-io-2.13.0.jar:/var/benchmarks/projects/commons-collections/target/dependency/guava-32.1.2-jre.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/bin
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.apache.commons.collections4.sequence.EqualityUtils, org.apache.commons.collections4.sequence.ReflectionUtils, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347751, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642350, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537210, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517070, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071]
+Executions terminated
+Failure: [initializationError(org.apache.commons.collections4.sequence.EqualityUtils): No runnable methods]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.apache.commons.collections4.sequence.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitDeleteCommand(ReplacementsFinder.java:110)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351.test(ReplacementsFinder_visitDeleteCommand_20154642351.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitInsertCommand(ReplacementsFinder.java:80)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211.test(ReplacementsFinder_visitInsertCommand_4353537211.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitKeepCommand(ReplacementsFinder.java:93)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071.test(ReplacementsFinder_visitKeepCommand_3372517071.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+
+---The tests are re-executed other four times to find the flaky ones---
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.apache.commons.collections4.sequence.EqualityUtils, org.apache.commons.collections4.sequence.ReflectionUtils, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347751, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642350, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537210, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517070, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071]
+Executions terminated
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.apache.commons.collections4.sequence.EqualityUtils, org.apache.commons.collections4.sequence.ReflectionUtils, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347751, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642350, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537210, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517070, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071]
+Failure: [initializationError(org.apache.commons.collections4.sequence.EqualityUtils): No runnable methods]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.apache.commons.collections4.sequence.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitDeleteCommand(ReplacementsFinder.java:110)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351.test(ReplacementsFinder_visitDeleteCommand_20154642351.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitInsertCommand(ReplacementsFinder.java:80)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211.test(ReplacementsFinder_visitInsertCommand_4353537211.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitKeepCommand(ReplacementsFinder.java:93)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071.test(ReplacementsFinder_visitKeepCommand_3372517071.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Executions terminated
+Failure: [initializationError(org.apache.commons.collections4.sequence.EqualityUtils): No runnable methods]
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.apache.commons.collections4.sequence.EqualityUtils, org.apache.commons.collections4.sequence.ReflectionUtils, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347751, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642350, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537210, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517070, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.apache.commons.collections4.sequence.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitDeleteCommand(ReplacementsFinder.java:110)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351.test(ReplacementsFinder_visitDeleteCommand_20154642351.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitInsertCommand(ReplacementsFinder.java:80)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211.test(ReplacementsFinder_visitInsertCommand_4353537211.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitKeepCommand(ReplacementsFinder.java:93)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071.test(ReplacementsFinder_visitKeepCommand_3372517071.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Executions terminated
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.apache.commons.collections4.sequence.EqualityUtils, org.apache.commons.collections4.sequence.ReflectionUtils, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347751, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642350, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537210, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517070, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071]
+Failure: [initializationError(org.apache.commons.collections4.sequence.EqualityUtils): No runnable methods]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.apache.commons.collections4.sequence.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitDeleteCommand(ReplacementsFinder.java:110)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351.test(ReplacementsFinder_visitDeleteCommand_20154642351.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitInsertCommand(ReplacementsFinder.java:80)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211.test(ReplacementsFinder_visitInsertCommand_4353537211.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitKeepCommand(ReplacementsFinder.java:93)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071.test(ReplacementsFinder_visitKeepCommand_3372517071.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Executions terminated
+Failure: [initializationError(org.apache.commons.collections4.sequence.EqualityUtils): No runnable methods]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.apache.commons.collections4.sequence.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.apache.commons.collections4.sequence.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitDeleteCommand(ReplacementsFinder.java:110)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351.test(ReplacementsFinder_visitDeleteCommand_20154642351.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitInsertCommand(ReplacementsFinder.java:80)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211.test(ReplacementsFinder_visitInsertCommand_4353537211.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071): null]
+Failing Tests: test(org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071)
+java.lang.NullPointerException
+	at org.apache.commons.collections4.sequence.ReplacementsFinder.visitKeepCommand(ReplacementsFinder.java:93)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.commons.collections4.sequence.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071.test(ReplacementsFinder_visitKeepCommand_3372517071.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+
+=== Run Jacoco for Coverage ===
+Number of instrumented file = 8644
+Running tests with the following classpath: 
+/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/commons-collections4-4.5-SNAPSHOT_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/error_prone_annotations-2.18.0_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/junit-jupiter-params-5.9.3_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/hamcrest-core-1.3_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/easymock-5.1.0_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/checker-qual-3.33.0_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/junit-jupiter-engine-5.9.3_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/junit-platform-engine-1.9.3_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/commons-lang3-3.13.0_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/junit-jupiter-api-5.9.3_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/commons-codec-1.16.0_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/apiguardian-api-1.1.2_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/opentest4j-1.2.0_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/failureaccess-1.0.1_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/jsr305-3.0.2_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/objenesis-3.3_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/guava-testlib-32.1.2-jre_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/j2objc-annotations-2.8_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/hamcrest-2.2_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/junit-4.13.2_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/commons-io-2.13.0_instrumented.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/guava-32.1.2-jre_instrumented.jar:/usr/local/bin/lib/hamcrest-core.jar:/usr/local/bin/lib/junit.jar:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/bin
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.apache.commons.collections4.sequence.EqualityUtils, org.apache.commons.collections4.sequence.ReflectionUtils, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347751, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642350, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537210, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517070, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071]
+Executions terminated
+Number of file with coverage information = 566
+Extracted coverage data for the class org/apache/commons/collections4/sequence/ReplacementsFinder
+Number of file with coverage information = 26
+Number of file with coverage information = 343
+Number of file with coverage information = 45
+Number of file with coverage information = 2827
+Number of file with coverage information = 358
+Number of file with coverage information = 134
+Number of file with coverage information = 127
+Number of file with coverage information = 390
+Number of file with coverage information = 0
+Number of file with coverage information = 179
+Number of file with coverage information = 109
+Number of file with coverage information = 3
+Number of file with coverage information = 7
+Number of file with coverage information = 2
+Number of file with coverage information = 35
+Number of file with coverage information = 43
+Number of file with coverage information = 630
+Number of file with coverage information = 13
+Number of file with coverage information = 108
+Number of file with coverage information = 350
+Number of file with coverage information = 329
+Number of file with coverage information = 2020
+
+=== Run PIT ===
+Matching Jacoco with PIT: find covered mutations
+Executing Mutation Analysis using 6 mutants 
+Evaluating mutant -1621475377 using tests: [org.apache.commons.collections4.sequence.EqualityUtils, org.apache.commons.collections4.sequence.ReflectionUtils, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347751, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642350, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537210, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517070, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/COLLECTIONS-16_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/bin:results_kex_120/COLLECTIONS-16_1/temp/testcases/mutated_code/CUT0
+
+Failed test initializationError(org.apache.commons.collections4.sequence.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.apache.commons.collections4.sequence.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.ReplacementsFinder, method=visitKeepCommand, methodDesc=(Ljava/lang/Object;)V], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator] killed by test (org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750),test)
+Evaluating mutant -1621471533 using tests: [org.apache.commons.collections4.sequence.EqualityUtils, org.apache.commons.collections4.sequence.ReflectionUtils, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347751, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642350, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537210, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517070, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/COLLECTIONS-16_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/bin:results_kex_120/COLLECTIONS-16_1/temp/testcases/mutated_code/CUT1
+
+Failed test initializationError(org.apache.commons.collections4.sequence.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.apache.commons.collections4.sequence.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.ReplacementsFinder, method=visitKeepCommand, methodDesc=(Ljava/lang/Object;)V], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator] killed by test (org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750),test)
+Evaluating mutant 1871610113 using tests: [org.apache.commons.collections4.sequence.EqualityUtils, org.apache.commons.collections4.sequence.ReflectionUtils, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750, org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347751, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642350, org.apache.commons.collections4.sequence.ReplacementsFinder_visitDeleteCommand_20154642351, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537210, org.apache.commons.collections4.sequence.ReplacementsFinder_visitInsertCommand_4353537211, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517070, org.apache.commons.collections4.sequence.ReplacementsFinder_visitKeepCommand_3372517071]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/COLLECTIONS-16_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/COLLECTIONS-16_1/temp/testcases/bin:results_kex_120/COLLECTIONS-16_1/temp/testcases/mutated_code/CUT2
+
+Failed test initializationError(org.apache.commons.collections4.sequence.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.apache.commons.collections4.sequence.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.ReplacementsFinder, method=visitKeepCommand, methodDesc=(Ljava/lang/Object;)V], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator] killed by test (org.apache.commons.collections4.sequence.ReplacementsFinder_init_2788347750),test)
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.ReplacementsFinder, method=visitKeepCommand, methodDesc=(Ljava/lang/Object;)V], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ReplacementsFinder.java, block=2, lineNumber=93, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.ReplacementsFinder, method=visitKeepCommand, methodDesc=(Ljava/lang/Object;)V], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ReplacementsFinder.java, block=3, lineNumber=93, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.ReplacementsFinder, method=visitKeepCommand, methodDesc=(Ljava/lang/Object;)V], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=ReplacementsFinder.java, block=4, lineNumber=94, description=Replaced integer addition with subtraction, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-16
+	Class Under Test: org.apache.commons.collections4.sequence.ReplacementsFinder
+	Run number: 1
+	Tool preparation time (ms): 9979
+	Tool test cases generation time (ms): 144081
+	Test cases execution time (ms): 135
+	Test case number: 8
+	Uncompilable Test Classes: 0
+	Broken tests number: 5
+	Failing tests number: 0
+	Lines total: 17
+	Lines covered: 13
+	Lines coverage ratio (%): 76.47059
+	Conditions total: 4
+	Conditions covered: 2
+	Conditions coverage ratio (%): 50.0
+	Mutants total: 6
+	Mutants covered: 3
+	Mutants coverage ratio (%): 50.0
+	Mutants killed: 3
+	Mutants killed ratio (%): 50.0
+	Mutants alive: 3
+
+
+Class org.apache.commons.collections4.sequence.ReplacementsFinder ended.
+Stopping process...
+Tool subprocess is an instance of java.lang.UNIXProcess
+Tool subprocess Id is 160992
+Killing master process 160992
+Executing command kill -9 160992
+Execution of command kill -9 160992 finished.
+Process was destroyed

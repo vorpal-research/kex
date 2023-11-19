@@ -1,0 +1,55 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-62
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.indicators.helpers.LossIndicator
+
+---Compilation---
+Compiled 'org/ta4j/core/indicators/helpers/EqualityUtils.java'
+Compiled 'org/ta4j/core/indicators/helpers/LossIndicator_calculate_11381847850.java'
+Compiled 'org/ta4j/core/indicators/helpers/LossIndicator_calculate_11381847851.java'
+Compiled 'org/ta4j/core/indicators/helpers/LossIndicator_init_11399518090.java'
+Compiled 'org/ta4j/core/indicators/helpers/LossIndicator_init_11399518091.java'
+Compiled 'org/ta4j/core/indicators/helpers/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 7 mutants 
+mutationResult.getState() IGNORED
+* Ignored mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.helpers.LossIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LossIndicator.java, block=1, lineNumber=44, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-62
+	Class Under Test: org.ta4j.core.indicators.helpers.LossIndicator
+	Run number: 1
+	Tool preparation time (ms): 7379
+	Tool test cases generation time (ms): 154091
+	Test cases execution time (ms): 108
+	Test case number: 4
+	Uncompilable Test Classes: 0
+	Broken tests number: 6
+	Failing tests number: 0
+	Lines total: 8
+	Lines covered: 1
+	Lines coverage ratio (%): 12.5
+	Conditions total: 4
+	Conditions covered: 1
+	Conditions coverage ratio (%): 25.0
+	Mutants total: 6
+	Mutants covered: 0
+	Mutants coverage ratio (%): 0.0
+	Mutants killed: 0
+	Mutants killed ratio (%): 0.0
+	Mutants alive: 6

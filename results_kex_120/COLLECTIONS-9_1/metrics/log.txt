@@ -1,0 +1,239 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-9
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.map.CompositeMap
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/map/CompositeMap_addComposited_18680843480.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_addComposited_18680843481.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_clear_10154006130.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_clear_10154006131.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_containsKey_17378735170.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_containsKey_17378735171.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_containsValue_5801149170.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_containsValue_5801149171.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_entrySet_7176497700.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_entrySet_7176497701.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_equals_8062637620.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_equals_8062637621.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_get_18914027880.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_get_18914027881.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_hashCode_3575770870.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_hashCode_3575770871.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_19263747610.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_19263747611.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_20581157790.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_20581157791.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_5555393820.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_5555393821.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_6986384540.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_6986384541.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_8283843360.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_init_8283843361.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_isEmpty_20486027450.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_isEmpty_20486027451.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_keySet_17488032730.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_keySet_17488032731.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_putAll_17981893920.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_putAll_17981893921.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_put_2829597180.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_put_2829597181.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_removeComposited_7694056250.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_removeComposited_7694056251.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_remove_17924960100.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_remove_17924960101.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_setMutator_12625552430.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_setMutator_12625552431.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_size_7469127950.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_size_7469127951.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_values_440129640.java'
+Compiled 'org/apache/commons/collections4/map/CompositeMap_values_440129641.java'
+Compiled 'org/apache/commons/collections4/map/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/map/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 101 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=size, methodDesc=()I], indexes=[29], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=61, lineNumber=445, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=isEmpty, methodDesc=()Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=41, lineNumber=305, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=putAll, methodDesc=(Ljava/util/Map;)V], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=52, lineNumber=394, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsValue, methodDesc=(Ljava/lang/Object;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=28, lineNumber=230, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=get, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=36, lineNumber=290, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=put, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=49, lineNumber=364, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=removeComposited, methodDesc=(Ljava/util/Map;)Ljava/util/Map;], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=15, lineNumber=162, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsValue, methodDesc=(Ljava/lang/Object;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=28, lineNumber=230, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=addComposited, methodDesc=(Ljava/util/Map;)V], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=9, lineNumber=138, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsValue, methodDesc=(Ljava/lang/Object;)Z], indexes=[29], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=31, lineNumber=230, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=keySet, methodDesc=()Ljava/util/Set;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=46, lineNumber=331, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=size, methodDesc=()I], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=60, lineNumber=445, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=entrySet, methodDesc=()Ljava/util/Set;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=33, lineNumber=258, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=remove, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=55, lineNumber=427, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=get, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=40, lineNumber=295, description=mutated return of Object value for org/apache/commons/collections4/map/CompositeMap::get to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=keySet, methodDesc=()Ljava/util/Set;], indexes=[36], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=48, lineNumber=334, description=mutated return of Object value for org/apache/commons/collections4/map/CompositeMap::keySet to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=clear, methodDesc=()V], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=20, lineNumber=181, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=entrySet, methodDesc=()Ljava/util/Set;], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=34, lineNumber=258, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=entrySet, methodDesc=()Ljava/util/Set;], indexes=[36], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=35, lineNumber=261, description=mutated return of Object value for org/apache/commons/collections4/map/CompositeMap::entrySet to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=values, methodDesc=()Ljava/util/Collection;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=63, lineNumber=467, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=addComposited, methodDesc=(Ljava/util/Map;)V], indexes=[32], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=10, lineNumber=140, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=entrySet, methodDesc=()Ljava/util/Set;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=33, lineNumber=258, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=values, methodDesc=()Ljava/util/Collection;], indexes=[36], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=65, lineNumber=470, description=mutated return of Object value for org/apache/commons/collections4/map/CompositeMap::values to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=clear, methodDesc=()V], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=20, lineNumber=181, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=hashCode, methodDesc=()I], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=69, lineNumber=495, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=removeComposited, methodDesc=(Ljava/util/Map;)Ljava/util/Map;], indexes=[68], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=18, lineNumber=162, description=Changed increment from 1 to -1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=values, methodDesc=()Ljava/util/Collection;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=63, lineNumber=467, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=removeComposited, methodDesc=(Ljava/util/Map;)Ljava/util/Map;], indexes=[74], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=19, lineNumber=171, description=mutated return of Object value for org/apache/commons/collections4/map/CompositeMap::removeComposited to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=addComposited, methodDesc=(Ljava/util/Map;)V], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=9, lineNumber=138, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=entrySet, methodDesc=()Ljava/util/Set;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=33, lineNumber=258, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=size, methodDesc=()I], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=62, lineNumber=448, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=66, lineNumber=481, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=isEmpty, methodDesc=()Z], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=44, lineNumber=305, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[23], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=68, lineNumber=485, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=isEmpty, methodDesc=()Z], indexes=[34], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=45, lineNumber=310, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=get, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=36, lineNumber=290, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsValue, methodDesc=(Ljava/lang/Object;)Z], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=32, lineNumber=235, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=isEmpty, methodDesc=()Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=41, lineNumber=305, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsValue, methodDesc=(Ljava/lang/Object;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=28, lineNumber=230, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=keySet, methodDesc=()Ljava/util/Set;], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=47, lineNumber=331, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=get, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[34], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=39, lineNumber=290, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=addComposited, methodDesc=(Ljava/util/Map;)V], indexes=[82], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=14, lineNumber=148, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=values, methodDesc=()Ljava/util/Collection;], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=64, lineNumber=467, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=get, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=36, lineNumber=290, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=<init>, methodDesc=([Ljava/util/Map;Lorg/apache/commons/collections4/map/CompositeMap$MapMutator;)V], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=4, lineNumber=115, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=addComposited, methodDesc=(Ljava/util/Map;)V], indexes=[72], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=14, lineNumber=147, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=clear, methodDesc=()V], indexes=[22], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=21, lineNumber=181, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsKey, methodDesc=(Ljava/lang/Object;)Z], indexes=[29], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=26, lineNumber=204, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=addComposited, methodDesc=(Ljava/util/Map;)V], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=8, lineNumber=137, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsKey, methodDesc=(Ljava/lang/Object;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=23, lineNumber=204, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=addComposited, methodDesc=(Ljava/util/Map;)V], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=9, lineNumber=138, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=remove, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[34], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=58, lineNumber=427, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=addComposited, methodDesc=(Ljava/util/Map;)V], indexes=[61], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=13, lineNumber=138, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=removeComposited, methodDesc=(Ljava/util/Map;)Ljava/util/Map;], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=15, lineNumber=162, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=<init>, methodDesc=([Ljava/util/Map;Lorg/apache/commons/collections4/map/CompositeMap$MapMutator;)V], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeMap.java, block=5, lineNumber=115, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=<init>, methodDesc=([Ljava/util/Map;Lorg/apache/commons/collections4/map/CompositeMap$MapMutator;)V], indexes=[32], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=CompositeMap.java, block=5, lineNumber=116, description=removed call to org/apache/commons/collections4/map/CompositeMap::addComposited, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=size, methodDesc=()I], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=60, lineNumber=445, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsKey, methodDesc=(Ljava/lang/Object;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=23, lineNumber=204, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=keySet, methodDesc=()Ljava/util/Set;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=46, lineNumber=331, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=remove, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=59, lineNumber=432, description=mutated return of Object value for org/apache/commons/collections4/map/CompositeMap::remove to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=<init>, methodDesc=([Ljava/util/Map;Lorg/apache/commons/collections4/map/CompositeMap$MapMutator;)V], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=4, lineNumber=115, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=remove, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=55, lineNumber=427, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsKey, methodDesc=(Ljava/lang/Object;)Z], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=27, lineNumber=209, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=size, methodDesc=()I], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=60, lineNumber=445, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=addComposited, methodDesc=(Ljava/util/Map;)V], indexes=[37], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=11, lineNumber=141, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=containsKey, methodDesc=(Ljava/lang/Object;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=23, lineNumber=204, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=values, methodDesc=()Ljava/util/Collection;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=63, lineNumber=467, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=isEmpty, methodDesc=()Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=41, lineNumber=305, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=<init>, methodDesc=([Ljava/util/Map;Lorg/apache/commons/collections4/map/CompositeMap$MapMutator;)V], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=4, lineNumber=115, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=hashCode, methodDesc=()I], indexes=[34], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeMap.java, block=71, lineNumber=498, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=clear, methodDesc=()V], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CompositeMap.java, block=20, lineNumber=181, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=remove, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeMap.java, block=55, lineNumber=427, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.CompositeMap, method=keySet, methodDesc=()Ljava/util/Set;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeMap.java, block=46, lineNumber=331, description=changed conditional boundary, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-9
+	Class Under Test: org.apache.commons.collections4.map.CompositeMap
+	Run number: 1
+	Tool preparation time (ms): 10018
+	Tool test cases generation time (ms): 144474
+	Test cases execution time (ms): 676
+	Test case number: 44
+	Uncompilable Test Classes: 0
+	Broken tests number: 21
+	Failing tests number: 0
+	Lines total: 92
+	Lines covered: 63
+	Lines coverage ratio (%): 68.478264
+	Conditions total: 52
+	Conditions covered: 24
+	Conditions coverage ratio (%): 46.153847
+	Mutants total: 101
+	Mutants covered: 73
+	Mutants coverage ratio (%): 72.27723
+	Mutants killed: 73
+	Mutants killed ratio (%): 72.27723
+	Mutants alive: 28

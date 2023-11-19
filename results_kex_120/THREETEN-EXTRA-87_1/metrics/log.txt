@@ -1,0 +1,205 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  THREETEN-EXTRA-87
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.threeten.extra.PeriodDuration
+
+---Compilation---
+Compiled 'org/threeten/extra/EqualityUtils.java'
+Compiled 'org/threeten/extra/PeriodDuration_addTo_20392019800.java'
+Compiled 'org/threeten/extra/PeriodDuration_addTo_20392019801.java'
+Compiled 'org/threeten/extra/PeriodDuration_between_8306467130.java'
+Compiled 'org/threeten/extra/PeriodDuration_between_8306467131.java'
+Compiled 'org/threeten/extra/PeriodDuration_equals_9387222520.java'
+Compiled 'org/threeten/extra/PeriodDuration_equals_9387222521.java'
+Compiled 'org/threeten/extra/PeriodDuration_from_5001415750.java'
+Compiled 'org/threeten/extra/PeriodDuration_from_5001415751.java'
+Compiled 'org/threeten/extra/PeriodDuration_getDuration_3022239930.java'
+Compiled 'org/threeten/extra/PeriodDuration_getDuration_3022239931.java'
+Compiled 'org/threeten/extra/PeriodDuration_getPeriod_17070463170.java'
+Compiled 'org/threeten/extra/PeriodDuration_getPeriod_17070463171.java'
+Compiled 'org/threeten/extra/PeriodDuration_getUnits_9694026590.java'
+Compiled 'org/threeten/extra/PeriodDuration_getUnits_9694026591.java'
+Compiled 'org/threeten/extra/PeriodDuration_get_16030899520.java'
+Compiled 'org/threeten/extra/PeriodDuration_get_16030899521.java'
+Compiled 'org/threeten/extra/PeriodDuration_hashCode_13874089270.java'
+Compiled 'org/threeten/extra/PeriodDuration_hashCode_13874089271.java'
+Compiled 'org/threeten/extra/PeriodDuration_init_5881613370.java'
+Compiled 'org/threeten/extra/PeriodDuration_init_5881613371.java'
+Compiled 'org/threeten/extra/PeriodDuration_isZero_16213834640.java'
+Compiled 'org/threeten/extra/PeriodDuration_isZero_16213834641.java'
+Compiled 'org/threeten/extra/PeriodDuration_minus_18308570230.java'
+Compiled 'org/threeten/extra/PeriodDuration_minus_18308570231.java'
+Compiled 'org/threeten/extra/PeriodDuration_multipliedBy_17185233070.java'
+Compiled 'org/threeten/extra/PeriodDuration_multipliedBy_17185233071.java'
+Compiled 'org/threeten/extra/PeriodDuration_negated_5193266230.java'
+Compiled 'org/threeten/extra/PeriodDuration_negated_5193266231.java'
+Compiled 'org/threeten/extra/PeriodDuration_normalizedStandardDays_6634092060.java'
+Compiled 'org/threeten/extra/PeriodDuration_normalizedStandardDays_6634092061.java'
+Compiled 'org/threeten/extra/PeriodDuration_normalizedYears_6332330540.java'
+Compiled 'org/threeten/extra/PeriodDuration_normalizedYears_6332330541.java'
+Compiled 'org/threeten/extra/PeriodDuration_of_11037037460.java'
+Compiled 'org/threeten/extra/PeriodDuration_of_11037037461.java'
+Compiled 'org/threeten/extra/PeriodDuration_of_2686523810.java'
+Compiled 'org/threeten/extra/PeriodDuration_of_2686523811.java'
+Compiled 'org/threeten/extra/PeriodDuration_of_6419011990.java'
+Compiled 'org/threeten/extra/PeriodDuration_of_6419011991.java'
+Compiled 'org/threeten/extra/PeriodDuration_parse_2784186970.java'
+Compiled 'org/threeten/extra/PeriodDuration_parse_2784186971.java'
+Compiled 'org/threeten/extra/PeriodDuration_plus_2192066790.java'
+Compiled 'org/threeten/extra/PeriodDuration_plus_2192066791.java'
+Compiled 'org/threeten/extra/PeriodDuration_readResolve_8853259670.java'
+Compiled 'org/threeten/extra/PeriodDuration_readResolve_8853259671.java'
+Compiled 'org/threeten/extra/PeriodDuration_subtractFrom_11748916860.java'
+Compiled 'org/threeten/extra/PeriodDuration_subtractFrom_11748916861.java'
+Compiled 'org/threeten/extra/PeriodDuration_toString_18981686170.java'
+Compiled 'org/threeten/extra/PeriodDuration_toString_18981686171.java'
+Compiled 'org/threeten/extra/PeriodDuration_withDuration_13166375820.java'
+Compiled 'org/threeten/extra/PeriodDuration_withDuration_13166375821.java'
+Compiled 'org/threeten/extra/PeriodDuration_withPeriod_2389311820.java'
+Compiled 'org/threeten/extra/PeriodDuration_withPeriod_2389311821.java'
+Compiled 'org/threeten/extra/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 82 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=toString, methodDesc=()Ljava/lang/String;], indexes=[43], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=93, lineNumber=671, description=mutated return of Object value for org/threeten/extra/PeriodDuration::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=toString, methodDesc=()Ljava/lang/String;], indexes=[43], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=93, lineNumber=671, description=mutated return of Object value for org/threeten/extra/PeriodDuration::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PeriodDuration.java, block=74, lineNumber=575, description=Replaced long multiplication with division, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PeriodDuration.java, block=74, lineNumber=575, description=Replaced long multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=isZero, methodDesc=()Z], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=64, lineNumber=456, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=isZero, methodDesc=()Z], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=64, lineNumber=456, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=from, methodDesc=(Ljava/time/temporal/TemporalAmount;)Lorg/threeten/extra/PeriodDuration;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=3, lineNumber=178, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=from, methodDesc=(Ljava/time/temporal/TemporalAmount;)Lorg/threeten/extra/PeriodDuration;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=3, lineNumber=178, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=multipliedBy, methodDesc=(I)Lorg/threeten/extra/PeriodDuration;], indexes=[23], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=71, lineNumber=511, description=mutated return of Object value for org/threeten/extra/PeriodDuration::multipliedBy to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=multipliedBy, methodDesc=(I)Lorg/threeten/extra/PeriodDuration;], indexes=[23], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=71, lineNumber=511, description=mutated return of Object value for org/threeten/extra/PeriodDuration::multipliedBy to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PeriodDuration.java, block=74, lineNumber=576, description=Replaced long division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=toString, methodDesc=()Ljava/lang/String;], indexes=[19], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=91, lineNumber=668, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=toString, methodDesc=()Ljava/lang/String;], indexes=[19], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=91, lineNumber=668, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[47], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=87, lineNumber=641, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[47], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=87, lineNumber=641, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=80, lineNumber=634, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=80, lineNumber=634, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PeriodDuration.java, block=74, lineNumber=575, description=Replaced long addition with subtraction, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PeriodDuration.java, block=74, lineNumber=575, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=isZero, methodDesc=()Z], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=63, lineNumber=456, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=isZero, methodDesc=()Z], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=63, lineNumber=456, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=from, methodDesc=(Ljava/time/temporal/TemporalAmount;)Lorg/threeten/extra/PeriodDuration;], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=5, lineNumber=181, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=from, methodDesc=(Ljava/time/temporal/TemporalAmount;)Lorg/threeten/extra/PeriodDuration;], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=5, lineNumber=181, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=withDuration, methodDesc=(Ljava/time/Duration;)Lorg/threeten/extra/PeriodDuration;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=62, lineNumber=443, description=mutated return of Object value for org/threeten/extra/PeriodDuration::withDuration to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=withDuration, methodDesc=(Ljava/time/Duration;)Lorg/threeten/extra/PeriodDuration;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=62, lineNumber=443, description=mutated return of Object value for org/threeten/extra/PeriodDuration::withDuration to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=hashCode, methodDesc=()I], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=88, lineNumber=651, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=hashCode, methodDesc=()I], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=88, lineNumber=651, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=isZero, methodDesc=()Z], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=66, lineNumber=456, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=isZero, methodDesc=()Z], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=66, lineNumber=456, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=multipliedBy, methodDesc=(I)Lorg/threeten/extra/PeriodDuration;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=69, lineNumber=508, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=multipliedBy, methodDesc=(I)Lorg/threeten/extra/PeriodDuration;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=69, lineNumber=508, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedYears, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=73, lineNumber=550, description=mutated return of Object value for org/threeten/extra/PeriodDuration::normalizedYears to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedYears, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=73, lineNumber=550, description=mutated return of Object value for org/threeten/extra/PeriodDuration::normalizedYears to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=toString, methodDesc=()Ljava/lang/String;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=89, lineNumber=665, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=toString, methodDesc=()Ljava/lang/String;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=89, lineNumber=665, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=from, methodDesc=(Ljava/time/temporal/TemporalAmount;)Lorg/threeten/extra/PeriodDuration;], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=7, lineNumber=184, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=from, methodDesc=(Ljava/time/temporal/TemporalAmount;)Lorg/threeten/extra/PeriodDuration;], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=7, lineNumber=184, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=get, methodDesc=(Ljava/time/temporal/TemporalUnit;)J], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=51, lineNumber=368, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=get, methodDesc=(Ljava/time/temporal/TemporalUnit;)J], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=51, lineNumber=368, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[33], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=74, lineNumber=578, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[33], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=74, lineNumber=578, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=77, lineNumber=581, description=mutated return of Object value for org/threeten/extra/PeriodDuration::normalizedStandardDays to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=77, lineNumber=581, description=mutated return of Object value for org/threeten/extra/PeriodDuration::normalizedStandardDays to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=of, methodDesc=(Ljava/time/Period;)Lorg/threeten/extra/PeriodDuration;], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=1, lineNumber=141, description=mutated return of Object value for org/threeten/extra/PeriodDuration::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=of, methodDesc=(Ljava/time/Period;)Lorg/threeten/extra/PeriodDuration;], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=1, lineNumber=141, description=mutated return of Object value for org/threeten/extra/PeriodDuration::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=of, methodDesc=(Ljava/time/Period;Ljava/time/Duration;)Lorg/threeten/extra/PeriodDuration;], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=0, lineNumber=128, description=mutated return of Object value for org/threeten/extra/PeriodDuration::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=of, methodDesc=(Ljava/time/Period;Ljava/time/Duration;)Lorg/threeten/extra/PeriodDuration;], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=0, lineNumber=128, description=mutated return of Object value for org/threeten/extra/PeriodDuration::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=from, methodDesc=(Ljava/time/temporal/TemporalAmount;)Lorg/threeten/extra/PeriodDuration;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=9, lineNumber=187, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=from, methodDesc=(Ljava/time/temporal/TemporalAmount;)Lorg/threeten/extra/PeriodDuration;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=9, lineNumber=187, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[39], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=75, lineNumber=578, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[39], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=75, lineNumber=578, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=getPeriod, methodDesc=()Ljava/time/Period;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=59, lineNumber=410, description=mutated return of Object value for org/threeten/extra/PeriodDuration::getPeriod to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PeriodDuration.java, block=74, lineNumber=577, description=Replaced long modulus with multiplication, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=normalizedStandardDays, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PeriodDuration.java, block=74, lineNumber=577, description=Replaced long modulus with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=readResolve, methodDesc=()Ljava/lang/Object;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=50, lineNumber=349, description=mutated return of Object value for org/threeten/extra/PeriodDuration::readResolve to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=readResolve, methodDesc=()Ljava/lang/Object;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=50, lineNumber=349, description=mutated return of Object value for org/threeten/extra/PeriodDuration::readResolve to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=of, methodDesc=(Ljava/time/Duration;)Lorg/threeten/extra/PeriodDuration;], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=2, lineNumber=154, description=mutated return of Object value for org/threeten/extra/PeriodDuration::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=of, methodDesc=(Ljava/time/Duration;)Lorg/threeten/extra/PeriodDuration;], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=2, lineNumber=154, description=mutated return of Object value for org/threeten/extra/PeriodDuration::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=negated, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=72, lineNumber=524, description=mutated return of Object value for org/threeten/extra/PeriodDuration::negated to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=negated, methodDesc=()Lorg/threeten/extra/PeriodDuration;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=72, lineNumber=524, description=mutated return of Object value for org/threeten/extra/PeriodDuration::negated to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=withPeriod, methodDesc=(Ljava/time/Period;)Lorg/threeten/extra/PeriodDuration;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=60, lineNumber=422, description=mutated return of Object value for org/threeten/extra/PeriodDuration::withPeriod to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=withPeriod, methodDesc=(Ljava/time/Period;)Lorg/threeten/extra/PeriodDuration;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=60, lineNumber=422, description=mutated return of Object value for org/threeten/extra/PeriodDuration::withPeriod to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=getDuration, methodDesc=()Ljava/time/Duration;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=61, lineNumber=431, description=mutated return of Object value for org/threeten/extra/PeriodDuration::getDuration to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=getUnits, methodDesc=()Ljava/util/List;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=58, lineNumber=400, description=mutated return of Object value for org/threeten/extra/PeriodDuration::getUnits to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=getUnits, methodDesc=()Ljava/util/List;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PeriodDuration.java, block=58, lineNumber=400, description=mutated return of Object value for org/threeten/extra/PeriodDuration::getUnits to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PeriodDuration.java, block=82, lineNumber=637, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=hashCode, methodDesc=()I], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PeriodDuration.java, block=88, lineNumber=651, description=Replaced XOR with AND, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.PeriodDuration, method=hashCode, methodDesc=()I], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PeriodDuration.java, block=88, lineNumber=651, description=Replaced XOR with AND, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: THREETEN-EXTRA-87
+	Class Under Test: org.threeten.extra.PeriodDuration
+	Run number: 1
+	Tool preparation time (ms): 6603
+	Tool test cases generation time (ms): 142688
+	Test cases execution time (ms): 490
+	Test case number: 52
+	Uncompilable Test Classes: 0
+	Broken tests number: 32
+	Failing tests number: 0
+	Lines total: 123
+	Lines covered: 43
+	Lines coverage ratio (%): 34.95935
+	Conditions total: 78
+	Conditions covered: 12
+	Conditions coverage ratio (%): 15.384616
+	Mutants total: 82
+	Mutants covered: 36
+	Mutants coverage ratio (%): 43.90244
+	Mutants killed: 36
+	Mutants killed ratio (%): 43.90244
+	Mutants alive: 46

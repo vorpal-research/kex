@@ -1,0 +1,56 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  THREETEN-EXTRA-88
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-generate-tests
+Creating directory ./temp
+Creating directory ./temp/data
+Creating directory ./temp/testcases
+Executing /home/kex/./runtool
+>> BENCHMARK
+>> /var/benchmarks/projects/threeten-extra/src/main/java
+>> /var/benchmarks/projects/threeten-extra/target/classes
+>> 14
+>> /var/benchmarks/projects/threeten-extra/target/threeten-extra-1.7.3-SNAPSHOT.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/junit-platform-engine-1.9.1.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/junit-jupiter-api-5.9.1.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/joda-convert-2.2.2.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/junit-jupiter-params-5.9.1.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/junit-platform-launcher-1.9.1.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/junit-pioneer-1.9.1.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/junit-jupiter-5.9.1.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/apiguardian-api-1.1.2.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/opentest4j-1.2.0.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/failureaccess-1.0.1.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/junit-jupiter-engine-5.9.1.jar
+>> /var/benchmarks/projects/threeten-extra/target/dependency/guava-32.1.2-jre.jar
+>> 1
+expecting CLASSPATH or READY
+<< READY
+>> 120
+Deleting file or directory ./temp/testcases
+Creating directory ./temp/testcases
+
+
+### CLASS UNDER TEST ###: org.threeten.extra.PackedFields
+>> org.threeten.extra.PackedFields
+
+
+ Executing with internal budget of 120 sec and external budget of 240 sec 
+expecting: READY
+<< READY
+
+
+ Execution finished with no timeout
+>> >>/home/kex/./temp/testcases
+Stopping process...
+Tool subprocess is an instance of java.lang.UNIXProcess
+Tool subprocess Id is 151796
+Killing master process 151796
+Executing command kill -9 151796
+Execution of command kill -9 151796 finished.
+Process was destroyed

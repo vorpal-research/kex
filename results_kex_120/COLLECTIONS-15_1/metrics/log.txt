@@ -1,0 +1,69 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-15
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.functors.DefaultEquator
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_defaultEquator_2646117150.java'
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_defaultEquator_2646117151.java'
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_equate_18974209780.java'
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_equate_18974209781.java'
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_hash_15740865260.java'
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_hash_15740865261.java'
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_init_12731549330.java'
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_init_12731549331.java'
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_readResolve_20557955020.java'
+Compiled 'org/apache/commons/collections4/functors/DefaultEquator_readResolve_20557955021.java'
+Compiled 'org/apache/commons/collections4/functors/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/functors/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 5 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.DefaultEquator, method=equate, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Z], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DefaultEquator.java, block=2, lineNumber=65, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.DefaultEquator, method=readResolve, methodDesc=()Ljava/lang/Object;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DefaultEquator.java, block=6, lineNumber=80, description=mutated return of Object value for org/apache/commons/collections4/functors/DefaultEquator::readResolve to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.DefaultEquator, method=defaultEquator, methodDesc=()Lorg/apache/commons/collections4/functors/DefaultEquator;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DefaultEquator.java, block=0, lineNumber=51, description=mutated return of Object value for org/apache/commons/collections4/functors/DefaultEquator::defaultEquator to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.DefaultEquator, method=hash, methodDesc=(Ljava/lang/Object;)I], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DefaultEquator.java, block=3, lineNumber=76, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.DefaultEquator, method=hash, methodDesc=(Ljava/lang/Object;)I], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DefaultEquator.java, block=5, lineNumber=76, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-15
+	Class Under Test: org.apache.commons.collections4.functors.DefaultEquator
+	Run number: 1
+	Tool preparation time (ms): 12629
+	Tool test cases generation time (ms): 152192
+	Test cases execution time (ms): 124
+	Test case number: 10
+	Uncompilable Test Classes: 0
+	Broken tests number: 2
+	Failing tests number: 0
+	Lines total: 5
+	Lines covered: 5
+	Lines coverage ratio (%): 100.0
+	Conditions total: 2
+	Conditions covered: 2
+	Conditions coverage ratio (%): 100.0
+	Mutants total: 5
+	Mutants covered: 5
+	Mutants coverage ratio (%): 100.0
+	Mutants killed: 5
+	Mutants killed ratio (%): 100.0
+	Mutants alive: 0

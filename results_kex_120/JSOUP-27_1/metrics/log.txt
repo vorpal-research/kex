@@ -1,0 +1,451 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-27
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.jsoup.parser.HtmlTreeBuilder
+
+---Compilation---
+Compiled 'org/jsoup/parser/EqualityUtils.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_aboveOnStack_6653810700.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_aboveOnStack_6653810701.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_addPendingTableCharacters_15047686290.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_addPendingTableCharacters_15047686291.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_checkActiveFormattingElements_10593934410.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_checkActiveFormattingElements_10593934411.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearFormattingElementsToLastMarker_13367591800.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearFormattingElementsToLastMarker_13367591801.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearStackToContext_5180329780.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearStackToContext_5180329781.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearStackToTableBodyContext_5487355070.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearStackToTableBodyContext_5487355071.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearStackToTableContext_14802855510.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearStackToTableContext_14802855511.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearStackToTableRowContext_5694011790.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_clearStackToTableRowContext_5694011791.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_closeElement_13485813510.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_closeElement_13485813511.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_currentTemplateMode_4461531040.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_currentTemplateMode_4461531041.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_dedupeAttributes_20629860180.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_dedupeAttributes_20629860181.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_defaultSettings_11269756870.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_defaultSettings_11269756871.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_error_18159293880.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_error_18159293881.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_framesetOk_10802894610.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_framesetOk_10802894611.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_framesetOk_10839157550.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_framesetOk_10839157551.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_generateImpliedEndTags_13196906460.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_generateImpliedEndTags_13196906461.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_generateImpliedEndTags_14719437690.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_generateImpliedEndTags_14719437691.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_generateImpliedEndTags_14719446990.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_generateImpliedEndTags_14719446991.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getActiveFormattingElement_8513203830.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getActiveFormattingElement_8513203831.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getBaseUri_7197391860.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getBaseUri_7197391861.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getDocument_8728837830.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getDocument_8728837831.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getFormElement_15945041990.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getFormElement_15945041991.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getFromStack_6402087820.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getFromStack_6402087821.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getHeadElement_13760572650.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getHeadElement_13760572651.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getPendingTableCharacters_1804244090.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getPendingTableCharacters_1804244091.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getStack_17601062590.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_getStack_17601062591.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inButtonScope_19616311700.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inButtonScope_19616311701.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inListItemScope_16216465910.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inListItemScope_16216465911.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inScope_284717920.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inScope_284717921.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inScope_4533513090.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inScope_4533513091.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inSelectScope_18001175560.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inSelectScope_18001175561.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inSpecificScope_8521067860.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inSpecificScope_8521067861.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inTableScope_14509626760.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_inTableScope_14509626761.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_init_19499008220.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_init_19499008221.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_initialiseParse_14568678780.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_initialiseParse_14568678781.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertEmpty_20198741710.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertEmpty_20198741711.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertForm_9164672860.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertForm_9164672861.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertInFosterParent_15644263680.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertInFosterParent_15644263681.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertMarkerToFormattingElements_8139125140.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertMarkerToFormattingElements_8139125141.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertNode_3038272220.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertNode_3038272221.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertOnStackAfter_21388214760.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertOnStackAfter_21388214761.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertStartTag_17518511910.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insertStartTag_17518511911.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_10247436360.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_10247436361.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_1448141570.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_1448141571.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_16609251980.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_16609251981.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_17231532060.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_17231532061.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_6572426020.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_6572426021.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_7389768840.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_insert_7389768841.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isContentForTagData_14826737170.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isContentForTagData_14826737171.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isFosterInserts_8529005730.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isFosterInserts_8529005731.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isFragmentParsing_5658087940.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isFragmentParsing_5658087941.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isInActiveFormattingElements_6103887220.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isInActiveFormattingElements_6103887221.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isSameFormattingElement_6517051630.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isSameFormattingElement_6517051631.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isSpecial_5991719520.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_isSpecial_5991719521.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_lastFormattingElement_16251682980.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_lastFormattingElement_16251682981.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_markInsertionMode_1248276830.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_markInsertionMode_1248276831.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_maybeSetBaseUri_3579292060.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_maybeSetBaseUri_3579292061.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_newInstance_2133758520.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_newInstance_2133758521.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_onStackNot_1822266130.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_onStackNot_1822266131.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_onStack_18098792220.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_onStack_18098792221.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_onStack_5541510820.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_onStack_5541510821.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_onStack_8338124150.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_onStack_8338124151.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_originalState_13715128700.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_originalState_13715128701.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_parseFragment_19855232520.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_parseFragment_19855232521.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_popStackToBefore_10015008380.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_popStackToBefore_10015008381.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_popStackToClose_13093711950.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_popStackToClose_13093711951.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_popStackToClose_13770934520.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_popStackToClose_13770934521.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_popTemplateMode_688882480.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_popTemplateMode_688882481.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_pop_9180651260.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_pop_9180651261.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_positionOfElement_364149470.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_positionOfElement_364149471.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_process_2775085450.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_process_2775085451.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_process_7468113730.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_process_7468113731.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_pushActiveFormattingElements_15042867350.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_pushActiveFormattingElements_15042867351.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_pushTemplateMode_8028953970.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_pushTemplateMode_8028953971.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_pushWithBookmark_5927744830.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_pushWithBookmark_5927744831.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_push_1422164950.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_push_1422164951.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_reconstructFormattingElements_21267956720.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_reconstructFormattingElements_21267956721.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_removeFromActiveFormattingElements_15804667250.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_removeFromActiveFormattingElements_15804667251.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_removeFromStack_13027935630.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_removeFromStack_13027935631.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_removeLastFormattingElement_3076681020.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_removeLastFormattingElement_3076681021.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_replaceActiveFormattingElement_12040400750.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_replaceActiveFormattingElement_12040400751.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_replaceInQueue_3800543410.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_replaceInQueue_3800543411.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_replaceOnStack_9722596030.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_replaceOnStack_9722596031.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_resetBody_19380053210.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_resetBody_19380053211.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_resetInsertionMode_14906028870.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_resetInsertionMode_14906028871.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_resetPendingTableCharacters_7138796560.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_resetPendingTableCharacters_7138796561.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_setFormElement_8235437290.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_setFormElement_8235437291.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_setFosterInserts_5285175950.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_setFosterInserts_5285175951.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_setHeadElement_10634451690.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_setHeadElement_10634451691.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_state_9122081490.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_state_9122081491.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_templateModeSize_13923625260.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_templateModeSize_13923625261.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_toString_14044449710.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_toString_14044449711.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_transition_591221190.java'
+Compiled 'org/jsoup/parser/HtmlTreeBuilder_transition_591221191.java'
+Compiled 'org/jsoup/parser/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 177 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=popStackToClose, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/Element;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=120, lineNumber=412, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=state, methodDesc=()Lorg/jsoup/parser/HtmlTreeBuilderState;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=44, lineNumber=181, description=mutated return of Object value for org/jsoup/parser/HtmlTreeBuilder::state to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[307], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=37, lineNumber=153, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[38], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=162, lineNumber=506, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=reconstructFormattingElements, methodDesc=()V], indexes=[80], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=HtmlTreeBuilder.java, block=313, lineNumber=830, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=positionOfElement, methodDesc=(Lorg/jsoup/nodes/Element;)I], indexes=[33], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=285, lineNumber=758, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[104], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=14, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=lastFormattingElement, methodDesc=()Lorg/jsoup/nodes/Element;], indexes=[22], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=280, lineNumber=750, description=mutated return of Object value for org/jsoup/parser/HtmlTreeBuilder::lastFormattingElement to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[409], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=218, lineNumber=573, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=reconstructFormattingElements, methodDesc=()V], indexes=[92], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=314, lineNumber=831, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=insert, methodDesc=(Lorg/jsoup/parser/Token$Character;Lorg/jsoup/nodes/Element;)V], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=76, lineNumber=314, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=getStack, methodDesc=()Ljava/util/ArrayList;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=96, lineNumber=362, description=mutated return of Object value for org/jsoup/parser/HtmlTreeBuilder::getStack to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStackNot, methodDesc=([Ljava/lang/String;)Z], indexes=[51], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=251, lineNumber=659, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=getFromStack, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/Element;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=108, lineNumber=388, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[208], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=190, lineNumber=518, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=reconstructFormattingElements, methodDesc=()V], indexes=[105], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=HtmlTreeBuilder.java, block=317, lineNumber=836, description=Changed increment from 1 to -1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=framesetOk, methodDesc=()Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=48, lineNumber=197, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStack, methodDesc=(Ljava/util/ArrayList;Lorg/jsoup/nodes/Element;)Z], indexes=[51], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=HtmlTreeBuilder.java, block=106, lineNumber=377, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=inScope, methodDesc=(Ljava/lang/String;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=235, lineNumber=616, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[140], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=22, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=removeLastFormattingElement, methodDesc=()Lorg/jsoup/nodes/Element;], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=287, lineNumber=764, description=mutated return of Object value for org/jsoup/parser/HtmlTreeBuilder::removeLastFormattingElement to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=currentTemplateMode, methodDesc=()Lorg/jsoup/parser/HtmlTreeBuilderState;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=353, lineNumber=936, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=dedupeAttributes, methodDesc=(Lorg/jsoup/parser/Token$StartTag;)V], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=91, lineNumber=344, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=currentTemplateMode, methodDesc=()Lorg/jsoup/parser/HtmlTreeBuilderState;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=354, lineNumber=936, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=reconstructFormattingElements, methodDesc=()V], indexes=[48], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=310, lineNumber=822, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=checkActiveFormattingElements, methodDesc=(Lorg/jsoup/nodes/Element;)V], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=292, lineNumber=788, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=replaceInQueue, methodDesc=(Ljava/util/ArrayList;Lorg/jsoup/nodes/Element;Lorg/jsoup/nodes/Element;)V], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=157, lineNumber=490, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=inSelectScope, methodDesc=(Ljava/lang/String;)Z], indexes=[50], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=HtmlTreeBuilder.java, block=245, lineNumber=638, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=isSpecial, methodDesc=(Lorg/jsoup/nodes/Element;)Z], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=277, lineNumber=746, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=reconstructFormattingElements, methodDesc=()V], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=305, lineNumber=814, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=insertOnStackAfter, methodDesc=(Lorg/jsoup/nodes/Element;Lorg/jsoup/nodes/Element;)V], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=HtmlTreeBuilder.java, block=155, lineNumber=480, description=removed call to org/jsoup/helper/Validate::isTrue, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=positionOfElement, methodDesc=(Lorg/jsoup/nodes/Element;)I], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=281, lineNumber=754, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=lastFormattingElement, methodDesc=()Lorg/jsoup/nodes/Element;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=278, lineNumber=750, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=clearFormattingElementsToLastMarker, methodDesc=()V], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=322, lineNumber=857, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=removeFromActiveFormattingElements, methodDesc=(Lorg/jsoup/nodes/Element;)V], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=326, lineNumber=863, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[393], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=HtmlTreeBuilder.java, block=215, lineNumber=510, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=clearStackToContext, methodDesc=([Ljava/lang/String;)V], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=139, lineNumber=458, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=getFromStack, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/Element;], indexes=[55], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=HtmlTreeBuilder.java, block=113, lineNumber=390, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[158], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=26, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[136], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=174, lineNumber=518, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=reconstructFormattingElements, methodDesc=()V], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=308, lineNumber=817, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=insert, methodDesc=(Lorg/jsoup/parser/Token$Character;Lorg/jsoup/nodes/Element;)V], indexes=[61], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=HtmlTreeBuilder.java, block=80, lineNumber=321, description=removed call to org/jsoup/parser/HtmlTreeBuilder::onNodeInserted, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStackNot, methodDesc=([Ljava/lang/String;)Z], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=248, lineNumber=653, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=removeLastFormattingElement, methodDesc=()Lorg/jsoup/nodes/Element;], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=286, lineNumber=763, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=160, lineNumber=503, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[236], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=HtmlTreeBuilder.java, block=33, lineNumber=133, description=removed call to org/jsoup/parser/Tokeniser::transition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=clearStackToContext, methodDesc=([Ljava/lang/String;)V], indexes=[46], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=HtmlTreeBuilder.java, block=143, lineNumber=458, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[66], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=164, lineNumber=512, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=isSameFormattingElement, methodDesc=(Lorg/jsoup/nodes/Element;Lorg/jsoup/nodes/Element;)Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=301, lineNumber=807, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[68], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=6, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=popTemplateMode, methodDesc=()Lorg/jsoup/parser/HtmlTreeBuilderState;], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=350, lineNumber=925, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=inSpecificScope, methodDesc=([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=222, lineNumber=594, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[172], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=182, lineNumber=518, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=isContentForTagData, methodDesc=(Ljava/lang/String;)Z], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=358, lineNumber=949, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=isFragmentParsing, methodDesc=()Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=55, lineNumber=221, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=getFromStack, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/Element;], indexes=[32], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=110, lineNumber=390, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=process, methodDesc=(Lorg/jsoup/parser/Token;)Z], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=41, lineNumber=168, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=pop, methodDesc=()Lorg/jsoup/nodes/Element;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=94, lineNumber=354, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[381], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=213, lineNumber=568, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=maybeSetBaseUri, methodDesc=(Lorg/jsoup/nodes/Element;)V], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=53, lineNumber=213, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[190], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=186, lineNumber=518, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStackNot, methodDesc=([Ljava/lang/String;)Z], indexes=[61], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=253, lineNumber=661, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=popTemplateMode, methodDesc=()Lorg/jsoup/parser/HtmlTreeBuilderState;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=349, lineNumber=924, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStack, methodDesc=(Ljava/util/ArrayList;Lorg/jsoup/nodes/Element;)Z], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=101, lineNumber=375, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=inSelectScope, methodDesc=(Ljava/lang/String;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=240, lineNumber=638, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=reconstructFormattingElements, methodDesc=()V], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=311, lineNumber=823, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=checkActiveFormattingElements, methodDesc=(Lorg/jsoup/nodes/Element;)V], indexes=[33], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=293, lineNumber=790, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[85], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=166, lineNumber=517, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[33], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=4, lineNumber=101, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStack, methodDesc=(Ljava/util/ArrayList;Lorg/jsoup/nodes/Element;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=101, lineNumber=376, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=removeFromStack, methodDesc=(Lorg/jsoup/nodes/Element;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=115, lineNumber=400, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=popStackToBefore, methodDesc=(Ljava/lang/String;)V], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=131, lineNumber=435, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=isSameFormattingElement, methodDesc=(Lorg/jsoup/nodes/Element;Lorg/jsoup/nodes/Element;)Z], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=304, lineNumber=807, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=getFromStack, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/Element;], indexes=[47], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=111, lineNumber=392, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=160, lineNumber=502, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[226], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=194, lineNumber=518, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=inSpecificScope, methodDesc=([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)Z], indexes=[32], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=224, lineNumber=598, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=removeFromStack, methodDesc=(Lorg/jsoup/nodes/Element;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=115, lineNumber=400, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=toString, methodDesc=()Ljava/lang/String;], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=356, lineNumber=941, description=mutated return of Object value for org/jsoup/parser/HtmlTreeBuilder::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStackNot, methodDesc=([Ljava/lang/String;)Z], indexes=[32], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=249, lineNumber=656, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=getActiveFormattingElement, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/Element;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=332, lineNumber=878, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=popStackToClose, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/Element;], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=HtmlTreeBuilder.java, block=124, lineNumber=412, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[53], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=163, lineNumber=510, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[122], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=18, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=popStackToClose, methodDesc=([Ljava/lang/String;)V], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=126, lineNumber=426, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=defaultSettings, methodDesc=()Lorg/jsoup/parser/ParseSettings;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=1, lineNumber=65, description=mutated return of Object value for org/jsoup/parser/HtmlTreeBuilder::defaultSettings to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=removeFromActiveFormattingElements, methodDesc=(Lorg/jsoup/nodes/Element;)V], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=327, lineNumber=865, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=popStackToClose, methodDesc=([Ljava/lang/String;)V], indexes=[41], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=HtmlTreeBuilder.java, block=129, lineNumber=426, description=Changed increment from -1 to 1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=insertNode, methodDesc=(Lorg/jsoup/nodes/Node;Lorg/jsoup/parser/Token;)V], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=83, lineNumber=329, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=inSpecificScope, methodDesc=([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)Z], indexes=[85], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=233, lineNumber=608, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=popStackToClose, methodDesc=([Ljava/lang/String;)V], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=HtmlTreeBuilder.java, block=126, lineNumber=426, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=getBaseUri, methodDesc=()Ljava/lang/String;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=50, lineNumber=205, description=mutated return of Object value for org/jsoup/parser/HtmlTreeBuilder::getBaseUri to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[118], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=170, lineNumber=518, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStack, methodDesc=(Ljava/util/ArrayList;Lorg/jsoup/nodes/Element;)Z], indexes=[31], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=103, lineNumber=377, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=getFromStack, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/Element;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=108, lineNumber=389, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=initialiseParse, methodDesc=(Ljava/io/Reader;Ljava/lang/String;Lorg/jsoup/parser/Parser;)V], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=HtmlTreeBuilder.java, block=3, lineNumber=75, description=removed call to org/jsoup/parser/TreeBuilder::initialiseParse, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=inSpecificScope, methodDesc=([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)Z], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=222, lineNumber=595, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStack, methodDesc=(Ljava/util/ArrayList;Lorg/jsoup/nodes/Element;)Z], indexes=[43], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=104, lineNumber=379, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[282], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=34, lineNumber=144, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=isFosterInserts, methodDesc=()Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=256, lineNumber=673, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=getPendingTableCharacters, methodDesc=()Ljava/util/List;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=261, lineNumber=693, description=mutated return of Object value for org/jsoup/parser/HtmlTreeBuilder::getPendingTableCharacters to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[86], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=10, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=isInActiveFormattingElements, methodDesc=(Lorg/jsoup/nodes/Element;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=331, lineNumber=873, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=resetInsertionMode, methodDesc=()Z], indexes=[154], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=178, lineNumber=518, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=checkActiveFormattingElements, methodDesc=(Lorg/jsoup/nodes/Element;)V], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=HtmlTreeBuilder.java, block=292, lineNumber=788, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=parseFragment, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Ljava/util/List;], indexes=[330], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=39, lineNumber=159, description=mutated return of Object value for org/jsoup/parser/HtmlTreeBuilder::parseFragment to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=removeFromStack, methodDesc=(Lorg/jsoup/nodes/Element;)Z], indexes=[46], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=HtmlTreeBuilder.java, block=119, lineNumber=407, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.parser.HtmlTreeBuilder, method=onStackNot, methodDesc=([Ljava/lang/String;)Z], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=HtmlTreeBuilder.java, block=247, lineNumber=653, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-27
+	Class Under Test: org.jsoup.parser.HtmlTreeBuilder
+	Run number: 1
+	Tool preparation time (ms): 5677
+	Tool test cases generation time (ms): 140603
+	Test cases execution time (ms): 2902
+	Test case number: 186
+	Uncompilable Test Classes: 0
+	Broken tests number: 119
+	Failing tests number: 0
+	Lines total: 466
+	Lines covered: 226
+	Lines coverage ratio (%): 48.497852
+	Conditions total: 254
+	Conditions covered: 85
+	Conditions coverage ratio (%): 33.464565
+	Mutants total: 177
+	Mutants covered: 108
+	Mutants coverage ratio (%): 61.01695
+	Mutants killed: 108
+	Mutants killed ratio (%): 61.01695
+	Mutants alive: 69

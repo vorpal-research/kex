@@ -1,0 +1,124 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-21
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.set.CompositeSet
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/set/CompositeSet_addAll_2663255280.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_addComposited_10914765980.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_addComposited_13699856860.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_add_4592756600.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_clear_2386101490.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_containsAll_9743269980.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_contains_4066773900.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_equals_294732980.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_getMutator_15704396090.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_getSets_386837210.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_hashCode_4192133770.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_init_14754289180.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_init_14754289181.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_init_16049920860.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_init_16049920861.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_isEmpty_14695740870.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_iterator_1085885440.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_removeAll_6759485170.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_removeComposited_16483860090.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_removeIf_20975083590.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_remove_10647578650.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_retainAll_4108226520.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_setMutator_14303003030.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_size_15237032590.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_toArray_8691298840.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_toArray_9389871150.java'
+Compiled 'org/apache/commons/collections4/set/CompositeSet_toSet_6837374910.java'
+Compiled 'org/apache/commons/collections4/set/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/set/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 83 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=containsAll, methodDesc=(Ljava/util/Collection;)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=38, lineNumber=253, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=(Ljava/util/Set;)V], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=66, lineNumber=373, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=removeAll, methodDesc=(Ljava/util/Collection;)Z], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeSet.java, block=54, lineNumber=311, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=getSets, methodDesc=()Ljava/util/List;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeSet.java, block=81, lineNumber=440, description=mutated return of Object value for org/apache/commons/collections4/set/CompositeSet::getSets to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=([Ljava/util/Set;)V], indexes=[27], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=CompositeSet.java, block=77, lineNumber=410, description=removed call to org/apache/commons/collections4/set/CompositeSet::addComposited, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=getMutator, methodDesc=()Lorg/apache/commons/collections4/set/CompositeSet$SetMutator;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeSet.java, block=82, lineNumber=448, description=mutated return of Object value for org/apache/commons/collections4/set/CompositeSet::getMutator to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=([Ljava/util/Set;)V], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CompositeSet.java, block=76, lineNumber=409, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[34], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeSet.java, block=88, lineNumber=461, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=([Ljava/util/Set;)V], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=75, lineNumber=408, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=([Ljava/util/Set;)V], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=76, lineNumber=409, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=add, methodDesc=(Ljava/lang/Object;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=30, lineNumber=218, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=83, lineNumber=457, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=(Ljava/util/Set;)V], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=67, lineNumber=375, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=removeIf, methodDesc=(Ljava/util/function/Predicate;)Z], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeSet.java, block=49, lineNumber=290, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=(Ljava/util/Set;)V], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=65, lineNumber=372, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=(Ljava/util/Set;)V], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=68, lineNumber=376, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=([Ljava/util/Set;)V], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=CompositeSet.java, block=77, lineNumber=409, description=Changed increment from 1 to -1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addAll, methodDesc=(Ljava/util/Collection;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=45, lineNumber=277, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=(Ljava/util/Set;Ljava/util/Set;)V], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=CompositeSet.java, block=74, lineNumber=399, description=removed call to org/apache/commons/collections4/set/CompositeSet::addComposited, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=<init>, methodDesc=([Ljava/util/Set;)V], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=CompositeSet.java, block=2, lineNumber=85, description=removed call to org/apache/commons/collections4/set/CompositeSet::addComposited, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=removeAll, methodDesc=(Ljava/util/Collection;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=53, lineNumber=310, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=containsAll, methodDesc=(Ljava/util/Collection;)Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CompositeSet.java, block=39, lineNumber=254, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=addComposited, methodDesc=(Ljava/util/Set;Ljava/util/Set;)V], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=CompositeSet.java, block=74, lineNumber=398, description=removed call to org/apache/commons/collections4/set/CompositeSet::addComposited, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.set.CompositeSet, method=removeIf, methodDesc=(Ljava/util/function/Predicate;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CompositeSet.java, block=48, lineNumber=289, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-21
+	Class Under Test: org.apache.commons.collections4.set.CompositeSet
+	Run number: 1
+	Tool preparation time (ms): 13431
+	Tool test cases generation time (ms): 150522
+	Test cases execution time (ms): 422
+	Test case number: 27
+	Uncompilable Test Classes: 0
+	Broken tests number: 18
+	Failing tests number: 0
+	Lines total: 124
+	Lines covered: 40
+	Lines coverage ratio (%): 32.258064
+	Conditions total: 72
+	Conditions covered: 15
+	Conditions coverage ratio (%): 20.833332
+	Mutants total: 83
+	Mutants covered: 24
+	Mutants coverage ratio (%): 28.91566
+	Mutants killed: 24
+	Mutants killed ratio (%): 28.91566
+	Mutants alive: 59

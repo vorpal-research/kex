@@ -1,0 +1,2371 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-29
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+Creating directory ./temp
+Creating directory ./temp/data
+Creating directory ./temp/testcases
+Executing /home/kex/./runtool
+>> BENCHMARK
+>> /var/benchmarks/projects/jsoup/src/main/java
+>> /var/benchmarks/projects/jsoup/target/classes
+>> 18
+>> /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar
+>> 0
+expecting CLASSPATH or READY
+<< READY
+>> 120
+
+
+### COMPUTING METRICS ###: org.jsoup.select.Selector
+
+
+Starting class org.jsoup.select.Selector
+
+
+Ending class org.jsoup.select.Selector
+Creating directory results_kex_120/JSOUP-29_1/temp/testcases/bin
+Creating dummy JUnit test file
+
+---Compilation---
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/SBSTDummyForCoverageAndMutationCalculation.java
+
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/EqualityUtils.java
+
+Compiled 'org/jsoup/select/EqualityUtils.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/ReflectionUtils.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_filterOut_16165847170.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_filterOut_16165847170.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_init_16767445320.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_init_16767445320.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_init_16767445321.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_init_16767445321.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_selectFirst_9095705270.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_selectFirst_9095705270.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_selectFirst_9095705271.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_selectFirst_9095705271.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_select_12381556510.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_select_12381556510.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_select_12381556511.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_select_12381556511.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_select_9175087860.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_select_9175087860.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_select_9175087861.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_select_9175087861.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_select_9288978750.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_select_9288978750.java'
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-29_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-29_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/Selector_select_9288978751.java
+
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:9: warning: Unsafe is internal proprietary API and may be removed in a future release
+import sun.misc.Unsafe;
+               ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:13: warning: Unsafe is internal proprietary API and may be removed in a future release
+    public static final Unsafe UNSAFE;
+                        ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:17: warning: Unsafe is internal proprietary API and may be removed in a future release
+            final Field uns = Unsafe.class.getDeclaredField("theUnsafe");
+                              ^
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/org/jsoup/select/ReflectionUtils.java:19: warning: Unsafe is internal proprietary API and may be removed in a future release
+            UNSAFE = (Unsafe) uns.get(null);
+                      ^
+4 warnings
+Compiled 'org/jsoup/select/Selector_select_9288978751.java'
+
+---Timing Information---
+Running tests with the following classpath: 
+/var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+Executions terminated
+Failure: [initializationError(org.jsoup.select.EqualityUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.jsoup.select.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_filterOut_16165847170): null]
+Failing Tests: test(org.jsoup.select.Selector_filterOut_16165847170)
+java.lang.NullPointerException
+	at org.jsoup.select.Selector.filterOut(Selector.java:142)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_filterOut_16165847170.test(Selector_filterOut_16165847170.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_selectFirst_9095705271): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_selectFirst_9095705271)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.selectFirst(Selector.java:163)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_selectFirst_9095705271.test(Selector_selectFirst_9095705271.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556510): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556510)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556510.test(Selector_select_12381556510.java:78)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556511): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556511)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556511.test(Selector_select_12381556511.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087860): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087860)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:122)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087860.test(Selector_select_9175087860.java:38)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087861): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087861)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:121)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087861.test(Selector_select_9175087861.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9288978751): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9288978751)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:96)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9288978751.test(Selector_select_9288978751.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+
+---The tests are re-executed other four times to find the flaky ones---
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+Executions terminated
+Failure: [initializationError(org.jsoup.select.EqualityUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.jsoup.select.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_filterOut_16165847170): null]
+Failing Tests: test(org.jsoup.select.Selector_filterOut_16165847170)
+java.lang.NullPointerException
+	at org.jsoup.select.Selector.filterOut(Selector.java:142)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_filterOut_16165847170.test(Selector_filterOut_16165847170.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_selectFirst_9095705271): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_selectFirst_9095705271)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.selectFirst(Selector.java:163)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_selectFirst_9095705271.test(Selector_selectFirst_9095705271.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556510): Object must not be null]
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556510)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556510.test(Selector_select_12381556510.java:78)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556511): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556511)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556511.test(Selector_select_12381556511.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087860): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087860)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:122)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087860.test(Selector_select_9175087860.java:38)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087861): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087861)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:121)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087861.test(Selector_select_9175087861.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9288978751): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9288978751)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:96)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9288978751.test(Selector_select_9288978751.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Executions terminated
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+Failure: [initializationError(org.jsoup.select.EqualityUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.jsoup.select.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_filterOut_16165847170): null]
+Failing Tests: test(org.jsoup.select.Selector_filterOut_16165847170)
+java.lang.NullPointerException
+	at org.jsoup.select.Selector.filterOut(Selector.java:142)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_filterOut_16165847170.test(Selector_filterOut_16165847170.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_selectFirst_9095705271): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_selectFirst_9095705271)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.selectFirst(Selector.java:163)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_selectFirst_9095705271.test(Selector_selectFirst_9095705271.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556510): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556510)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556510.test(Selector_select_12381556510.java:78)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556511): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556511)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556511.test(Selector_select_12381556511.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087860): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087860)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:122)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087860.test(Selector_select_9175087860.java:38)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087861): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087861)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:121)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087861.test(Selector_select_9175087861.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9288978751): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9288978751)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:96)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9288978751.test(Selector_select_9288978751.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Executions terminated
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+Failure: [initializationError(org.jsoup.select.EqualityUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.jsoup.select.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_filterOut_16165847170): null]
+Failing Tests: test(org.jsoup.select.Selector_filterOut_16165847170)
+java.lang.NullPointerException
+	at org.jsoup.select.Selector.filterOut(Selector.java:142)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_filterOut_16165847170.test(Selector_filterOut_16165847170.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_selectFirst_9095705271): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_selectFirst_9095705271)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.selectFirst(Selector.java:163)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_selectFirst_9095705271.test(Selector_selectFirst_9095705271.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556510): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556510)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556510.test(Selector_select_12381556510.java:78)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556511): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556511)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556511.test(Selector_select_12381556511.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087860): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087860)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:122)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087860.test(Selector_select_9175087860.java:38)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087861): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087861)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:121)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087861.test(Selector_select_9175087861.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9288978751): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9288978751)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:96)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9288978751.test(Selector_select_9288978751.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Executions terminated
+Failure: [initializationError(org.jsoup.select.EqualityUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.EqualityUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [initializationError(org.jsoup.select.ReflectionUtils): No runnable methods]
+Failing Tests: initializationError(org.jsoup.select.ReflectionUtils)
+java.lang.Exception: No runnable methods
+	at org.junit.runners.BlockJUnit4ClassRunner.validateInstanceMethods(BlockJUnit4ClassRunner.java:169)
+	at org.junit.runners.BlockJUnit4ClassRunner.collectInitializationErrors(BlockJUnit4ClassRunner.java:104)
+	at org.junit.runners.ParentRunner.validate(ParentRunner.java:355)
+	at org.junit.runners.ParentRunner.<init>(ParentRunner.java:76)
+	at org.junit.runners.BlockJUnit4ClassRunner.<init>(BlockJUnit4ClassRunner.java:57)
+	at org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.internal.builders.AllDefaultPossibilitiesBuilder.runnerForClass(AllDefaultPossibilitiesBuilder.java:26)
+	at org.junit.runner.Computer.getRunner(Computer.java:40)
+	at org.junit.runner.Computer$1.runnerForClass(Computer.java:31)
+	at org.junit.runners.model.RunnerBuilder.safeRunnerForClass(RunnerBuilder.java:59)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:101)
+	at org.junit.runners.model.RunnerBuilder.runners(RunnerBuilder.java:87)
+	at org.junit.runners.Suite.<init>(Suite.java:80)
+	at org.junit.runner.Computer.getSuite(Computer.java:28)
+	at org.junit.runner.Request.classes(Request.java:75)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_filterOut_16165847170): null]
+Failing Tests: test(org.jsoup.select.Selector_filterOut_16165847170)
+java.lang.NullPointerException
+	at org.jsoup.select.Selector.filterOut(Selector.java:142)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_filterOut_16165847170.test(Selector_filterOut_16165847170.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_selectFirst_9095705271): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_selectFirst_9095705271)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.selectFirst(Selector.java:163)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_selectFirst_9095705271.test(Selector_selectFirst_9095705271.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556510): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556510)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556510.test(Selector_select_12381556510.java:78)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_12381556511): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_12381556511)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:108)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_12381556511.test(Selector_select_12381556511.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087860): Object must not be null]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087860)
+org.jsoup.helper.ValidationException: Object must not be null
+	at org.jsoup.select.Selector.select(Selector.java:122)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087860.test(Selector_select_9175087860.java:38)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9175087861): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9175087861)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:121)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9175087861.test(Selector_select_9175087861.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+Failure: [test(org.jsoup.select.Selector_select_9288978751): String must not be empty]
+Failing Tests: test(org.jsoup.select.Selector_select_9288978751)
+org.jsoup.helper.ValidationException: String must not be empty
+	at org.jsoup.select.Selector.select(Selector.java:96)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jsoup.select.ReflectionUtils.callMethod(ReflectionUtils.java:238)
+	at org.jsoup.select.Selector_select_9288978751.test(Selector_select_9288978751.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runners.Suite.runChild(Suite.java:127)
+	at org.junit.runners.Suite.runChild(Suite.java:26)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:138)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:117)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:54)
+	at sbst.benchmark.coverage.TestExecutionTask.call(TestExecutionTask.java:15)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:750)
+
+
+=== Run Jacoco for Coverage ===
+Number of instrumented file = 2459
+Running tests with the following classpath: 
+/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/jsoup-1.16.2-SNAPSHOT_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/junit-jupiter-params-5.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/gson-2.10.1_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/jetty-util-ajax-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/junit-jupiter-engine-5.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/jetty-server-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/junit-platform-engine-1.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/junit-jupiter-api-5.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/apiguardian-api-1.1.2_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/opentest4j-1.2.0_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/javax.servlet-api-3.1.0_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/jetty-util-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/jetty-http-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/jetty-security-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/jsr305-3.0.2_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/jetty-io-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/junit-jupiter-5.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/jetty-servlet-9.4.51.v20230217_instrumented.jar:/usr/local/bin/lib/hamcrest-core.jar:/usr/local/bin/lib/junit.jar:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation, org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+Executions terminated
+Number of file with coverage information = 264
+Extracted coverage data for the class org/jsoup/select/Selector
+Number of file with coverage information = 343
+Number of file with coverage information = 218
+Number of file with coverage information = 33
+Number of file with coverage information = 134
+Number of file with coverage information = 357
+Number of file with coverage information = 127
+Number of file with coverage information = 179
+Number of file with coverage information = 3
+Number of file with coverage information = 7
+Number of file with coverage information = 79
+Number of file with coverage information = 327
+Number of file with coverage information = 109
+Number of file with coverage information = 62
+Number of file with coverage information = 35
+Number of file with coverage information = 111
+Number of file with coverage information = 1
+Number of file with coverage information = 70
+
+=== Run PIT ===
+Matching Jacoco with PIT: find covered mutations
+Executing Mutation Analysis using 18 mutants 
+Evaluating mutant -140569761 using tests: [org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/CUT0
+
+Failed test initializationError(org.jsoup.select.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.jsoup.select.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_filterOut_16165847170)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_selectFirst_9095705270)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator] killed by test (org.jsoup.select.Selector_selectFirst_9095705270),test)
+Evaluating mutant 1520094075 using tests: [org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/CUT1
+
+Failed test initializationError(org.jsoup.select.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.jsoup.select.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_filterOut_16165847170)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_selectFirst_9095705270)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Lorg/jsoup/select/Evaluator;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator] killed by test (org.jsoup.select.Selector_selectFirst_9095705270),test)
+Evaluating mutant 1018323059 using tests: [org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/CUT2
+
+Failed test initializationError(org.jsoup.select.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.jsoup.select.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_filterOut_16165847170)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_selectFirst_9095705270)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=selectFirst, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;)Lorg/jsoup/nodes/Element;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator] killed by test (org.jsoup.select.Selector_selectFirst_9095705270),test)
+Evaluating mutant 1223625771 using tests: [org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/CUT3
+
+Failed test initializationError(org.jsoup.select.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.jsoup.select.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_filterOut_16165847170)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_selectFirst_9095705270)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=selectFirst, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;)Lorg/jsoup/nodes/Element;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator] killed by test (org.jsoup.select.Selector_selectFirst_9095705270),test)
+Evaluating mutant -345872473 using tests: [org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/CUT4
+
+Failed test initializationError(org.jsoup.select.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.jsoup.select.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_filterOut_16165847170)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_selectFirst_9095705270)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator] killed by test (org.jsoup.select.Selector_selectFirst_9095705270),test)
+Evaluating mutant 1725395826 using tests: [org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/CUT5
+
+Failed test initializationError(org.jsoup.select.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.jsoup.select.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_filterOut_16165847170)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_selectFirst_9095705270)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Lorg/jsoup/select/Evaluator;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator] killed by test (org.jsoup.select.Selector_selectFirst_9095705270),test)
+Evaluating mutant 1520090231 using tests: [org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/CUT6
+
+Failed test initializationError(org.jsoup.select.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.jsoup.select.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_filterOut_16165847170)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_selectFirst_9095705270)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Lorg/jsoup/select/Evaluator;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator] killed by test (org.jsoup.select.Selector_selectFirst_9095705270),test)
+Evaluating mutant -167662820 using tests: [org.jsoup.select.EqualityUtils, org.jsoup.select.ReflectionUtils, org.jsoup.select.Selector_filterOut_16165847170, org.jsoup.select.Selector_init_16767445320, org.jsoup.select.Selector_init_16767445321, org.jsoup.select.Selector_selectFirst_9095705270, org.jsoup.select.Selector_selectFirst_9095705271, org.jsoup.select.Selector_select_12381556510, org.jsoup.select.Selector_select_12381556511, org.jsoup.select.Selector_select_9175087860, org.jsoup.select.Selector_select_9175087861, org.jsoup.select.Selector_select_9288978750, org.jsoup.select.Selector_select_9288978751]
+
+ CP : /usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/SUT:/home/kex/results_kex_120/JSOUP-29_1/temp/testcases/bin:results_kex_120/JSOUP-29_1/temp/testcases/mutated_code/CUT7
+
+Failed test initializationError(org.jsoup.select.EqualityUtils)
+	 flaky test, ignore !
+Failed test initializationError(org.jsoup.select.ReflectionUtils)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_filterOut_16165847170)
+	 flaky test, ignore !
+Failed test test(org.jsoup.select.Selector_selectFirst_9095705270)
+	 actual test, will stop test execution !
+TestExec4MutationTask: Mutant MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Ljava/lang/String;Ljava/lang/Iterable;)Lorg/jsoup/select/Elements;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator] killed by test (org.jsoup.select.Selector_selectFirst_9095705270),test)
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Selector.java, block=1, lineNumber=97, description=mutated return of Object value for org/jsoup/select/Selector::select to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Lorg/jsoup/select/Evaluator;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=Selector.java, block=2, lineNumber=109, description=removed call to org/jsoup/helper/Validate::notNull, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=selectFirst, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;)Lorg/jsoup/nodes/Element;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=Selector.java, block=17, lineNumber=163, description=removed call to org/jsoup/helper/Validate::notEmpty, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=selectFirst, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;)Lorg/jsoup/nodes/Element;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Selector.java, block=17, lineNumber=164, description=mutated return of Object value for org/jsoup/select/Selector::selectFirst to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Ljava/lang/String;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=Selector.java, block=1, lineNumber=96, description=removed call to org/jsoup/helper/Validate::notEmpty, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Lorg/jsoup/select/Evaluator;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Selector.java, block=2, lineNumber=110, description=mutated return of Object value for org/jsoup/select/Selector::select to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Lorg/jsoup/select/Evaluator;Lorg/jsoup/nodes/Element;)Lorg/jsoup/select/Elements;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=Selector.java, block=2, lineNumber=108, description=removed call to org/jsoup/helper/Validate::notNull, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.Selector, method=select, methodDesc=(Ljava/lang/String;Ljava/lang/Iterable;)Lorg/jsoup/select/Elements;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=Selector.java, block=3, lineNumber=121, description=removed call to org/jsoup/helper/Validate::notEmpty, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-29
+	Class Under Test: org.jsoup.select.Selector
+	Run number: 1
+	Tool preparation time (ms): 5237
+	Tool test cases generation time (ms): 137469
+	Test cases execution time (ms): 324
+	Test case number: 11
+	Uncompilable Test Classes: 0
+	Broken tests number: 9
+	Failing tests number: 0
+	Lines total: 32
+	Lines covered: 9
+	Lines coverage ratio (%): 28.125
+	Conditions total: 14
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 18
+	Mutants covered: 8
+	Mutants coverage ratio (%): 44.444447
+	Mutants killed: 8
+	Mutants killed ratio (%): 44.444447
+	Mutants alive: 10
+
+
+Class org.jsoup.select.Selector ended.
+Stopping process...
+Tool subprocess is an instance of java.lang.UNIXProcess
+Tool subprocess Id is 233402
+Killing master process 233402
+Executing command kill -9 233402
+Execution of command kill -9 233402 finished.
+Process was destroyed

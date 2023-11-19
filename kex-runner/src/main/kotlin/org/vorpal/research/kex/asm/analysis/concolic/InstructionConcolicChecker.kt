@@ -40,6 +40,7 @@ import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.deleteIfExists
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -127,14 +128,11 @@ class InstructionConcolicChecker(
                 val testFile2 = testWithAssertionsGenerator.emit()
 
                 compilerHelper.compileFile(testFile2)
-                collectTrace(testWithAssertionsGenerator.testKlassName)
+                collectTrace(testWithAssertionsGenerator.testKlassName).also { testFile.deleteIfExists() }
             } else {
                 result
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            println(method.name)
-            println((result as? ExecutionCompletedResult)?.trace)
             result
         }
     }

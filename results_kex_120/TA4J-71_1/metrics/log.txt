@@ -1,0 +1,201 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-71
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.num.NaN
+
+---Compilation---
+Compiled 'org/ta4j/core/num/EqualityUtils.java'
+Compiled 'org/ta4j/core/num/NaN_abs_20557673000.java'
+Compiled 'org/ta4j/core/num/NaN_abs_20557673001.java'
+Compiled 'org/ta4j/core/num/NaN_ceil_7824145430.java'
+Compiled 'org/ta4j/core/num/NaN_ceil_7824145431.java'
+Compiled 'org/ta4j/core/num/NaN_compareTo_114092960.java'
+Compiled 'org/ta4j/core/num/NaN_compareTo_114092961.java'
+Compiled 'org/ta4j/core/num/NaN_dividedBy_9087732480.java'
+Compiled 'org/ta4j/core/num/NaN_dividedBy_9087732481.java'
+Compiled 'org/ta4j/core/num/NaN_doubleValue_9312282110.java'
+Compiled 'org/ta4j/core/num/NaN_doubleValue_9312282111.java'
+Compiled 'org/ta4j/core/num/NaN_floatValue_18814598590.java'
+Compiled 'org/ta4j/core/num/NaN_floatValue_18814598591.java'
+Compiled 'org/ta4j/core/num/NaN_floor_13805588700.java'
+Compiled 'org/ta4j/core/num/NaN_floor_13805588701.java'
+Compiled 'org/ta4j/core/num/NaN_function_2453426590.java'
+Compiled 'org/ta4j/core/num/NaN_function_2453426591.java'
+Compiled 'org/ta4j/core/num/NaN_getDelegate_9331270840.java'
+Compiled 'org/ta4j/core/num/NaN_getDelegate_9331270841.java'
+Compiled 'org/ta4j/core/num/NaN_getName_12394824620.java'
+Compiled 'org/ta4j/core/num/NaN_getName_12394824621.java'
+Compiled 'org/ta4j/core/num/NaN_init_6531805740.java'
+Compiled 'org/ta4j/core/num/NaN_init_6531805741.java'
+Compiled 'org/ta4j/core/num/NaN_intValue_19886735980.java'
+Compiled 'org/ta4j/core/num/NaN_intValue_19886735981.java'
+Compiled 'org/ta4j/core/num/NaN_isEqual_16841093820.java'
+Compiled 'org/ta4j/core/num/NaN_isEqual_16841093821.java'
+Compiled 'org/ta4j/core/num/NaN_isGreaterThanOrEqual_2713111840.java'
+Compiled 'org/ta4j/core/num/NaN_isGreaterThanOrEqual_2713111841.java'
+Compiled 'org/ta4j/core/num/NaN_isGreaterThan_17172697590.java'
+Compiled 'org/ta4j/core/num/NaN_isGreaterThan_17172697591.java'
+Compiled 'org/ta4j/core/num/NaN_isLessThanOrEqual_14722762530.java'
+Compiled 'org/ta4j/core/num/NaN_isLessThanOrEqual_14722762531.java'
+Compiled 'org/ta4j/core/num/NaN_isLessThan_7066386440.java'
+Compiled 'org/ta4j/core/num/NaN_isLessThan_7066386441.java'
+Compiled 'org/ta4j/core/num/NaN_isNaN_20285508990.java'
+Compiled 'org/ta4j/core/num/NaN_isNaN_20285508991.java'
+Compiled 'org/ta4j/core/num/NaN_isNegativeOrZero_9645350140.java'
+Compiled 'org/ta4j/core/num/NaN_isNegativeOrZero_9645350141.java'
+Compiled 'org/ta4j/core/num/NaN_isNegative_14982467570.java'
+Compiled 'org/ta4j/core/num/NaN_isNegative_14982467571.java'
+Compiled 'org/ta4j/core/num/NaN_isPositiveOrZero_19848773980.java'
+Compiled 'org/ta4j/core/num/NaN_isPositiveOrZero_19848773981.java'
+Compiled 'org/ta4j/core/num/NaN_isPositive_5419995210.java'
+Compiled 'org/ta4j/core/num/NaN_isPositive_5419995211.java'
+Compiled 'org/ta4j/core/num/NaN_isZero_1690604300.java'
+Compiled 'org/ta4j/core/num/NaN_isZero_1690604301.java'
+Compiled 'org/ta4j/core/num/NaN_log_20452328180.java'
+Compiled 'org/ta4j/core/num/NaN_log_20452328181.java'
+Compiled 'org/ta4j/core/num/NaN_longValue_11693237270.java'
+Compiled 'org/ta4j/core/num/NaN_longValue_11693237271.java'
+Compiled 'org/ta4j/core/num/NaN_max_18442302380.java'
+Compiled 'org/ta4j/core/num/NaN_max_18442302381.java'
+Compiled 'org/ta4j/core/num/NaN_min_18440015200.java'
+Compiled 'org/ta4j/core/num/NaN_min_18440015201.java'
+Compiled 'org/ta4j/core/num/NaN_minus_8830014260.java'
+Compiled 'org/ta4j/core/num/NaN_minus_8830014261.java'
+Compiled 'org/ta4j/core/num/NaN_multipliedBy_12205019760.java'
+Compiled 'org/ta4j/core/num/NaN_multipliedBy_12205019761.java'
+Compiled 'org/ta4j/core/num/NaN_negate_12272748680.java'
+Compiled 'org/ta4j/core/num/NaN_negate_12272748681.java'
+Compiled 'org/ta4j/core/num/NaN_plus_13619021680.java'
+Compiled 'org/ta4j/core/num/NaN_plus_13619021681.java'
+Compiled 'org/ta4j/core/num/NaN_pow_18410435620.java'
+Compiled 'org/ta4j/core/num/NaN_pow_18410435621.java'
+Compiled 'org/ta4j/core/num/NaN_pow_20415214360.java'
+Compiled 'org/ta4j/core/num/NaN_pow_20415214361.java'
+Compiled 'org/ta4j/core/num/NaN_remainder_7382016350.java'
+Compiled 'org/ta4j/core/num/NaN_remainder_7382016351.java'
+Compiled 'org/ta4j/core/num/NaN_sqrt_12518390180.java'
+Compiled 'org/ta4j/core/num/NaN_sqrt_12518390181.java'
+Compiled 'org/ta4j/core/num/NaN_sqrt_12518409400.java'
+Compiled 'org/ta4j/core/num/NaN_sqrt_12518409401.java'
+Compiled 'org/ta4j/core/num/NaN_toString_1077247230.java'
+Compiled 'org/ta4j/core/num/NaN_toString_1077247231.java'
+Compiled 'org/ta4j/core/num/NaN_valueOf_11097152550.java'
+Compiled 'org/ta4j/core/num/NaN_valueOf_11097152551.java'
+Compiled 'org/ta4j/core/num/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 38 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=log, methodDesc=()Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=19, lineNumber=150, description=mutated return of Object value for org/ta4j/core/num/NaN::log to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=min, methodDesc=(Lorg/ta4j/core/num/Num;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=37, lineNumber=231, description=mutated return of Object value for org/ta4j/core/num/NaN::min to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isEqual, methodDesc=(Lorg/ta4j/core/num/Num;)Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=NaN.java, block=30, lineNumber=206, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isNegative, methodDesc=()Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=27, lineNumber=190, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=negate, methodDesc=()Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=23, lineNumber=170, description=mutated return of Object value for org/ta4j/core/num/NaN::negate to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isEqual, methodDesc=(Lorg/ta4j/core/num/Num;)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=NaN.java, block=29, lineNumber=206, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isPositive, methodDesc=()Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=25, lineNumber=180, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=getDelegate, methodDesc=()Ljava/lang/Number;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=7, lineNumber=90, description=mutated return of Object value for org/ta4j/core/num/NaN::getDelegate to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=sqrt, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=21, lineNumber=160, description=mutated return of Object value for org/ta4j/core/num/NaN::sqrt to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=pow, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=17, lineNumber=140, description=mutated return of Object value for org/ta4j/core/num/NaN::pow to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isEqual, methodDesc=(Lorg/ta4j/core/num/Num;)Z], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=32, lineNumber=206, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=sqrt, methodDesc=()Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=20, lineNumber=155, description=mutated return of Object value for org/ta4j/core/num/NaN::sqrt to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=minus, methodDesc=(Lorg/ta4j/core/num/Num;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=11, lineNumber=110, description=mutated return of Object value for org/ta4j/core/num/NaN::minus to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=lambda$function$0, methodDesc=(Ljava/lang/Number;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=41, lineNumber=241, description=mutated return of Object value for org/ta4j/core/num/NaN::lambda$function$0 to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=plus, methodDesc=(Lorg/ta4j/core/num/Num;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=10, lineNumber=105, description=mutated return of Object value for org/ta4j/core/num/NaN::plus to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=getName, methodDesc=()Ljava/lang/String;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=8, lineNumber=95, description=mutated return of Object value for org/ta4j/core/num/NaN::getName to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isGreaterThanOrEqual, methodDesc=(Lorg/ta4j/core/num/Num;)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=34, lineNumber=216, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isGreaterThan, methodDesc=(Lorg/ta4j/core/num/Num;)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=33, lineNumber=211, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isLessThanOrEqual, methodDesc=(Lorg/ta4j/core/num/Num;)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=36, lineNumber=226, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=dividedBy, methodDesc=(Lorg/ta4j/core/num/Num;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=13, lineNumber=120, description=mutated return of Object value for org/ta4j/core/num/NaN::dividedBy to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isLessThan, methodDesc=(Lorg/ta4j/core/num/Num;)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=35, lineNumber=221, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=valueOf, methodDesc=(Ljava/lang/Number;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=1, lineNumber=60, description=mutated return of Object value for org/ta4j/core/num/NaN::valueOf to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=doubleValue, methodDesc=()D], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=6, lineNumber=85, description=replaced return of double value with -(x + 1) for org/ta4j/core/num/NaN::doubleValue, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=pow, methodDesc=(Lorg/ta4j/core/num/Num;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=18, lineNumber=145, description=mutated return of Object value for org/ta4j/core/num/NaN::pow to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isPositiveOrZero, methodDesc=()Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=26, lineNumber=185, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=toString, methodDesc=()Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=9, lineNumber=100, description=mutated return of Object value for org/ta4j/core/num/NaN::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=max, methodDesc=(Lorg/ta4j/core/num/Num;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=38, lineNumber=236, description=mutated return of Object value for org/ta4j/core/num/NaN::max to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=floor, methodDesc=()Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=15, lineNumber=130, description=mutated return of Object value for org/ta4j/core/num/NaN::floor to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=multipliedBy, methodDesc=(Lorg/ta4j/core/num/Num;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=12, lineNumber=115, description=mutated return of Object value for org/ta4j/core/num/NaN::multipliedBy to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isNaN, methodDesc=()Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=40, lineNumber=246, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=abs, methodDesc=()Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=22, lineNumber=165, description=mutated return of Object value for org/ta4j/core/num/NaN::abs to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=compareTo, methodDesc=(Lorg/ta4j/core/num/Num;)I], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=2, lineNumber=65, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=floatValue, methodDesc=()F], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=5, lineNumber=80, description=replaced return of float value with -(x + 1) for org/ta4j/core/num/NaN::floatValue, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=function, methodDesc=()Ljava/util/function/Function;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=39, lineNumber=241, description=mutated return of Object value for org/ta4j/core/num/NaN::function to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=ceil, methodDesc=()Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=16, lineNumber=135, description=mutated return of Object value for org/ta4j/core/num/NaN::ceil to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=remainder, methodDesc=(Lorg/ta4j/core/num/Num;)Lorg/ta4j/core/num/Num;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=14, lineNumber=125, description=mutated return of Object value for org/ta4j/core/num/NaN::remainder to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isZero, methodDesc=()Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=24, lineNumber=175, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.num.NaN, method=isNegativeOrZero, methodDesc=()Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NaN.java, block=28, lineNumber=195, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-71
+	Class Under Test: org.ta4j.core.num.NaN
+	Run number: 1
+	Tool preparation time (ms): 12157
+	Tool test cases generation time (ms): 165258
+	Test cases execution time (ms): 635
+	Test case number: 76
+	Uncompilable Test Classes: 0
+	Broken tests number: 6
+	Failing tests number: 0
+	Lines total: 38
+	Lines covered: 38
+	Lines coverage ratio (%): 100.0
+	Conditions total: 4
+	Conditions covered: 1
+	Conditions coverage ratio (%): 25.0
+	Mutants total: 38
+	Mutants covered: 38
+	Mutants coverage ratio (%): 100.0
+	Mutants killed: 38
+	Mutants killed ratio (%): 100.0
+	Mutants alive: 0

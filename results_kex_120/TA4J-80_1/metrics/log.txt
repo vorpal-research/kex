@@ -1,0 +1,65 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-80
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.criteria.NumberOfConsecutivePositionsCriterion
+
+---Compilation---
+Compiled 'org/ta4j/core/criteria/EqualityUtils.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_betterThan_5105473760.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_betterThan_5105473761.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_calculate_13346717230.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_calculate_13346717231.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_calculate_14615767580.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_calculate_14615767581.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_init_3376390320.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_init_3376390321.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_isConsecutive_17461543770.java'
+Compiled 'org/ta4j/core/criteria/NumberOfConsecutivePositionsCriterion_isConsecutive_17461543771.java'
+Compiled 'org/ta4j/core/criteria/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 16 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.criteria.NumberOfConsecutivePositionsCriterion, method=betterThan, methodDesc=(Lorg/ta4j/core/num/Num;Lorg/ta4j/core/num/Num;)Z], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NumberOfConsecutivePositionsCriterion.java, block=13, lineNumber=85, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.criteria.NumberOfConsecutivePositionsCriterion, method=isConsecutive, methodDesc=(Lorg/ta4j/core/Position;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=NumberOfConsecutivePositionsCriterion.java, block=14, lineNumber=90, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.criteria.NumberOfConsecutivePositionsCriterion, method=betterThan, methodDesc=(Lorg/ta4j/core/num/Num;Lorg/ta4j/core/num/Num;)Z], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=NumberOfConsecutivePositionsCriterion.java, block=11, lineNumber=85, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-80
+	Class Under Test: org.ta4j.core.criteria.NumberOfConsecutivePositionsCriterion
+	Run number: 1
+	Tool preparation time (ms): 8394
+	Tool test cases generation time (ms): 160032
+	Test cases execution time (ms): 200
+	Test case number: 10
+	Uncompilable Test Classes: 0
+	Broken tests number: 10
+	Failing tests number: 0
+	Lines total: 22
+	Lines covered: 7
+	Lines coverage ratio (%): 31.818182
+	Conditions total: 16
+	Conditions covered: 2
+	Conditions coverage ratio (%): 12.5
+	Mutants total: 16
+	Mutants covered: 3
+	Mutants coverage ratio (%): 18.75
+	Mutants killed: 3
+	Mutants killed ratio (%): 18.75
+	Mutants alive: 13

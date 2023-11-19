@@ -1,0 +1,61 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-58
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.rules.StopGainRule
+
+---Compilation---
+Compiled 'org/ta4j/core/rules/EqualityUtils.java'
+Compiled 'org/ta4j/core/rules/ReflectionUtils.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_init_4443207000.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_init_4443207001.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_init_9158100270.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_init_9158100271.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_isBuyGainSatisfied_14671692300.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_isBuyGainSatisfied_14671692301.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_isSatisfied_21416629120.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_isSatisfied_21416629121.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_isSellGainSatisfied_10758083660.java'
+Compiled 'org/ta4j/core/rules/StopGainRule_isSellGainSatisfied_10758083661.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 7 mutants 
+mutationResult.getState() IGNORED
+* Ignored mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.rules.StopGainRule, method=isSatisfied, methodDesc=(ILorg/ta4j/core/TradingRecord;)Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StopGainRule.java, block=2, lineNumber=80, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-58
+	Class Under Test: org.ta4j.core.rules.StopGainRule
+	Run number: 1
+	Tool preparation time (ms): 9248
+	Tool test cases generation time (ms): 157472
+	Test cases execution time (ms): 576
+	Test case number: 10
+	Uncompilable Test Classes: 0
+	Broken tests number: 12
+	Failing tests number: 0
+	Lines total: 24
+	Lines covered: 5
+	Lines coverage ratio (%): 20.833332
+	Conditions total: 6
+	Conditions covered: 1
+	Conditions coverage ratio (%): 16.666668
+	Mutants total: 6
+	Mutants covered: 0
+	Mutants coverage ratio (%): 0.0
+	Mutants killed: 0
+	Mutants killed ratio (%): 0.0
+	Mutants alive: 6

@@ -1,0 +1,335 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  THREETEN-EXTRA-90
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.threeten.extra.LocalDateRange
+
+---Compilation---
+Compiled 'org/threeten/extra/EqualityUtils.java'
+Compiled 'org/threeten/extra/LocalDateRange_abuts_1168589160.java'
+Compiled 'org/threeten/extra/LocalDateRange_abuts_1168589161.java'
+Compiled 'org/threeten/extra/LocalDateRange_contains_14965627320.java'
+Compiled 'org/threeten/extra/LocalDateRange_contains_14965627321.java'
+Compiled 'org/threeten/extra/LocalDateRange_encloses_15206089390.java'
+Compiled 'org/threeten/extra/LocalDateRange_encloses_15206089391.java'
+Compiled 'org/threeten/extra/LocalDateRange_equals_13042825010.java'
+Compiled 'org/threeten/extra/LocalDateRange_equals_13042825011.java'
+Compiled 'org/threeten/extra/LocalDateRange_getEndInclusive_10946555220.java'
+Compiled 'org/threeten/extra/LocalDateRange_getEndInclusive_10946555221.java'
+Compiled 'org/threeten/extra/LocalDateRange_getEnd_16249532160.java'
+Compiled 'org/threeten/extra/LocalDateRange_getEnd_16249532161.java'
+Compiled 'org/threeten/extra/LocalDateRange_getStart_1427881530.java'
+Compiled 'org/threeten/extra/LocalDateRange_getStart_1427881531.java'
+Compiled 'org/threeten/extra/LocalDateRange_hashCode_8555958260.java'
+Compiled 'org/threeten/extra/LocalDateRange_hashCode_8555958261.java'
+Compiled 'org/threeten/extra/LocalDateRange_init_6209697310.java'
+Compiled 'org/threeten/extra/LocalDateRange_init_6209697311.java'
+Compiled 'org/threeten/extra/LocalDateRange_intersection_15236857260.java'
+Compiled 'org/threeten/extra/LocalDateRange_intersection_15236857261.java'
+Compiled 'org/threeten/extra/LocalDateRange_isAfter_3497745250.java'
+Compiled 'org/threeten/extra/LocalDateRange_isAfter_3497745251.java'
+Compiled 'org/threeten/extra/LocalDateRange_isAfter_9973349830.java'
+Compiled 'org/threeten/extra/LocalDateRange_isAfter_9973349831.java'
+Compiled 'org/threeten/extra/LocalDateRange_isBefore_19792266180.java'
+Compiled 'org/threeten/extra/LocalDateRange_isBefore_19792266181.java'
+Compiled 'org/threeten/extra/LocalDateRange_isBefore_9686311700.java'
+Compiled 'org/threeten/extra/LocalDateRange_isBefore_9686311701.java'
+Compiled 'org/threeten/extra/LocalDateRange_isConnected_16204780000.java'
+Compiled 'org/threeten/extra/LocalDateRange_isConnected_16204780001.java'
+Compiled 'org/threeten/extra/LocalDateRange_isEmpty_15505840060.java'
+Compiled 'org/threeten/extra/LocalDateRange_isEmpty_15505840061.java'
+Compiled 'org/threeten/extra/LocalDateRange_isUnboundedEnd_21167933200.java'
+Compiled 'org/threeten/extra/LocalDateRange_isUnboundedEnd_21167933201.java'
+Compiled 'org/threeten/extra/LocalDateRange_isUnboundedStart_14552126390.java'
+Compiled 'org/threeten/extra/LocalDateRange_isUnboundedStart_14552126391.java'
+Compiled 'org/threeten/extra/LocalDateRange_lengthInDays_21248975430.java'
+Compiled 'org/threeten/extra/LocalDateRange_lengthInDays_21248975431.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofClosed_13746651500.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofClosed_13746651501.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofEmpty_14418582850.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofEmpty_14418582851.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofUnboundedEnd_2418803630.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofUnboundedEnd_2418803631.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofUnboundedStart_13951625740.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofUnboundedStart_13951625741.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofUnbounded_5629387960.java'
+Compiled 'org/threeten/extra/LocalDateRange_ofUnbounded_5629387961.java'
+Compiled 'org/threeten/extra/LocalDateRange_of_1097951640.java'
+Compiled 'org/threeten/extra/LocalDateRange_of_1097951641.java'
+Compiled 'org/threeten/extra/LocalDateRange_of_17811601820.java'
+Compiled 'org/threeten/extra/LocalDateRange_of_17811601821.java'
+Compiled 'org/threeten/extra/LocalDateRange_overlaps_6469854750.java'
+Compiled 'org/threeten/extra/LocalDateRange_overlaps_6469854751.java'
+Compiled 'org/threeten/extra/LocalDateRange_parse_14853997850.java'
+Compiled 'org/threeten/extra/LocalDateRange_parse_14853997851.java'
+Compiled 'org/threeten/extra/LocalDateRange_span_19549407070.java'
+Compiled 'org/threeten/extra/LocalDateRange_span_19549407071.java'
+Compiled 'org/threeten/extra/LocalDateRange_stream_4661329860.java'
+Compiled 'org/threeten/extra/LocalDateRange_stream_4661329861.java'
+Compiled 'org/threeten/extra/LocalDateRange_toPeriod_15620101670.java'
+Compiled 'org/threeten/extra/LocalDateRange_toPeriod_15620101671.java'
+Compiled 'org/threeten/extra/LocalDateRange_toString_3448361360.java'
+Compiled 'org/threeten/extra/LocalDateRange_toString_3448361361.java'
+Compiled 'org/threeten/extra/LocalDateRange_union_17305043440.java'
+Compiled 'org/threeten/extra/LocalDateRange_union_17305043441.java'
+Compiled 'org/threeten/extra/LocalDateRange_withEnd_14876122880.java'
+Compiled 'org/threeten/extra/LocalDateRange_withEnd_14876122881.java'
+Compiled 'org/threeten/extra/LocalDateRange_withStart_7957375430.java'
+Compiled 'org/threeten/extra/LocalDateRange_withStart_7957375431.java'
+Compiled 'org/threeten/extra/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 145 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=encloses, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=51, lineNumber=470, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[34], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=128, lineNumber=743, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=<init>, methodDesc=(Ljava/time/LocalDate;Ljava/time/LocalDate;)V], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=27, lineNumber=304, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isConnected, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=57, lineNumber=500, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isAfter, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=99, lineNumber=648, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=union, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[53], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=81, lineNumber=565, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isBefore, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=105, lineNumber=661, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=getEnd, methodDesc=()Ljava/time/LocalDate;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=36, lineNumber=343, description=mutated return of Object value for org/threeten/extra/LocalDateRange::getEnd to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=stream, methodDesc=()Ljava/util/stream/Stream;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=96, lineNumber=604, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=getEndInclusive, methodDesc=()Ljava/time/LocalDate;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=37, lineNumber=359, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[51], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=67, lineNumber=537, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=union, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[57], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=82, lineNumber=566, description=mutated return of Object value for org/threeten/extra/LocalDateRange::union to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isAfter, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=106, lineNumber=675, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=overlaps, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=62, lineNumber=516, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[47], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=131, lineNumber=745, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isAfter, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=107, lineNumber=675, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=124, lineNumber=738, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[53], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=68, lineNumber=537, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isBefore, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=102, lineNumber=661, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=contains, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[31], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=49, lineNumber=456, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=ofUnbounded, methodDesc=()Lorg/threeten/extra/LocalDateRange;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=10, lineNumber=214, description=mutated return of Object value for org/threeten/extra/LocalDateRange::ofUnbounded to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=abuts, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[19], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=LocalDateRange.java, block=54, lineNumber=484, description=Replaced XOR with AND, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[73], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=73, lineNumber=542, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=union, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=78, lineNumber=560, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isAfter, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=99, lineNumber=648, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=contains, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=45, lineNumber=456, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=toPeriod, methodDesc=()Ljava/time/Period;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=120, lineNumber=720, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isBefore, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=110, lineNumber=688, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=overlaps, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=61, lineNumber=516, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isBefore, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=111, lineNumber=688, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=span, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=93, lineNumber=590, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=ofClosed, methodDesc=(Ljava/time/LocalDate;Ljava/time/LocalDate;)Lorg/threeten/extra/LocalDateRange;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=1, lineNumber=158, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=toPeriod, methodDesc=()Ljava/time/Period;], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=123, lineNumber=723, description=mutated return of Object value for org/threeten/extra/LocalDateRange::toPeriod to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=union, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[53], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=81, lineNumber=565, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=65, lineNumber=532, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isBefore, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=110, lineNumber=688, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isConnected, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=57, lineNumber=500, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=span, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[26], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=91, lineNumber=589, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isBefore, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=102, lineNumber=661, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=ofEmpty, methodDesc=(Ljava/time/LocalDate;)Lorg/threeten/extra/LocalDateRange;], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=9, lineNumber=205, description=mutated return of Object value for org/threeten/extra/LocalDateRange::ofEmpty to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isUnboundedEnd, methodDesc=()Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=42, lineNumber=398, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isConnected, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=55, lineNumber=500, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=<init>, methodDesc=(Ljava/time/LocalDate;Ljava/time/LocalDate;)V], indexes=[52], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=31, lineNumber=310, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[64], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=71, lineNumber=539, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=<init>, methodDesc=(Ljava/time/LocalDate;Ljava/time/LocalDate;)V], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=32, lineNumber=310, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=contains, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=46, lineNumber=456, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=ofUnboundedStart, methodDesc=(Ljava/time/LocalDate;)Lorg/threeten/extra/LocalDateRange;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=11, lineNumber=228, description=mutated return of Object value for org/threeten/extra/LocalDateRange::ofUnboundedStart to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=127, lineNumber=743, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=lengthInDays, methodDesc=()I], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=115, lineNumber=702, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=contains, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=46, lineNumber=456, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=encloses, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=53, lineNumber=470, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=toPeriod, methodDesc=()Ljava/time/Period;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=121, lineNumber=720, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[64], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=71, lineNumber=539, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=encloses, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=51, lineNumber=470, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=<init>, methodDesc=(Ljava/time/LocalDate;Ljava/time/LocalDate;)V], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=25, lineNumber=301, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[87], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=75, lineNumber=543, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=encloses, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=50, lineNumber=470, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isUnboundedStart, methodDesc=()Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=41, lineNumber=387, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=lengthInDays, methodDesc=()I], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=117, lineNumber=706, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=getEndInclusive, methodDesc=()Ljava/time/LocalDate;], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=39, lineNumber=362, description=mutated return of Object value for org/threeten/extra/LocalDateRange::getEndInclusive to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=lengthInDays, methodDesc=()I], indexes=[39], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=119, lineNumber=706, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=union, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[51], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=80, lineNumber=565, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=of, methodDesc=(Ljava/time/LocalDate;Ljava/time/Period;)Lorg/threeten/extra/LocalDateRange;], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=8, lineNumber=188, description=mutated return of Object value for org/threeten/extra/LocalDateRange::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isConnected, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[34], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=59, lineNumber=500, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=<init>, methodDesc=(Ljava/time/LocalDate;Ljava/time/LocalDate;)V], indexes=[38], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=29, lineNumber=307, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isAfter, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=101, lineNumber=648, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isBefore, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=103, lineNumber=661, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=of, methodDesc=(Ljava/time/LocalDate;Ljava/time/Period;)Lorg/threeten/extra/LocalDateRange;], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=6, lineNumber=185, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[53], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=68, lineNumber=537, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[51], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=67, lineNumber=537, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isAfter, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=106, lineNumber=675, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=overlaps, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=62, lineNumber=516, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=overlaps, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=61, lineNumber=516, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=span, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[26], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=91, lineNumber=589, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isAfter, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=109, lineNumber=675, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=overlaps, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[34], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=64, lineNumber=516, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=lengthInDays, methodDesc=()I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=114, lineNumber=702, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=contains, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=45, lineNumber=456, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[73], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=73, lineNumber=542, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=span, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=95, lineNumber=591, description=mutated return of Object value for org/threeten/extra/LocalDateRange::span to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=hashCode, methodDesc=()I], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=LocalDateRange.java, block=132, lineNumber=755, description=Replaced XOR with AND, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=overlaps, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=60, lineNumber=516, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=126, lineNumber=741, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isBefore, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=113, lineNumber=688, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=of, methodDesc=(Ljava/time/LocalDate;Ljava/time/LocalDate;)Lorg/threeten/extra/LocalDateRange;], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=0, lineNumber=132, description=mutated return of Object value for org/threeten/extra/LocalDateRange::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[87], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=75, lineNumber=543, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=encloses, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=50, lineNumber=470, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=stream, methodDesc=()Ljava/util/stream/Stream;], indexes=[37], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=98, lineNumber=634, description=mutated return of Object value for org/threeten/extra/LocalDateRange::stream to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=contains, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=47, lineNumber=456, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=span, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=93, lineNumber=590, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=lengthInDays, methodDesc=()I], indexes=[23], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=LocalDateRange.java, block=117, lineNumber=705, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=toString, methodDesc=()Ljava/lang/String;], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=133, lineNumber=770, description=mutated return of Object value for org/threeten/extra/LocalDateRange::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isEmpty, methodDesc=()Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=40, lineNumber=376, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=lengthInDays, methodDesc=()I], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=117, lineNumber=706, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=hashCode, methodDesc=()I], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=132, lineNumber=755, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isConnected, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=56, lineNumber=500, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=union, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[51], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=80, lineNumber=565, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[103], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=77, lineNumber=544, description=mutated return of Object value for org/threeten/extra/LocalDateRange::intersection to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[42], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=130, lineNumber=743, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=abuts, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=54, lineNumber=484, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isBefore, methodDesc=(Ljava/time/LocalDate;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=103, lineNumber=661, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[62], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=70, lineNumber=539, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=isConnected, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Z], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=LocalDateRange.java, block=56, lineNumber=500, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=stream, methodDesc=()Ljava/util/stream/Stream;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=LocalDateRange.java, block=96, lineNumber=604, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=intersection, methodDesc=(Lorg/threeten/extra/LocalDateRange;)Lorg/threeten/extra/LocalDateRange;], indexes=[62], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=LocalDateRange.java, block=70, lineNumber=539, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=stream, methodDesc=()Ljava/util/stream/Stream;], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=LocalDateRange.java, block=98, lineNumber=604, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=ofUnboundedEnd, methodDesc=(Ljava/time/LocalDate;)Lorg/threeten/extra/LocalDateRange;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=12, lineNumber=242, description=mutated return of Object value for org/threeten/extra/LocalDateRange::ofUnboundedEnd to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.LocalDateRange, method=getStart, methodDesc=()Ljava/time/LocalDate;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=LocalDateRange.java, block=35, lineNumber=329, description=mutated return of Object value for org/threeten/extra/LocalDateRange::getStart to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: THREETEN-EXTRA-90
+	Class Under Test: org.threeten.extra.LocalDateRange
+	Run number: 1
+	Tool preparation time (ms): 7616
+	Tool test cases generation time (ms): 144938
+	Test cases execution time (ms): 597
+	Test case number: 70
+	Uncompilable Test Classes: 0
+	Broken tests number: 38
+	Failing tests number: 0
+	Lines total: 123
+	Lines covered: 85
+	Lines coverage ratio (%): 69.10569
+	Conditions total: 120
+	Conditions covered: 43
+	Conditions coverage ratio (%): 35.833332
+	Mutants total: 145
+	Mutants covered: 108
+	Mutants coverage ratio (%): 74.48276
+	Mutants killed: 108
+	Mutants killed ratio (%): 74.48276
+	Mutants alive: 37

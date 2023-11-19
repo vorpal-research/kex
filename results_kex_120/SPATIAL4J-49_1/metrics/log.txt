@@ -1,0 +1,65 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  SPATIAL4J-49
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.locationtech.spatial4j.io.GeoJSONWriter
+
+---Compilation---
+Compiled 'org/locationtech/spatial4j/io/EqualityUtils.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_getFormatName_2959623150.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_getFormatName_2959623151.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_init_15230633560.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_init_15230633561.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_toString_699253400.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_toString_699253401.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_writeDistance_15231405450.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_writeDistance_15231405451.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_write_17056757970.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_write_17056757971.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_write_17565285840.java'
+Compiled 'org/locationtech/spatial4j/io/GeoJSONWriter_write_17565285841.java'
+Compiled 'org/locationtech/spatial4j/io/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 45 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.GeoJSONWriter, method=getFormatName, methodDesc=()Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=GeoJSONWriter.java, block=1, lineNumber=36, description=mutated return of Object value for org/locationtech/spatial4j/io/GeoJSONWriter::getFormatName to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.GeoJSONWriter, method=write, methodDesc=(Ljava/io/Writer;Lorg/locationtech/spatial4j/shape/Shape;)V], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=GeoJSONWriter.java, block=8, lineNumber=55, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: SPATIAL4J-49
+	Class Under Test: org.locationtech.spatial4j.io.GeoJSONWriter
+	Run number: 1
+	Tool preparation time (ms): 4034
+	Tool test cases generation time (ms): 135264
+	Test cases execution time (ms): 232
+	Test case number: 12
+	Uncompilable Test Classes: 0
+	Broken tests number: 10
+	Failing tests number: 0
+	Lines total: 105
+	Lines covered: 6
+	Lines coverage ratio (%): 5.714286
+	Conditions total: 36
+	Conditions covered: 1
+	Conditions coverage ratio (%): 2.777778
+	Mutants total: 45
+	Mutants covered: 2
+	Mutants coverage ratio (%): 4.4444447
+	Mutants killed: 2
+	Mutants killed ratio (%): 4.4444447
+	Mutants alive: 43

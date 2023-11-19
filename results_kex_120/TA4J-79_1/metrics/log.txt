@@ -1,0 +1,65 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-79
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.indicators.statistics.VarianceIndicator
+
+---Compilation---
+Compiled 'org/ta4j/core/indicators/statistics/EqualityUtils.java'
+Compiled 'org/ta4j/core/indicators/statistics/ReflectionUtils.java'
+Compiled 'org/ta4j/core/indicators/statistics/VarianceIndicator_calculate_5448022650.java'
+Compiled 'org/ta4j/core/indicators/statistics/VarianceIndicator_calculate_5448022651.java'
+Compiled 'org/ta4j/core/indicators/statistics/VarianceIndicator_init_14758002470.java'
+Compiled 'org/ta4j/core/indicators/statistics/VarianceIndicator_init_14758002471.java'
+Compiled 'org/ta4j/core/indicators/statistics/VarianceIndicator_toString_18644270060.java'
+Compiled 'org/ta4j/core/indicators/statistics/VarianceIndicator_toString_18644270061.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 9 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.VarianceIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=VarianceIndicator.java, block=1, lineNumber=56, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.VarianceIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=VarianceIndicator.java, block=1, lineNumber=55, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.VarianceIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=VarianceIndicator.java, block=1, lineNumber=55, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.VarianceIndicator, method=toString, methodDesc=()Ljava/lang/String;], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=VarianceIndicator.java, block=4, lineNumber=69, description=mutated return of Object value for org/ta4j/core/indicators/statistics/VarianceIndicator::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.VarianceIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=VarianceIndicator.java, block=1, lineNumber=56, description=Replaced integer subtraction with addition, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-79
+	Class Under Test: org.ta4j.core.indicators.statistics.VarianceIndicator
+	Run number: 1
+	Tool preparation time (ms): 12838
+	Tool test cases generation time (ms): 176249
+	Test cases execution time (ms): 172
+	Test case number: 6
+	Uncompilable Test Classes: 0
+	Broken tests number: 6
+	Failing tests number: 0
+	Lines total: 15
+	Lines covered: 3
+	Lines coverage ratio (%): 20.0
+	Conditions total: 2
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 9
+	Mutants covered: 5
+	Mutants coverage ratio (%): 55.555557
+	Mutants killed: 5
+	Mutants killed ratio (%): 55.555557
+	Mutants alive: 4

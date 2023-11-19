@@ -1,0 +1,96 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-22
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.ArrayStack
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/ArrayStack_empty_6213467740.java'
+Compiled 'org/apache/commons/collections4/ArrayStack_init_1488388190.java'
+Compiled 'org/apache/commons/collections4/ArrayStack_init_1488388191.java'
+Compiled 'org/apache/commons/collections4/ArrayStack_init_1488407410.java'
+Compiled 'org/apache/commons/collections4/ArrayStack_init_1488407411.java'
+Compiled 'org/apache/commons/collections4/ArrayStack_peek_20908264750.java'
+Compiled 'org/apache/commons/collections4/ArrayStack_peek_20908283970.java'
+Compiled 'org/apache/commons/collections4/ArrayStack_pop_11051769910.java'
+Compiled 'org/apache/commons/collections4/ArrayStack_push_21190930630.java'
+Compiled 'org/apache/commons/collections4/ArrayStack_search_19609778440.java'
+Compiled 'org/apache/commons/collections4/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 26 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=(I)Ljava/lang/Object;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ArrayStack.java, block=6, lineNumber=107, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=(I)Ljava/lang/Object;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ArrayStack.java, block=6, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=()Ljava/lang/Object;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ArrayStack.java, block=3, lineNumber=90, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=()Ljava/lang/Object;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ArrayStack.java, block=3, lineNumber=90, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=search, methodDesc=(Ljava/lang/Object;)I], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=ArrayStack.java, block=13, lineNumber=151, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=empty, methodDesc=()Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ArrayStack.java, block=2, lineNumber=79, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=empty, methodDesc=()Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ArrayStack.java, block=2, lineNumber=79, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=(I)Ljava/lang/Object;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ArrayStack.java, block=6, lineNumber=107, description=changed conditional boundary, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=(I)Ljava/lang/Object;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ArrayStack.java, block=6, lineNumber=107, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=search, methodDesc=(Ljava/lang/Object;)I], indexes=[58], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ArrayStack.java, block=20, lineNumber=162, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=search, methodDesc=(Ljava/lang/Object;)I], indexes=[58], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ArrayStack.java, block=20, lineNumber=162, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=(I)Ljava/lang/Object;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=ArrayStack.java, block=6, lineNumber=106, description=Replaced integer subtraction with addition, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=(I)Ljava/lang/Object;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=ArrayStack.java, block=6, lineNumber=106, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=search, methodDesc=(Ljava/lang/Object;)I], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ArrayStack.java, block=13, lineNumber=153, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=pop, methodDesc=()Ljava/lang/Object;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ArrayStack.java, block=9, lineNumber=121, description=changed conditional boundary, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=pop, methodDesc=()Ljava/lang/Object;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ArrayStack.java, block=9, lineNumber=121, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=(I)Ljava/lang/Object;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=ArrayStack.java, block=6, lineNumber=106, description=Replaced integer subtraction with addition, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=(I)Ljava/lang/Object;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=ArrayStack.java, block=6, lineNumber=106, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=search, methodDesc=(Ljava/lang/Object;)I], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ArrayStack.java, block=13, lineNumber=153, description=changed conditional boundary, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=search, methodDesc=(Ljava/lang/Object;)I], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ArrayStack.java, block=13, lineNumber=153, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=pop, methodDesc=()Ljava/lang/Object;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ArrayStack.java, block=9, lineNumber=121, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=pop, methodDesc=()Ljava/lang/Object;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ArrayStack.java, block=9, lineNumber=121, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=()Ljava/lang/Object;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ArrayStack.java, block=3, lineNumber=90, description=changed conditional boundary, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ArrayStack, method=peek, methodDesc=()Ljava/lang/Object;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ArrayStack.java, block=3, lineNumber=90, description=changed conditional boundary, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-22
+	Class Under Test: org.apache.commons.collections4.ArrayStack
+	Run number: 1
+	Tool preparation time (ms): 9312
+	Tool test cases generation time (ms): 149536
+	Test cases execution time (ms): 328
+	Test case number: 10
+	Uncompilable Test Classes: 0
+	Broken tests number: 7
+	Failing tests number: 0
+	Lines total: 30
+	Lines covered: 18
+	Lines coverage ratio (%): 60.000004
+	Conditions total: 16
+	Conditions covered: 4
+	Conditions coverage ratio (%): 25.0
+	Mutants total: 26
+	Mutants covered: 13
+	Mutants coverage ratio (%): 50.0
+	Mutants killed: 13
+	Mutants killed ratio (%): 50.0
+	Mutants alive: 13

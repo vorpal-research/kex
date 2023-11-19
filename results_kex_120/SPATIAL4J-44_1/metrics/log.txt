@@ -1,0 +1,81 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  SPATIAL4J-44
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.locationtech.spatial4j.shape.impl.InfBufLine
+
+---Compilation---
+Compiled 'org/locationtech/spatial4j/shape/impl/EqualityUtils.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_contains_5760424830.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_contains_5760424831.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_cornerByQuadrant_12072595230.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_cornerByQuadrant_12072595231.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_distanceUnbuffered_643173260.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_distanceUnbuffered_643173261.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_getBuf_2543813880.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_getBuf_2543813881.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_getDistDenomInv_4248774970.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_getDistDenomInv_4248774971.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_getIntercept_9414661730.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_getIntercept_9414661731.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_getSlope_10141658680.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_getSlope_10141658681.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_init_12358029120.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_init_12358029121.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_quadrant_21424493280.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_quadrant_21424493281.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_relate_1206934260.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_relate_1206934261.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_toString_11865207450.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/InfBufLine_toString_11865207451.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 51 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.InfBufLine, method=toString, methodDesc=()Ljava/lang/String;], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=InfBufLine.java, block=46, lineNumber=153, description=mutated return of Object value for org/locationtech/spatial4j/shape/impl/InfBufLine::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.InfBufLine, method=getIntercept, methodDesc=()D], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=InfBufLine.java, block=43, lineNumber=139, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/shape/impl/InfBufLine::getIntercept, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.InfBufLine, method=getSlope, methodDesc=()D], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=InfBufLine.java, block=42, lineNumber=135, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/shape/impl/InfBufLine::getSlope, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.InfBufLine, method=getBuf, methodDesc=()D], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=InfBufLine.java, block=44, lineNumber=143, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/shape/impl/InfBufLine::getBuf, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.InfBufLine, method=getDistDenomInv, methodDesc=()D], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=InfBufLine.java, block=45, lineNumber=148, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/shape/impl/InfBufLine::getDistDenomInv, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: SPATIAL4J-44
+	Class Under Test: org.locationtech.spatial4j.shape.impl.InfBufLine
+	Run number: 1
+	Tool preparation time (ms): 3809
+	Tool test cases generation time (ms): 135561
+	Test cases execution time (ms): 287
+	Test case number: 22
+	Uncompilable Test Classes: 0
+	Broken tests number: 14
+	Failing tests number: 0
+	Lines total: 49
+	Lines covered: 10
+	Lines coverage ratio (%): 20.408163
+	Conditions total: 42
+	Conditions covered: 3
+	Conditions coverage ratio (%): 7.1428576
+	Mutants total: 51
+	Mutants covered: 5
+	Mutants coverage ratio (%): 9.803922
+	Mutants killed: 5
+	Mutants killed ratio (%): 9.803922
+	Mutants alive: 46

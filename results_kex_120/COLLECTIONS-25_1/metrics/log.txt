@@ -1,0 +1,75 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-25
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.sequence.EditScript
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/sequence/EditScript_append_13088437520.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_append_13088437521.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_append_15509979000.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_append_15509979001.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_append_20672635260.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_append_20672635261.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_getLCSLength_9184678770.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_getLCSLength_9184678771.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_getModifications_1155729760.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_getModifications_1155729761.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_init_19356723410.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_init_19356723411.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_visit_18197358540.java'
+Compiled 'org/apache/commons/collections4/sequence/EditScript_visit_18197358541.java'
+Compiled 'org/apache/commons/collections4/sequence/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/sequence/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 7 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.EditScript, method=append, methodDesc=(Lorg/apache/commons/collections4/sequence/InsertCommand;)V], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=EditScript.java, block=2, lineNumber=84, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.EditScript, method=visit, methodDesc=(Lorg/apache/commons/collections4/sequence/CommandVisitor;)V], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=EditScript.java, block=4, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.EditScript, method=getModifications, methodDesc=()I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=EditScript.java, block=8, lineNumber=131, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.EditScript, method=append, methodDesc=(Lorg/apache/commons/collections4/sequence/KeepCommand;)V], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=EditScript.java, block=1, lineNumber=74, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.EditScript, method=getLCSLength, methodDesc=()I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=EditScript.java, block=7, lineNumber=120, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.sequence.EditScript, method=append, methodDesc=(Lorg/apache/commons/collections4/sequence/DeleteCommand;)V], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=EditScript.java, block=3, lineNumber=94, description=Replaced integer addition with subtraction, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-25
+	Class Under Test: org.apache.commons.collections4.sequence.EditScript
+	Run number: 1
+	Tool preparation time (ms): 13642
+	Tool test cases generation time (ms): 155935
+	Test cases execution time (ms): 223
+	Test case number: 14
+	Uncompilable Test Classes: 0
+	Broken tests number: 6
+	Failing tests number: 0
+	Lines total: 20
+	Lines covered: 18
+	Lines coverage ratio (%): 90.0
+	Conditions total: 2
+	Conditions covered: 1
+	Conditions coverage ratio (%): 50.0
+	Mutants total: 7
+	Mutants covered: 6
+	Mutants coverage ratio (%): 85.71429
+	Mutants killed: 6
+	Mutants killed ratio (%): 85.71429
+	Mutants alive: 1

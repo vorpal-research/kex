@@ -1,0 +1,59 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-5
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.functors.PrototypeFactory
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/functors/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/functors/PrototypeFactory_init_19330534710.java'
+Compiled 'org/apache/commons/collections4/functors/PrototypeFactory_init_19330534711.java'
+Compiled 'org/apache/commons/collections4/functors/PrototypeFactory_prototypeFactory_16247815590.java'
+Compiled 'org/apache/commons/collections4/functors/PrototypeFactory_prototypeFactory_16247815591.java'
+Compiled 'org/apache/commons/collections4/functors/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 6 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.PrototypeFactory, method=prototypeFactory, methodDesc=(Ljava/lang/Object;)Lorg/apache/commons/collections4/Factory;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PrototypeFactory.java, block=0, lineNumber=67, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.PrototypeFactory, method=prototypeFactory, methodDesc=(Ljava/lang/Object;)Lorg/apache/commons/collections4/Factory;], indexes=[82], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PrototypeFactory.java, block=4, lineNumber=82, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.PrototypeFactory, method=prototypeFactory, methodDesc=(Ljava/lang/Object;)Lorg/apache/commons/collections4/Factory;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PrototypeFactory.java, block=1, lineNumber=68, description=mutated return of Object value for org/apache/commons/collections4/functors/PrototypeFactory::prototypeFactory to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-5
+	Class Under Test: org.apache.commons.collections4.functors.PrototypeFactory
+	Run number: 1
+	Tool preparation time (ms): 13466
+	Tool test cases generation time (ms): 153133
+	Test cases execution time (ms): 145
+	Test case number: 4
+	Uncompilable Test Classes: 0
+	Broken tests number: 3
+	Failing tests number: 0
+	Lines total: 13
+	Lines covered: 6
+	Lines coverage ratio (%): 46.153847
+	Conditions total: 4
+	Conditions covered: 3
+	Conditions coverage ratio (%): 75.0
+	Mutants total: 6
+	Mutants covered: 3
+	Mutants coverage ratio (%): 50.0
+	Mutants killed: 3
+	Mutants killed ratio (%): 50.0
+	Mutants alive: 3

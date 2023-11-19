@@ -1,0 +1,165 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-39
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.jsoup.nodes.TextNode
+
+---Compilation---
+Compiled 'org/jsoup/nodes/EqualityUtils.java'
+Compiled 'org/jsoup/nodes/ReflectionUtils.java'
+Compiled 'org/jsoup/nodes/TextNode_clone_11333721560.java'
+Compiled 'org/jsoup/nodes/TextNode_clone_11333721561.java'
+Compiled 'org/jsoup/nodes/TextNode_createFromEncoded_10839817000.java'
+Compiled 'org/jsoup/nodes/TextNode_createFromEncoded_10839817001.java'
+Compiled 'org/jsoup/nodes/TextNode_getWholeText_7022218040.java'
+Compiled 'org/jsoup/nodes/TextNode_getWholeText_7022218041.java'
+Compiled 'org/jsoup/nodes/TextNode_init_19552075880.java'
+Compiled 'org/jsoup/nodes/TextNode_init_19552075881.java'
+Compiled 'org/jsoup/nodes/TextNode_isBlank_15631366690.java'
+Compiled 'org/jsoup/nodes/TextNode_isBlank_15631366691.java'
+Compiled 'org/jsoup/nodes/TextNode_lastCharIsWhitespace_7380800400.java'
+Compiled 'org/jsoup/nodes/TextNode_lastCharIsWhitespace_7380800401.java'
+Compiled 'org/jsoup/nodes/TextNode_nodeName_19811356050.java'
+Compiled 'org/jsoup/nodes/TextNode_nodeName_19811356051.java'
+Compiled 'org/jsoup/nodes/TextNode_normaliseWhitespace_20200045000.java'
+Compiled 'org/jsoup/nodes/TextNode_normaliseWhitespace_20200045001.java'
+Compiled 'org/jsoup/nodes/TextNode_outerHtmlHead_184257050.java'
+Compiled 'org/jsoup/nodes/TextNode_outerHtmlHead_184257051.java'
+Compiled 'org/jsoup/nodes/TextNode_outerHtmlTail_3216760390.java'
+Compiled 'org/jsoup/nodes/TextNode_outerHtmlTail_3216760391.java'
+Compiled 'org/jsoup/nodes/TextNode_splitText_20057021360.java'
+Compiled 'org/jsoup/nodes/TextNode_splitText_20057021361.java'
+Compiled 'org/jsoup/nodes/TextNode_stripLeadingWhitespace_15057190340.java'
+Compiled 'org/jsoup/nodes/TextNode_stripLeadingWhitespace_15057190341.java'
+Compiled 'org/jsoup/nodes/TextNode_text_3855069550.java'
+Compiled 'org/jsoup/nodes/TextNode_text_3855069551.java'
+Compiled 'org/jsoup/nodes/TextNode_text_7622891430.java'
+Compiled 'org/jsoup/nodes/TextNode_text_7622891431.java'
+Compiled 'org/jsoup/nodes/TextNode_toString_12574986140.java'
+Compiled 'org/jsoup/nodes/TextNode_toString_12574986141.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 59 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=text, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/TextNode;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=TextNode.java, block=3, lineNumber=43, description=mutated return of Object value for org/jsoup/nodes/TextNode::text to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[190], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=42, lineNumber=106, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=isBlank, methodDesc=()Z], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=TextNode.java, block=5, lineNumber=59, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[128], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=29, lineNumber=99, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[192], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=43, lineNumber=106, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[182], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=40, lineNumber=105, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=text, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/TextNode;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=TextNode.java, block=3, lineNumber=42, description=removed call to org/jsoup/nodes/TextNode::coreValue, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[184], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=41, lineNumber=105, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[41], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=17, lineNumber=88, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=normaliseWhitespace, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=TextNode.java, block=54, lineNumber=141, description=mutated return of Object value for org/jsoup/nodes/TextNode::normaliseWhitespace to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[45], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=18, lineNumber=88, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[173], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=37, lineNumber=103, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=clone, methodDesc=()Lorg/jsoup/nodes/TextNode;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=TextNode.java, block=52, lineNumber=126, description=mutated return of Object value for org/jsoup/nodes/TextNode::clone to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[175], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=38, lineNumber=103, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[49], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=19, lineNumber=88, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[100], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=27, lineNumber=93, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=getWholeText, methodDesc=()Ljava/lang/String;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=TextNode.java, block=4, lineNumber=51, description=mutated return of Object value for org/jsoup/nodes/TextNode::getWholeText to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=splitText, methodDesc=(I)Lorg/jsoup/nodes/TextNode;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=TextNode.java, block=8, lineNumber=70, description=removed call to org/jsoup/helper/Validate::isTrue, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=14, lineNumber=87, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[155], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=34, lineNumber=101, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=splitText, methodDesc=(I)Lorg/jsoup/nodes/TextNode;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=TextNode.java, block=6, lineNumber=70, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[159], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=35, lineNumber=101, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[97], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=26, lineNumber=93, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[83], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=24, lineNumber=92, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[149], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=33, lineNumber=100, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[29], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=15, lineNumber=87, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=stripLeadingWhitespace, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=TextNode.java, block=55, lineNumber=145, description=mutated return of Object value for org/jsoup/nodes/TextNode::stripLeadingWhitespace to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=splitText, methodDesc=(I)Lorg/jsoup/nodes/TextNode;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=6, lineNumber=70, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[205], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=46, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[210], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=TextNode.java, block=47, lineNumber=107, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[77], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=23, lineNumber=92, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[203], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=45, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=nodeName, methodDesc=()Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=TextNode.java, block=1, lineNumber=24, description=mutated return of Object value for org/jsoup/nodes/TextNode::nodeName to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[144], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=32, lineNumber=100, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[210], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=47, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[203], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=TextNode.java, block=45, lineNumber=107, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=createFromEncoded, methodDesc=(Ljava/lang/String;)Lorg/jsoup/nodes/TextNode;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=TextNode.java, block=53, lineNumber=136, description=mutated return of Object value for org/jsoup/nodes/TextNode::createFromEncoded to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[70], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=21, lineNumber=91, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[133], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=30, lineNumber=99, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[138], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=31, lineNumber=99, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[199], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=44, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=12, lineNumber=86, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.TextNode, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[74], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=TextNode.java, block=22, lineNumber=92, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-39
+	Class Under Test: org.jsoup.nodes.TextNode
+	Run number: 1
+	Tool preparation time (ms): 3724
+	Tool test cases generation time (ms): 135634
+	Test cases execution time (ms): 572
+	Test case number: 30
+	Uncompilable Test Classes: 0
+	Broken tests number: 17
+	Failing tests number: 0
+	Lines total: 50
+	Lines covered: 35
+	Lines coverage ratio (%): 70.0
+	Conditions total: 70
+	Conditions covered: 17
+	Conditions coverage ratio (%): 24.285715
+	Mutants total: 59
+	Mutants covered: 43
+	Mutants coverage ratio (%): 72.881355
+	Mutants killed: 43
+	Mutants killed ratio (%): 72.881355
+	Mutants alive: 16

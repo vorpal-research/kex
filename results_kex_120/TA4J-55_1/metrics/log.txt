@@ -1,0 +1,73 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-55
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.aggregator.DurationBarAggregator
+
+---Compilation---
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_aggregate_19230399530.java'
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_aggregate_19230399531.java'
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_beginTimesInDuration_4262299240.java'
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_beginTimesInDuration_4262299241.java'
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_init_18071288670.java'
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_init_18071288671.java'
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_init_1817729410.java'
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_init_1817729411.java'
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_isInDuration_2232942300.java'
+Compiled 'org/ta4j/core/aggregator/DurationBarAggregator_isInDuration_2232942301.java'
+Compiled 'org/ta4j/core/aggregator/EqualityUtils.java'
+Compiled 'org/ta4j/core/aggregator/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 30 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.aggregator.DurationBarAggregator, method=beginTimesInDuration, methodDesc=(Ljava/time/ZonedDateTime;Ljava/time/ZonedDateTime;)Z], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DurationBarAggregator.java, block=25, lineNumber=146, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.aggregator.DurationBarAggregator, method=aggregate, methodDesc=(Ljava/util/List;)Ljava/util/List;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DurationBarAggregator.java, block=2, lineNumber=78, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.aggregator.DurationBarAggregator, method=beginTimesInDuration, methodDesc=(Ljava/time/ZonedDateTime;Ljava/time/ZonedDateTime;)Z], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DurationBarAggregator.java, block=25, lineNumber=146, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.aggregator.DurationBarAggregator, method=beginTimesInDuration, methodDesc=(Ljava/time/ZonedDateTime;Ljava/time/ZonedDateTime;)Z], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DurationBarAggregator.java, block=27, lineNumber=146, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.aggregator.DurationBarAggregator, method=isInDuration, methodDesc=(Ljava/time/Duration;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DurationBarAggregator.java, block=28, lineNumber=150, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.aggregator.DurationBarAggregator, method=isInDuration, methodDesc=(Ljava/time/Duration;)Z], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DurationBarAggregator.java, block=30, lineNumber=150, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.aggregator.DurationBarAggregator, method=isInDuration, methodDesc=(Ljava/time/Duration;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DurationBarAggregator.java, block=28, lineNumber=150, description=changed conditional boundary, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-55
+	Class Under Test: org.ta4j.core.aggregator.DurationBarAggregator
+	Run number: 1
+	Tool preparation time (ms): 7897
+	Tool test cases generation time (ms): 151816
+	Test cases execution time (ms): 179
+	Test case number: 10
+	Uncompilable Test Classes: 0
+	Broken tests number: 6
+	Failing tests number: 0
+	Lines total: 52
+	Lines covered: 11
+	Lines coverage ratio (%): 21.153847
+	Conditions total: 36
+	Conditions covered: 3
+	Conditions coverage ratio (%): 8.333334
+	Mutants total: 30
+	Mutants covered: 7
+	Mutants coverage ratio (%): 23.333334
+	Mutants killed: 7
+	Mutants killed ratio (%): 23.333334
+	Mutants alive: 23

@@ -1,0 +1,251 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  SPATIAL4J-47
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.locationtech.spatial4j.distance.DistanceUtils
+
+---Compilation---
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_calcBoxByDistFromPtDEG_9835791380.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_calcBoxByDistFromPtDEG_9835791381.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_calcBoxByDistFromPtdeltaLonDEG_15578042990.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_calcBoxByDistFromPtdeltaLonDEG_15578042991.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_calcBoxByDistFromPtlatHorizAxisDEG_13378310770.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_calcBoxByDistFromPtlatHorizAxisDEG_13378310771.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_calcLonDegreesAtLat_412536690.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_calcLonDegreesAtLat_412536691.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_degrees2Dist_1135647210.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_degrees2Dist_1135647211.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_dist2Degrees_3200946510.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_dist2Degrees_3200946511.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_dist2Radians_5193701700.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_dist2Radians_5193701701.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_distHaversineRAD_20194301800.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_distHaversineRAD_20194301801.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_distLawOfCosinesRAD_14227308980.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_distLawOfCosinesRAD_14227308981.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_distSquaredCartesian_15440698630.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_distSquaredCartesian_15440698631.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_distVincentyRAD_14746296890.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_distVincentyRAD_14746296891.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_init_13447239250.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_init_13447239251.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_normLatDEG_3557709000.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_normLatDEG_3557709001.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_normLonDEG_2758543600.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_normLonDEG_2758543601.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_pointOnBearingRAD_11805544020.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_pointOnBearingRAD_11805544021.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_radians2Dist_11913987780.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_radians2Dist_11913987781.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_toDegrees_19523346530.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_toDegrees_19523346531.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_toRadians_11128698320.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_toRadians_11128698321.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_vectorBoxCorner_15011565580.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_vectorBoxCorner_15011565581.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_vectorDistance_11009413850.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_vectorDistance_11009413851.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_vectorDistance_19048009520.java'
+Compiled 'org/locationtech/spatial4j/distance/DistanceUtils_vectorDistance_19048009521.java'
+Compiled 'org/locationtech/spatial4j/distance/EqualityUtils.java'
+Compiled 'org/locationtech/spatial4j/distance/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 115 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distVincentyRAD, methodDesc=(DDDD)D], indexes=[77], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=112, lineNumber=469, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distVincentyRAD, methodDesc=(DDDD)D], indexes=[94], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=112, lineNumber=471, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::distVincentyRAD, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorBoxCorner, methodDesc=([D[DDZ)[D], indexes=[32], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=29, lineNumber=152, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=32, lineNumber=178, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPtDEG, methodDesc=(DDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Rectangle;)Lorg/locationtech/spatial4j/shape/Rectangle;], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=62, lineNumber=251, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPtDEG, methodDesc=(DDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Rectangle;)Lorg/locationtech/spatial4j/shape/Rectangle;], indexes=[147], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=71, lineNumber=278, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_latHorizAxisDEG, methodDesc=(DDD)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=79, lineNumber=312, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[33], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=32, lineNumber=179, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=toDegrees, methodDesc=(D)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=118, lineNumber=520, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::toDegrees, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distSquaredCartesian, methodDesc=([D[D)D], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=DistanceUtils.java, block=94, lineNumber=385, description=Changed increment from 1 to -1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_latHorizAxisDEG, methodDesc=(DDD)D], indexes=[29], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=83, lineNumber=318, description=Replaced double subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=normLonDEG, methodDesc=(D)D], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=47, lineNumber=221, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::normLonDEG, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[63], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=32, lineNumber=185, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[96], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=35, lineNumber=192, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distVincentyRAD, methodDesc=(DDDD)D], indexes=[65], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=112, lineNumber=468, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorDistance, methodDesc=([D[DDD)D], indexes=[169], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=DistanceUtils.java, block=24, lineNumber=123, description=Changed increment from 1 to -1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distSquaredCartesian, methodDesc=([D[D)D], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=93, lineNumber=385, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorDistance, methodDesc=([D[DDD)D], indexes=[93], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=16, lineNumber=116, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distHaversineRAD, methodDesc=(DDDD)D], indexes=[22], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=99, lineNumber=406, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorBoxCorner, methodDesc=([D[DDZ)[D], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=DistanceUtils.java, block=30, lineNumber=153, description=Changed increment from 1 to -1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distHaversineRAD, methodDesc=(DDDD)D], indexes=[57], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=99, lineNumber=410, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[47], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=32, lineNumber=181, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPtDEG, methodDesc=(DDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Rectangle;)Lorg/locationtech/spatial4j/shape/Rectangle;], indexes=[133], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=71, lineNumber=274, description=Replaced double subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=toRadians, methodDesc=(D)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=117, lineNumber=512, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::toRadians, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorDistance, methodDesc=([D[DDD)D], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=12, lineNumber=112, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_deltaLonDEG, methodDesc=(DD)D], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=77, lineNumber=299, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::calcBoxByDistFromPt_deltaLonDEG, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_latHorizAxisDEG, methodDesc=(DDD)D], indexes=[54], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=85, lineNumber=323, description=Replaced double division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=32, lineNumber=181, description=Replaced double addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distHaversineRAD, methodDesc=(DDDD)D], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=98, lineNumber=405, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::distHaversineRAD, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=degrees2Dist, methodDesc=(DD)D], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=114, lineNumber=488, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::degrees2Dist, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorBoxCorner, methodDesc=([D[DDZ)[D], indexes=[43], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=29, lineNumber=153, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorDistance, methodDesc=([D[DDD)D], indexes=[111], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=19, lineNumber=118, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distSquaredCartesian, methodDesc=([D[D)D], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=94, lineNumber=387, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distHaversineRAD, methodDesc=(DDDD)D], indexes=[45], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=99, lineNumber=409, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_deltaLonDEG, methodDesc=(DD)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=74, lineNumber=292, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distHaversineRAD, methodDesc=(DDDD)D], indexes=[49], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=99, lineNumber=409, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[165], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=42, lineNumber=208, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distLawOfCosinesRAD, methodDesc=(DDDD)D], indexes=[57], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=106, lineNumber=441, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorBoxCorner, methodDesc=([D[DDZ)[D], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=28, lineNumber=146, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorDistance, methodDesc=([D[DDD)D], indexes=[162], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=24, lineNumber=124, description=Replaced double subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorDistance, methodDesc=([D[DDD)D], indexes=[152], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=23, lineNumber=123, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distLawOfCosinesRAD, methodDesc=(DDDD)D], indexes=[39], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=104, lineNumber=436, description=Replaced double addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorDistance, methodDesc=([D[DDD)D], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=7, lineNumber=109, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[81], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=34, lineNumber=187, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorDistance, methodDesc=([D[DD)D], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=3, lineNumber=90, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distVincentyRAD, methodDesc=(DDDD)D], indexes=[80], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=112, lineNumber=469, description=Replaced double addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distHaversineRAD, methodDesc=(DDDD)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=96, lineNumber=404, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distVincentyRAD, methodDesc=(DDDD)D], indexes=[68], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=112, lineNumber=468, description=Replaced double subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distHaversineRAD, methodDesc=(DDDD)D], indexes=[31], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=99, lineNumber=407, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distVincentyRAD, methodDesc=(DDDD)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=109, lineNumber=456, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorBoxCorner, methodDesc=([D[DDZ)[D], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=26, lineNumber=143, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[132], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=39, lineNumber=199, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distLawOfCosinesRAD, methodDesc=(DDDD)D], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=104, lineNumber=436, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distVincentyRAD, methodDesc=(DDDD)D], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=111, lineNumber=457, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::distVincentyRAD, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=radians2Dist, methodDesc=(DD)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=116, lineNumber=504, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::radians2Dist, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distLawOfCosinesRAD, methodDesc=(DDDD)D], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=102, lineNumber=428, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_latHorizAxisDEG, methodDesc=(DDD)D], indexes=[19], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=81, lineNumber=316, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=normLatDEG, methodDesc=(D)D], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=55, lineNumber=235, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=vectorDistance, methodDesc=([D[DD)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=1, lineNumber=90, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distVincentyRAD, methodDesc=(DDDD)D], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=112, lineNumber=467, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPtDEG, methodDesc=(DDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Rectangle;)Lorg/locationtech/spatial4j/shape/Rectangle;], indexes=[49], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=64, lineNumber=256, description=Replaced double addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=normLatDEG, methodDesc=(D)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=54, lineNumber=235, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_deltaLonDEG, methodDesc=(DD)D], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=76, lineNumber=296, description=Replaced double division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=normLonDEG, methodDesc=(D)D], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=46, lineNumber=220, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distHaversineRAD, methodDesc=(DDDD)D], indexes=[74], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=100, lineNumber=412, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::distHaversineRAD, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPtDEG, methodDesc=(DDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Rectangle;)Lorg/locationtech/spatial4j/shape/Rectangle;], indexes=[62], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=64, lineNumber=259, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=pointOnBearingRAD, methodDesc=(DDDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Point;)Lorg/locationtech/spatial4j/shape/Point;], indexes=[53], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=32, lineNumber=181, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=dist2Radians, methodDesc=(DD)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=115, lineNumber=496, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::dist2Radians, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcLonDegreesAtLat, methodDesc=(DD)D], indexes=[49], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=92, lineNumber=371, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::calcLonDegreesAtLat, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_latHorizAxisDEG, methodDesc=(DDD)D], indexes=[66], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DistanceUtils.java, block=86, lineNumber=325, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/distance/DistanceUtils::calcBoxByDistFromPt_latHorizAxisDEG, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPtDEG, methodDesc=(DDDLorg/locationtech/spatial4j/context/SpatialContext;Lorg/locationtech/spatial4j/shape/Rectangle;)Lorg/locationtech/spatial4j/shape/Rectangle;], indexes=[66], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=65, lineNumber=259, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distHaversineRAD, methodDesc=(DDDD)D], indexes=[70], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=100, lineNumber=412, description=Replaced double subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcLonDegreesAtLat, methodDesc=(DD)D], indexes=[41], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=92, lineNumber=368, description=Replaced double subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_latHorizAxisDEG, methodDesc=(DDD)D], indexes=[32], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=83, lineNumber=318, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcLonDegreesAtLat, methodDesc=(DD)D], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=92, lineNumber=368, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distVincentyRAD, methodDesc=(DDDD)D], indexes=[89], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=112, lineNumber=471, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=normLonDEG, methodDesc=(D)D], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DistanceUtils.java, block=45, lineNumber=220, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distLawOfCosinesRAD, methodDesc=(DDDD)D], indexes=[46], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DistanceUtils.java, block=104, lineNumber=439, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=calcBoxByDistFromPt_latHorizAxisDEG, methodDesc=(DDD)D], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=81, lineNumber=316, description=Replaced double addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.distance.DistanceUtils, method=distLawOfCosinesRAD, methodDesc=(DDDD)D], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DistanceUtils.java, block=104, lineNumber=433, description=Replaced double subtraction with addition, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: SPATIAL4J-47
+	Class Under Test: org.locationtech.spatial4j.distance.DistanceUtils
+	Run number: 1
+	Tool preparation time (ms): 3783
+	Tool test cases generation time (ms): 139606
+	Test cases execution time (ms): 522
+	Test case number: 42
+	Uncompilable Test Classes: 0
+	Broken tests number: 12
+	Failing tests number: 0
+	Lines total: 162
+	Lines covered: 110
+	Lines coverage ratio (%): 67.90124
+	Conditions total: 118
+	Conditions covered: 54
+	Conditions coverage ratio (%): 45.76271
+	Mutants total: 115
+	Mutants covered: 80
+	Mutants coverage ratio (%): 69.565216
+	Mutants killed: 80
+	Mutants killed ratio (%): 69.565216
+	Mutants alive: 35

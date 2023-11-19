@@ -1,0 +1,281 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  THREETEN-EXTRA-96
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.threeten.extra.chrono.PaxDate
+
+---Compilation---
+Compiled 'org/threeten/extra/chrono/EqualityUtils.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_atTime_19913739550.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_atTime_19913739551.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_from_1447262940.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_from_1447262941.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getChronology_3881300390.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getChronology_3881300391.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getDayOfMonth_18092781870.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getDayOfMonth_18092781871.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getDayOfYear_4385514440.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getDayOfYear_4385514441.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getEra_310441330.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getEra_310441331.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getLeapMonthsBefore_18654858280.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getLeapMonthsBefore_18654858281.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getLeapYearsBefore_7504224850.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getLeapYearsBefore_7504224851.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getMonth_1039233240.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getMonth_1039233241.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getProlepticMonth_2685241240.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getProlepticMonth_2685241241.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getProlepticYear_18279076130.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_getProlepticYear_18279076131.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_init_12736672900.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_init_12736672901.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_lengthOfMonth_16146829870.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_lengthOfMonth_16146829871.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_lengthOfYearInMonths_4323905240.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_lengthOfYearInMonths_4323905241.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_lengthOfYear_9864635080.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_lengthOfYear_9864635081.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_minus_20638606710.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_minus_20638606711.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_minus_21171992470.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_minus_21171992471.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_now_13291364050.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_now_13291364051.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_now_16655499220.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_now_16655499221.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_now_20058550030.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_now_20058550031.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_ofEpochDay_5887611090.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_ofEpochDay_5887611091.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_ofYearDay_20348568890.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_ofYearDay_20348568891.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_of_12294413040.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_of_12294413041.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_plusMonths_14711546740.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_plusMonths_14711546741.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_plusYears_105480990.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_plusYears_105480991.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_plus_1277043470.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_plus_1277043471.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_plus_137969690.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_plus_137969691.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_rangeAlignedWeekOfMonth_8177143080.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_rangeAlignedWeekOfMonth_8177143081.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_range_7131772050.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_range_7131772051.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_readResolve_3057418830.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_readResolve_3057418831.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_resolvePreviousValid_14607402300.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_resolvePreviousValid_14607402301.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_resolvePrevious_5657996120.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_resolvePrevious_5657996121.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_toEpochDay_19652266880.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_toEpochDay_19652266881.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_until_12587476660.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_until_12587476661.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_until_16875138440.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_until_16875138441.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_until_20102872540.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_until_20102872541.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_with_1572898410.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_with_1572898411.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_with_2299388850.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_with_2299388851.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_yearsUntil_2391492970.java'
+Compiled 'org/threeten/extra/chrono/PaxDate_yearsUntil_2391492971.java'
+Compiled 'org/threeten/extra/chrono/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 123 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=toEpochDay, methodDesc=()J], indexes=[22], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=130, lineNumber=675, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=toEpochDay, methodDesc=()J], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=130, lineNumber=675, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=toEpochDay, methodDesc=()J], indexes=[29], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=130, lineNumber=676, description=replaced return of long value with value + 1 for org/threeten/extra/chrono/PaxDate::toEpochDay, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[162], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=28, lineNumber=311, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[38], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=50, lineNumber=374, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getDayOfYear, methodDesc=()I], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=62, lineNumber=419, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[64], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=45, lineNumber=352, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[50], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=PaxDate.java, block=22, lineNumber=289, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getProlepticYear, methodDesc=()I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=57, lineNumber=404, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofYearDay, methodDesc=(II)Lorg/threeten/extra/chrono/PaxDate;], indexes=[67], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=18, lineNumber=259, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=yearsUntil, methodDesc=(Lorg/threeten/extra/chrono/PaxDate;)J], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=121, lineNumber=656, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=resolvePreviousValid, methodDesc=(III)Lorg/threeten/extra/chrono/PaxDate;], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=35, lineNumber=332, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getProlepticMonth, methodDesc=()J], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=80, lineNumber=455, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[39], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=41, lineNumber=352, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[84], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=47, lineNumber=353, description=Replaced long division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=lengthOfYear, methodDesc=()I], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=91, lineNumber=505, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getProlepticMonth, methodDesc=()J], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=80, lineNumber=455, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=22, lineNumber=285, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[73], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=54, lineNumber=375, description=Replaced long division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=41, lineNumber=351, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=now, methodDesc=(Ljava/time/Clock;)Lorg/threeten/extra/chrono/PaxDate;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=2, lineNumber=178, description=mutated return of Object value for org/threeten/extra/chrono/PaxDate::now to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=now, methodDesc=()Lorg/threeten/extra/chrono/PaxDate;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=0, lineNumber=146, description=mutated return of Object value for org/threeten/extra/chrono/PaxDate::now to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=plusMonths, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=107, lineNumber=600, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getEra, methodDesc=()Lorg/threeten/extra/chrono/PaxEra;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=82, lineNumber=482, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=PaxDate.java, block=39, lineNumber=348, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=atTime, methodDesc=(Ljava/time/LocalTime;)Ljava/time/chrono/ChronoLocalDateTime;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=112, lineNumber=620, description=mutated return of Object value for org/threeten/extra/chrono/PaxDate::atTime to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=of, methodDesc=(III)Lorg/threeten/extra/chrono/PaxDate;], indexes=[33], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=4, lineNumber=199, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[77], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=54, lineNumber=373, description=replaced return of long value with value + 1 for org/threeten/extra/chrono/PaxDate::getLeapYearsBefore, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=yearsUntil, methodDesc=(Lorg/threeten/extra/chrono/PaxDate;)J], indexes=[49], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=125, lineNumber=657, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[84], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=25, lineNumber=297, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=yearsUntil, methodDesc=(Lorg/threeten/extra/chrono/PaxDate;)J], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=120, lineNumber=656, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[88], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=47, lineNumber=350, description=replaced return of long value with value + 1 for org/threeten/extra/chrono/PaxDate::getLeapMonthsBefore, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[26], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=PaxDate.java, block=48, lineNumber=374, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofYearDay, methodDesc=(II)Lorg/threeten/extra/chrono/PaxDate;], indexes=[80], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=20, lineNumber=264, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=rangeAlignedWeekOfMonth, methodDesc=()Ljava/time/temporal/ValueRange;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=66, lineNumber=430, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[50], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=43, lineNumber=352, description=Replaced long division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[39], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=22, lineNumber=288, description=Replaced integer multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=rangeAlignedWeekOfMonth, methodDesc=()Ljava/time/temporal/ValueRange;], indexes=[19], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=69, lineNumber=430, description=mutated return of Object value for org/threeten/extra/chrono/PaxDate::rangeAlignedWeekOfMonth to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[54], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=43, lineNumber=352, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=50, lineNumber=374, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[159], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=28, lineNumber=311, description=Replaced integer multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofYearDay, methodDesc=(II)Lorg/threeten/extra/chrono/PaxDate;], indexes=[27], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=14, lineNumber=252, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=yearsUntil, methodDesc=(Lorg/threeten/extra/chrono/PaxDate;)J], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=124, lineNumber=656, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getDayOfMonth, methodDesc=()I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=59, lineNumber=414, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=of, methodDesc=(III)Lorg/threeten/extra/chrono/PaxDate;], indexes=[63], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=8, lineNumber=203, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[29], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=22, lineNumber=287, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[155], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=28, lineNumber=311, description=Replaced integer multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[42], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=50, lineNumber=374, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=yearsUntil, methodDesc=(Lorg/threeten/extra/chrono/PaxDate;)J], indexes=[42], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=124, lineNumber=657, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=of, methodDesc=(III)Lorg/threeten/extra/chrono/PaxDate;], indexes=[55], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=6, lineNumber=203, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=until, methodDesc=(Lorg/threeten/extra/chrono/AbstractDate;Ljava/time/temporal/TemporalUnit;)J], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=114, lineNumber=630, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=toEpochDay, methodDesc=()J], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=130, lineNumber=675, description=Replaced long multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofYearDay, methodDesc=(II)Lorg/threeten/extra/chrono/PaxDate;], indexes=[70], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=19, lineNumber=259, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=41, lineNumber=348, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[62], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=52, lineNumber=375, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=48, lineNumber=373, description=Replaced long multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofYearDay, methodDesc=(II)Lorg/threeten/extra/chrono/PaxDate;], indexes=[59], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=17, lineNumber=256, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=plusMonths, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=105, lineNumber=595, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofYearDay, methodDesc=(II)Lorg/threeten/extra/chrono/PaxDate;], indexes=[55], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=17, lineNumber=256, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=48, lineNumber=373, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[132], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=27, lineNumber=306, description=Replaced integer modulus with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=resolvePreviousValid, methodDesc=(III)Lorg/threeten/extra/chrono/PaxDate;], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=36, lineNumber=333, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getChronology, methodDesc=()Lorg/threeten/extra/chrono/PaxChronology;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=81, lineNumber=469, description=mutated return of Object value for org/threeten/extra/chrono/PaxDate::getChronology to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getDayOfYear, methodDesc=()I], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=62, lineNumber=419, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=yearsUntil, methodDesc=(Lorg/threeten/extra/chrono/PaxDate;)J], indexes=[61], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=128, lineNumber=657, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[79], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=24, lineNumber=296, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[124], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=27, lineNumber=305, description=Replaced integer division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=yearsUntil, methodDesc=(Lorg/threeten/extra/chrono/PaxDate;)J], indexes=[69], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=128, lineNumber=658, description=Replaced long division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getDayOfYear, methodDesc=()I], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=60, lineNumber=419, description=Replaced integer multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=lengthOfYearInMonths, methodDesc=()I], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=65, lineNumber=425, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapMonthsBefore, methodDesc=(J)J], indexes=[73], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=45, lineNumber=353, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofYearDay, methodDesc=(II)Lorg/threeten/extra/chrono/PaxDate;], indexes=[83], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=20, lineNumber=264, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[112], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=27, lineNumber=303, description=Replaced integer division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=plusYears, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=98, lineNumber=557, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=ofEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/PaxDate;], indexes=[140], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PaxDate.java, block=27, lineNumber=307, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=lengthOfMonth, methodDesc=()I], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PaxDate.java, block=88, lineNumber=499, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.PaxDate, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[54], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=PaxDate.java, block=52, lineNumber=374, description=Replaced long subtraction with addition, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: THREETEN-EXTRA-96
+	Class Under Test: org.threeten.extra.chrono.PaxDate
+	Run number: 1
+	Tool preparation time (ms): 7224
+	Tool test cases generation time (ms): 146551
+	Test cases execution time (ms): 866
+	Test case number: 78
+	Uncompilable Test Classes: 0
+	Broken tests number: 42
+	Failing tests number: 0
+	Lines total: 137
+	Lines covered: 74
+	Lines coverage ratio (%): 54.0146
+	Conditions total: 113
+	Conditions covered: 39
+	Conditions coverage ratio (%): 34.513275
+	Mutants total: 123
+	Mutants covered: 77
+	Mutants coverage ratio (%): 62.601627
+	Mutants killed: 77
+	Mutants killed ratio (%): 62.601627
+	Mutants alive: 46

@@ -1,0 +1,153 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  THREETEN-EXTRA-93
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.threeten.extra.DayOfMonth
+
+---Compilation---
+Compiled 'org/threeten/extra/DayOfMonth_adjustInto_18501043530.java'
+Compiled 'org/threeten/extra/DayOfMonth_adjustInto_18501043531.java'
+Compiled 'org/threeten/extra/DayOfMonth_atMonth_7694638750.java'
+Compiled 'org/threeten/extra/DayOfMonth_atMonth_7694638751.java'
+Compiled 'org/threeten/extra/DayOfMonth_atMonth_8198636980.java'
+Compiled 'org/threeten/extra/DayOfMonth_atMonth_8198636981.java'
+Compiled 'org/threeten/extra/DayOfMonth_atYearMonth_621986980.java'
+Compiled 'org/threeten/extra/DayOfMonth_atYearMonth_621986981.java'
+Compiled 'org/threeten/extra/DayOfMonth_compareTo_19161370230.java'
+Compiled 'org/threeten/extra/DayOfMonth_compareTo_19161370231.java'
+Compiled 'org/threeten/extra/DayOfMonth_equals_18155048920.java'
+Compiled 'org/threeten/extra/DayOfMonth_equals_18155048921.java'
+Compiled 'org/threeten/extra/DayOfMonth_from_14955119140.java'
+Compiled 'org/threeten/extra/DayOfMonth_from_14955119141.java'
+Compiled 'org/threeten/extra/DayOfMonth_getLong_21228654700.java'
+Compiled 'org/threeten/extra/DayOfMonth_getLong_21228654701.java'
+Compiled 'org/threeten/extra/DayOfMonth_getValue_18622624550.java'
+Compiled 'org/threeten/extra/DayOfMonth_getValue_18622624551.java'
+Compiled 'org/threeten/extra/DayOfMonth_get_16714618940.java'
+Compiled 'org/threeten/extra/DayOfMonth_get_16714618941.java'
+Compiled 'org/threeten/extra/DayOfMonth_hashCode_13668182170.java'
+Compiled 'org/threeten/extra/DayOfMonth_hashCode_13668182171.java'
+Compiled 'org/threeten/extra/DayOfMonth_init_3106045980.java'
+Compiled 'org/threeten/extra/DayOfMonth_init_3106045981.java'
+Compiled 'org/threeten/extra/DayOfMonth_isSupported_16875909880.java'
+Compiled 'org/threeten/extra/DayOfMonth_isSupported_16875909881.java'
+Compiled 'org/threeten/extra/DayOfMonth_isValidYearMonth_3642742210.java'
+Compiled 'org/threeten/extra/DayOfMonth_isValidYearMonth_3642742211.java'
+Compiled 'org/threeten/extra/DayOfMonth_now_13255926830.java'
+Compiled 'org/threeten/extra/DayOfMonth_now_13255926831.java'
+Compiled 'org/threeten/extra/DayOfMonth_now_253117140.java'
+Compiled 'org/threeten/extra/DayOfMonth_now_253117141.java'
+Compiled 'org/threeten/extra/DayOfMonth_now_6488740850.java'
+Compiled 'org/threeten/extra/DayOfMonth_now_6488740851.java'
+Compiled 'org/threeten/extra/DayOfMonth_of_14271944080.java'
+Compiled 'org/threeten/extra/DayOfMonth_of_14271944081.java'
+Compiled 'org/threeten/extra/DayOfMonth_query_3398238690.java'
+Compiled 'org/threeten/extra/DayOfMonth_query_3398238691.java'
+Compiled 'org/threeten/extra/DayOfMonth_range_2479788630.java'
+Compiled 'org/threeten/extra/DayOfMonth_range_2479788631.java'
+Compiled 'org/threeten/extra/DayOfMonth_readResolve_6554141850.java'
+Compiled 'org/threeten/extra/DayOfMonth_readResolve_6554141851.java'
+Compiled 'org/threeten/extra/DayOfMonth_toString_8560585270.java'
+Compiled 'org/threeten/extra/DayOfMonth_toString_8560585271.java'
+Compiled 'org/threeten/extra/EqualityUtils.java'
+Compiled 'org/threeten/extra/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 44 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=hashCode, methodDesc=()I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=49, lineNumber=524, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=hashCode, methodDesc=()I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=49, lineNumber=524, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isSupported, methodDesc=(Ljava/time/temporal/TemporalField;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=13, lineNumber=252, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isSupported, methodDesc=(Ljava/time/temporal/TemporalField;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=13, lineNumber=252, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isSupported, methodDesc=(Ljava/time/temporal/TemporalField;)Z], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=20, lineNumber=255, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isSupported, methodDesc=(Ljava/time/temporal/TemporalField;)Z], indexes=[35], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=20, lineNumber=255, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=44, lineNumber=511, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=now, methodDesc=()Lorg/threeten/extra/DayOfMonth;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=0, lineNumber=110, description=mutated return of Object value for org/threeten/extra/DayOfMonth::now to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=now, methodDesc=()Lorg/threeten/extra/DayOfMonth;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=0, lineNumber=110, description=mutated return of Object value for org/threeten/extra/DayOfMonth::now to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isValidYearMonth, methodDesc=(Ljava/time/YearMonth;)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=28, lineNumber=362, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=compareTo, methodDesc=(Lorg/threeten/extra/DayOfMonth;)I], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DayOfMonth.java, block=41, lineNumber=496, description=Replaced integer subtraction with addition, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=compareTo, methodDesc=(Lorg/threeten/extra/DayOfMonth;)I], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DayOfMonth.java, block=41, lineNumber=496, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=of, methodDesc=(I)Lorg/threeten/extra/DayOfMonth;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=3, lineNumber=156, description=mutated return of Object value for org/threeten/extra/DayOfMonth::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=of, methodDesc=(I)Lorg/threeten/extra/DayOfMonth;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=3, lineNumber=156, description=mutated return of Object value for org/threeten/extra/DayOfMonth::of to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=toString, methodDesc=()Ljava/lang/String;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=50, lineNumber=535, description=mutated return of Object value for org/threeten/extra/DayOfMonth::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=toString, methodDesc=()Ljava/lang/String;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=50, lineNumber=535, description=mutated return of Object value for org/threeten/extra/DayOfMonth::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=getValue, methodDesc=()I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=12, lineNumber=223, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=getValue, methodDesc=()I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=12, lineNumber=223, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=atYearMonth, methodDesc=(Ljava/time/YearMonth;)Ljava/time/LocalDate;], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=40, lineNumber=481, description=mutated return of Object value for org/threeten/extra/DayOfMonth::atYearMonth to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=atYearMonth, methodDesc=(Ljava/time/YearMonth;)Ljava/time/LocalDate;], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=40, lineNumber=481, description=mutated return of Object value for org/threeten/extra/DayOfMonth::atYearMonth to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isValidYearMonth, methodDesc=(Ljava/time/YearMonth;)Z], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=29, lineNumber=362, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isValidYearMonth, methodDesc=(Ljava/time/YearMonth;)Z], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=29, lineNumber=362, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isValidYearMonth, methodDesc=(Ljava/time/YearMonth;)Z], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=31, lineNumber=362, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isValidYearMonth, methodDesc=(Ljava/time/YearMonth;)Z], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=31, lineNumber=362, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=now, methodDesc=(Ljava/time/ZoneId;)Lorg/threeten/extra/DayOfMonth;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=1, lineNumber=126, description=mutated return of Object value for org/threeten/extra/DayOfMonth::now to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=now, methodDesc=(Ljava/time/ZoneId;)Lorg/threeten/extra/DayOfMonth;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=1, lineNumber=126, description=mutated return of Object value for org/threeten/extra/DayOfMonth::now to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isSupported, methodDesc=(Ljava/time/temporal/TemporalField;)Z], indexes=[23], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=17, lineNumber=255, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=now, methodDesc=(Ljava/time/Clock;)Lorg/threeten/extra/DayOfMonth;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=2, lineNumber=141, description=mutated return of Object value for org/threeten/extra/DayOfMonth::now to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=now, methodDesc=(Ljava/time/Clock;)Lorg/threeten/extra/DayOfMonth;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=2, lineNumber=141, description=mutated return of Object value for org/threeten/extra/DayOfMonth::now to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isSupported, methodDesc=(Ljava/time/temporal/TemporalField;)Z], indexes=[27], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=18, lineNumber=255, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=isSupported, methodDesc=(Ljava/time/temporal/TemporalField;)Z], indexes=[27], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=18, lineNumber=255, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=of, methodDesc=(I)Lorg/threeten/extra/DayOfMonth;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DayOfMonth.java, block=3, lineNumber=156, description=Replaced integer subtraction with addition, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=of, methodDesc=(I)Lorg/threeten/extra/DayOfMonth;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=DayOfMonth.java, block=3, lineNumber=156, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=42, lineNumber=508, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DayOfMonth.java, block=42, lineNumber=508, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[36], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=48, lineNumber=514, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[36], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=48, lineNumber=514, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=compareTo, methodDesc=(Lorg/threeten/extra/DayOfMonth;)I], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=41, lineNumber=496, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.DayOfMonth, method=compareTo, methodDesc=(Lorg/threeten/extra/DayOfMonth;)I], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DayOfMonth.java, block=41, lineNumber=496, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: THREETEN-EXTRA-93
+	Class Under Test: org.threeten.extra.DayOfMonth
+	Run number: 1
+	Tool preparation time (ms): 6649
+	Tool test cases generation time (ms): 141815
+	Test cases execution time (ms): 398
+	Test case number: 44
+	Uncompilable Test Classes: 0
+	Broken tests number: 27
+	Failing tests number: 0
+	Lines total: 53
+	Lines covered: 25
+	Lines coverage ratio (%): 47.16981
+	Conditions total: 32
+	Conditions covered: 9
+	Conditions coverage ratio (%): 28.125
+	Mutants total: 44
+	Mutants covered: 21
+	Mutants coverage ratio (%): 47.727272
+	Mutants killed: 21
+	Mutants killed ratio (%): 47.727272
+	Mutants alive: 23

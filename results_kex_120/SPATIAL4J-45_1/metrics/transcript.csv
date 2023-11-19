@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,SPATIAL4J-45,org.locationtech.spatial4j.context.SpatialContextFactory,1,3842,135025,673,28,0,19,0,151,99,65.56291,60,30,50.0,56,41,73.21429,41,73.21429,15,120,30
+ 
+ 
+ 
+

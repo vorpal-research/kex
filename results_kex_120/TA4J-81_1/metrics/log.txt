@@ -1,0 +1,71 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-81
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator
+
+---Compilation---
+Compiled 'org/ta4j/core/indicators/statistics/EqualityUtils.java'
+Compiled 'org/ta4j/core/indicators/statistics/ReflectionUtils.java'
+Compiled 'org/ta4j/core/indicators/statistics/SimpleLinearRegressionIndicator_calculateRegressionLine_3729467910.java'
+Compiled 'org/ta4j/core/indicators/statistics/SimpleLinearRegressionIndicator_calculateRegressionLine_3729467911.java'
+Compiled 'org/ta4j/core/indicators/statistics/SimpleLinearRegressionIndicator_calculate_20377686900.java'
+Compiled 'org/ta4j/core/indicators/statistics/SimpleLinearRegressionIndicator_calculate_20377686901.java'
+Compiled 'org/ta4j/core/indicators/statistics/SimpleLinearRegressionIndicator_init_171661780.java'
+Compiled 'org/ta4j/core/indicators/statistics/SimpleLinearRegressionIndicator_init_171661781.java'
+Compiled 'org/ta4j/core/indicators/statistics/SimpleLinearRegressionIndicator_init_17956999510.java'
+Compiled 'org/ta4j/core/indicators/statistics/SimpleLinearRegressionIndicator_init_17956999511.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 21 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=SimpleLinearRegressionIndicator.java, block=2, lineNumber=81, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=SimpleLinearRegressionIndicator.java, block=2, lineNumber=80, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=SimpleLinearRegressionIndicator.java, block=2, lineNumber=81, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=SimpleLinearRegressionIndicator.java, block=2, lineNumber=80, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=SimpleLinearRegressionIndicator.java, block=3, lineNumber=83, description=mutated return of Object value for org/ta4j/core/indicators/statistics/SimpleLinearRegressionIndicator::calculate to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=SimpleLinearRegressionIndicator.java, block=2, lineNumber=81, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=SimpleLinearRegressionIndicator.java, block=2, lineNumber=81, description=Replaced integer subtraction with addition, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-81
+	Class Under Test: org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator
+	Run number: 1
+	Tool preparation time (ms): 14410
+	Tool test cases generation time (ms): 177933
+	Test cases execution time (ms): 195
+	Test case number: 8
+	Uncompilable Test Classes: 0
+	Broken tests number: 9
+	Failing tests number: 0
+	Lines total: 34
+	Lines covered: 3
+	Lines coverage ratio (%): 8.823529
+	Conditions total: 10
+	Conditions covered: 1
+	Conditions coverage ratio (%): 10.0
+	Mutants total: 21
+	Mutants covered: 7
+	Mutants coverage ratio (%): 33.333336
+	Mutants killed: 7
+	Mutants killed ratio (%): 33.333336
+	Mutants alive: 14

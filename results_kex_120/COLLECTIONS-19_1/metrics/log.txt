@@ -1,0 +1,72 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-19
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.iterators.ZippingIterator
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/iterators/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/iterators/ReflectionUtils.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_hasNext_17443490960.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_hasNext_17443490961.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_init_20601742710.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_init_20601742711.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_init_7529938350.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_init_7529938351.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_init_9456999250.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_init_9456999251.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_next_10899049910.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_next_10899049911.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_remove_16641974590.java'
+Compiled 'org/apache/commons/collections4/iterators/ZippingIterator_remove_16641974591.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 14 mutants 
+mutationResult.getState() IGNORED
+* Ignored mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.iterators.ZippingIterator, method=remove, methodDesc=()V], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ZippingIterator.java, block=15, lineNumber=147, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.iterators.ZippingIterator, method=hasNext, methodDesc=()Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ZippingIterator.java, block=5, lineNumber=105, description=negated conditional, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.iterators.ZippingIterator, method=hasNext, methodDesc=()Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ZippingIterator.java, block=5, lineNumber=105, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() IGNORED
+* Ignored mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.iterators.ZippingIterator, method=<init>, methodDesc=([Ljava/util/Iterator;)V], indexes=[43], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=ZippingIterator.java, block=3, lineNumber=89, description=Changed increment from 1 to -1, testsInOrder=[]]
+mutationResult.getState() IGNORED
+* Ignored mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.iterators.ZippingIterator, method=<init>, methodDesc=([Ljava/util/Iterator;)V], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ZippingIterator.java, block=2, lineNumber=89, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() IGNORED
+* Ignored mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.iterators.ZippingIterator, method=<init>, methodDesc=([Ljava/util/Iterator;)V], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ZippingIterator.java, block=2, lineNumber=89, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-19
+	Class Under Test: org.apache.commons.collections4.iterators.ZippingIterator
+	Run number: 1
+	Tool preparation time (ms): 8685
+	Tool test cases generation time (ms): 150597
+	Test cases execution time (ms): 239
+	Test case number: 12
+	Uncompilable Test Classes: 0
+	Broken tests number: 14
+	Failing tests number: 0
+	Lines total: 32
+	Lines covered: 6
+	Lines coverage ratio (%): 18.75
+	Conditions total: 12
+	Conditions covered: 3
+	Conditions coverage ratio (%): 25.0
+	Mutants total: 10
+	Mutants covered: 1
+	Mutants coverage ratio (%): 10.0
+	Mutants killed: 1
+	Mutants killed ratio (%): 10.0
+	Mutants alive: 9

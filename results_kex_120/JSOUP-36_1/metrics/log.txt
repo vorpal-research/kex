@@ -1,0 +1,107 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-36
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.jsoup.nodes.DocumentType
+
+---Compilation---
+Compiled 'org/jsoup/nodes/DocumentType_has_14561205660.java'
+Compiled 'org/jsoup/nodes/DocumentType_has_14561205661.java'
+Compiled 'org/jsoup/nodes/DocumentType_init_11749183580.java'
+Compiled 'org/jsoup/nodes/DocumentType_init_11749183581.java'
+Compiled 'org/jsoup/nodes/DocumentType_name_2439028450.java'
+Compiled 'org/jsoup/nodes/DocumentType_name_2439028451.java'
+Compiled 'org/jsoup/nodes/DocumentType_nodeName_18602329970.java'
+Compiled 'org/jsoup/nodes/DocumentType_nodeName_18602329971.java'
+Compiled 'org/jsoup/nodes/DocumentType_outerHtmlHead_4720243990.java'
+Compiled 'org/jsoup/nodes/DocumentType_outerHtmlHead_4720243991.java'
+Compiled 'org/jsoup/nodes/DocumentType_outerHtmlTail_1319226550.java'
+Compiled 'org/jsoup/nodes/DocumentType_outerHtmlTail_1319226551.java'
+Compiled 'org/jsoup/nodes/DocumentType_publicId_15818877160.java'
+Compiled 'org/jsoup/nodes/DocumentType_publicId_15818877161.java'
+Compiled 'org/jsoup/nodes/DocumentType_setPubSysKey_3850840810.java'
+Compiled 'org/jsoup/nodes/DocumentType_setPubSysKey_3850840811.java'
+Compiled 'org/jsoup/nodes/DocumentType_systemId_14514738900.java'
+Compiled 'org/jsoup/nodes/DocumentType_systemId_14514738901.java'
+Compiled 'org/jsoup/nodes/DocumentType_updatePubSyskey_18391763970.java'
+Compiled 'org/jsoup/nodes/DocumentType_updatePubSyskey_18391763971.java'
+Compiled 'org/jsoup/nodes/EqualityUtils.java'
+Compiled 'org/jsoup/nodes/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 23 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DocumentType.java, block=13, lineNumber=85, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=<init>, methodDesc=(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=DocumentType.java, block=0, lineNumber=31, description=removed call to org/jsoup/helper/Validate::notNull, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=publicId, methodDesc=()Ljava/lang/String;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DocumentType.java, block=8, lineNumber=63, description=mutated return of Object value for org/jsoup/nodes/DocumentType::publicId to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=has, methodDesc=(Ljava/lang/String;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DocumentType.java, block=23, lineNumber=107, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=updatePubSyskey, methodDesc=()V], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DocumentType.java, block=3, lineNumber=44, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=name, methodDesc=()Ljava/lang/String;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DocumentType.java, block=7, lineNumber=55, description=mutated return of Object value for org/jsoup/nodes/DocumentType::name to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DocumentType.java, block=11, lineNumber=82, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=systemId, methodDesc=()Ljava/lang/String;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DocumentType.java, block=9, lineNumber=71, description=mutated return of Object value for org/jsoup/nodes/DocumentType::systemId to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DocumentType.java, block=12, lineNumber=82, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=has, methodDesc=(Ljava/lang/String;)Z], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DocumentType.java, block=25, lineNumber=107, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=<init>, methodDesc=(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=DocumentType.java, block=0, lineNumber=30, description=removed call to org/jsoup/helper/Validate::notNull, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=nodeName, methodDesc=()Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DocumentType.java, block=10, lineNumber=76, description=mutated return of Object value for org/jsoup/nodes/DocumentType::nodeName to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[29], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DocumentType.java, block=15, lineNumber=85, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=<init>, methodDesc=(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=DocumentType.java, block=0, lineNumber=29, description=removed call to org/jsoup/helper/Validate::notNull, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=<init>, methodDesc=(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V], indexes=[41], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=DocumentType.java, block=0, lineNumber=35, description=removed call to org/jsoup/nodes/DocumentType::updatePubSyskey, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=setPubSysKey, methodDesc=(Ljava/lang/String;)V], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DocumentType.java, block=1, lineNumber=39, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DocumentType.java, block=11, lineNumber=82, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=outerHtmlHead, methodDesc=(Ljava/lang/Appendable;ILorg/jsoup/nodes/Document$OutputSettings;)V], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DocumentType.java, block=14, lineNumber=85, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.DocumentType, method=updatePubSyskey, methodDesc=()V], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DocumentType.java, block=5, lineNumber=46, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-36
+	Class Under Test: org.jsoup.nodes.DocumentType
+	Run number: 1
+	Tool preparation time (ms): 4252
+	Tool test cases generation time (ms): 136279
+	Test cases execution time (ms): 447
+	Test case number: 20
+	Uncompilable Test Classes: 0
+	Broken tests number: 6
+	Failing tests number: 0
+	Lines total: 38
+	Lines covered: 23
+	Lines coverage ratio (%): 60.526318
+	Conditions total: 26
+	Conditions covered: 11
+	Conditions coverage ratio (%): 42.307693
+	Mutants total: 23
+	Mutants covered: 19
+	Mutants coverage ratio (%): 82.608696
+	Mutants killed: 19
+	Mutants killed ratio (%): 82.608696
+	Mutants alive: 4

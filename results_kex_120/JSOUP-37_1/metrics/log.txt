@@ -1,0 +1,124 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-37
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.jsoup.internal.ConstrainableInputStream
+
+---Compilation---
+Compiled 'org/jsoup/internal/ConstrainableInputStream_expired_25787980.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_expired_25787981.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_init_9349414650.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_init_9349414651.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_readToByteBuffer_17769351280.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_readToByteBuffer_17769351281.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_read_11865479070.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_read_11865479071.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_reset_8479405600.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_reset_8479405601.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_timeout_14562683520.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_timeout_14562683521.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_wrap_21162012510.java'
+Compiled 'org/jsoup/internal/ConstrainableInputStream_wrap_21162012511.java'
+Compiled 'org/jsoup/internal/EqualityUtils.java'
+Compiled 'org/jsoup/internal/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 47 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=readToByteBuffer, methodDesc=(I)Ljava/nio/ByteBuffer;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=ConstrainableInputStream.java, block=22, lineNumber=77, description=removed call to org/jsoup/helper/Validate::isTrue, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=<init>, methodDesc=(Ljava/io/InputStream;II)V], indexes=[23], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=ConstrainableInputStream.java, block=2, lineNumber=28, description=removed call to org/jsoup/helper/Validate::isTrue, testsInOrder=[]]
+* Alived mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=<init>, methodDesc=(Ljava/io/InputStream;II)V], indexes=[23], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=ConstrainableInputStream.java, block=2, lineNumber=28, description=removed call to org/jsoup/helper/Validate::isTrue, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=readToByteBuffer, methodDesc=(I)Ljava/nio/ByteBuffer;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ConstrainableInputStream.java, block=20, lineNumber=77, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=readToByteBuffer, methodDesc=(I)Ljava/nio/ByteBuffer;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=20, lineNumber=77, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=expired, methodDesc=()Z], indexes=[38], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ConstrainableInputStream.java, block=42, lineNumber=118, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=<init>, methodDesc=(Ljava/io/InputStream;II)V], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ConstrainableInputStream.java, block=0, lineNumber=28, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=read, methodDesc=([BII)I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=8, lineNumber=50, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=readToByteBuffer, methodDesc=(I)Ljava/nio/ByteBuffer;], indexes=[64], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=27, lineNumber=86, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=read, methodDesc=([BII)I], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=9, lineNumber=50, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=read, methodDesc=([BII)I], indexes=[53], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ConstrainableInputStream.java, block=17, lineNumber=60, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=<init>, methodDesc=(Ljava/io/InputStream;II)V], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=0, lineNumber=28, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=read, methodDesc=([BII)I], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ConstrainableInputStream.java, block=10, lineNumber=50, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=read, methodDesc=([BII)I], indexes=[49], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=16, lineNumber=60, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=expired, methodDesc=()Z], indexes=[22], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=ConstrainableInputStream.java, block=40, lineNumber=117, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=read, methodDesc=([BII)I], indexes=[53], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=17, lineNumber=60, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=readToByteBuffer, methodDesc=(I)Ljava/nio/ByteBuffer;], indexes=[32], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ConstrainableInputStream.java, block=25, lineNumber=79, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=timeout, methodDesc=(JJ)Lorg/jsoup/internal/ConstrainableInputStream;], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ConstrainableInputStream.java, block=37, lineNumber=109, description=mutated return of Object value for org/jsoup/internal/ConstrainableInputStream::timeout to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=expired, methodDesc=()Z], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=40, lineNumber=118, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=readToByteBuffer, methodDesc=(I)Ljava/nio/ByteBuffer;], indexes=[29], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=24, lineNumber=79, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=expired, methodDesc=()Z], indexes=[30], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ConstrainableInputStream.java, block=40, lineNumber=118, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=read, methodDesc=([BII)I], indexes=[36], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=14, lineNumber=57, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=timeout, methodDesc=(JJ)Lorg/jsoup/internal/ConstrainableInputStream;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=ConstrainableInputStream.java, block=37, lineNumber=108, description=Replaced long multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=readToByteBuffer, methodDesc=(I)Ljava/nio/ByteBuffer;], indexes=[32], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=25, lineNumber=79, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=<init>, methodDesc=(Ljava/io/InputStream;II)V], indexes=[38], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=2, lineNumber=31, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=read, methodDesc=([BII)I], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=10, lineNumber=50, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=readToByteBuffer, methodDesc=(I)Ljava/nio/ByteBuffer;], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ConstrainableInputStream.java, block=22, lineNumber=78, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=expired, methodDesc=()Z], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ConstrainableInputStream.java, block=39, lineNumber=114, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=expired, methodDesc=()Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=38, lineNumber=113, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=read, methodDesc=([BII)I], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=12, lineNumber=52, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.internal.ConstrainableInputStream, method=readToByteBuffer, methodDesc=(I)Ljava/nio/ByteBuffer;], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ConstrainableInputStream.java, block=22, lineNumber=78, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-37
+	Class Under Test: org.jsoup.internal.ConstrainableInputStream
+	Run number: 1
+	Tool preparation time (ms): 3772
+	Tool test cases generation time (ms): 134244
+	Test cases execution time (ms): 891
+	Test case number: 14
+	Uncompilable Test Classes: 0
+	Broken tests number: 11
+	Failing tests number: 0
+	Lines total: 49
+	Lines covered: 28
+	Lines coverage ratio (%): 57.14286
+	Conditions total: 40
+	Conditions covered: 20
+	Conditions coverage ratio (%): 50.0
+	Mutants total: 47
+	Mutants covered: 30
+	Mutants coverage ratio (%): 63.829784
+	Mutants killed: 30
+	Mutants killed ratio (%): 63.829784
+	Mutants alive: 17

@@ -1,0 +1,53 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-34
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.jsoup.select.Evaluator
+
+---Compilation---
+Compiled 'org/jsoup/select/EqualityUtils.java'
+Compiled 'org/jsoup/select/Evaluator_cost_14125829670.java'
+Compiled 'org/jsoup/select/Evaluator_cost_14125829671.java'
+Compiled 'org/jsoup/select/Evaluator_reset_4270518590.java'
+Compiled 'org/jsoup/select/Evaluator_reset_4270518591.java'
+Compiled 'org/jsoup/select/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 1 mutants 
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-34
+	Class Under Test: org.jsoup.select.Evaluator
+	Run number: 1
+	Tool preparation time (ms): 4355
+	Tool test cases generation time (ms): 136124
+	Test cases execution time (ms): 111
+	Test case number: 4
+	Uncompilable Test Classes: 0
+	Broken tests number: 6
+	Failing tests number: 0
+	Lines total: 4
+	Lines covered: 0
+	Lines coverage ratio (%): 0.0
+	Conditions total: 0
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 1
+	Mutants covered: 0
+	Mutants coverage ratio (%): 0.0
+	Mutants killed: 0
+	Mutants killed ratio (%): 0.0
+	Mutants alive: 1

@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,SPATIAL4J-51,org.locationtech.spatial4j.shape.impl.CircleImpl,1,4438,134554,547,44,0,33,0,94,14,14.893617,88,9,10.227273,104,16,15.384616,16,15.384616,88,120,46
+ 
+ 
+ 
+

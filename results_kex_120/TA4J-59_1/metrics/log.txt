@@ -1,0 +1,57 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-59
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.criteria.pnl.AverageProfitCriterion
+
+---Compilation---
+Compiled 'org/ta4j/core/criteria/pnl/AverageProfitCriterion_betterThan_7459278580.java'
+Compiled 'org/ta4j/core/criteria/pnl/AverageProfitCriterion_betterThan_7459278581.java'
+Compiled 'org/ta4j/core/criteria/pnl/AverageProfitCriterion_calculate_10992912410.java'
+Compiled 'org/ta4j/core/criteria/pnl/AverageProfitCriterion_calculate_10992912411.java'
+Compiled 'org/ta4j/core/criteria/pnl/AverageProfitCriterion_calculate_12261962760.java'
+Compiled 'org/ta4j/core/criteria/pnl/AverageProfitCriterion_calculate_12261962761.java'
+Compiled 'org/ta4j/core/criteria/pnl/AverageProfitCriterion_init_19150409950.java'
+Compiled 'org/ta4j/core/criteria/pnl/AverageProfitCriterion_init_19150409951.java'
+Compiled 'org/ta4j/core/criteria/pnl/EqualityUtils.java'
+Compiled 'org/ta4j/core/criteria/pnl/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 11 mutants 
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-59
+	Class Under Test: org.ta4j.core.criteria.pnl.AverageProfitCriterion
+	Run number: 1
+	Tool preparation time (ms): 8312
+	Tool test cases generation time (ms): 158213
+	Test cases execution time (ms): 232
+	Test case number: 8
+	Uncompilable Test Classes: 0
+	Broken tests number: 8
+	Failing tests number: 0
+	Lines total: 18
+	Lines covered: 3
+	Lines coverage ratio (%): 16.666668
+	Conditions total: 8
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 11
+	Mutants covered: 0
+	Mutants coverage ratio (%): 0.0
+	Mutants killed: 0
+	Mutants killed ratio (%): 0.0
+	Mutants alive: 11

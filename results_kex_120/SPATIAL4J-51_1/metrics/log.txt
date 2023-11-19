@@ -1,0 +1,125 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  SPATIAL4J-51
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.locationtech.spatial4j.shape.impl.CircleImpl
+
+---Compilation---
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_contains_9095394610.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_contains_9095394611.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_equals_16347858360.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_equals_16347858361.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_equals_6869715940.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_equals_6869715941.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getArea_12371713210.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getArea_12371713211.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getBoundingBox_13800523840.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getBoundingBox_13800523841.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getBuffered_18818690770.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getBuffered_18818690771.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getCenter_4977006130.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getCenter_4977006131.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getRadius_7565579090.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getRadius_7565579091.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getXAxis_8478260640.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getXAxis_8478260641.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getYAxis_17353297450.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_getYAxis_17353297451.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_hasArea_7540972770.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_hasArea_7540972771.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_hashCode_2382849190.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_hashCode_2382849191.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_hashCode_9449891390.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_hashCode_9449891391.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_init_18689440560.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_init_18689440561.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_isEmpty_21270723830.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_isEmpty_21270723831.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relateRectanglePhase2_6102408040.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relateRectanglePhase2_6102408041.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relate_13697497040.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relate_13697497041.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relate_8210201110.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relate_8210201111.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relate_9023624100.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relate_9023624101.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relate_9815483450.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_relate_9815483451.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_reset_7594480800.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_reset_7594480801.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_toString_2724747710.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/CircleImpl_toString_2724747711.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/EqualityUtils.java'
+Compiled 'org/locationtech/spatial4j/shape/impl/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 104 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=hasArea, methodDesc=()Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=CircleImpl.java, block=17, lineNumber=85, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=equals, methodDesc=(Lorg/locationtech/spatial4j/shape/Circle;Ljava/lang/Object;)Z], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CircleImpl.java, block=84, lineNumber=242, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=equals, methodDesc=(Ljava/lang/Object;)Z], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CircleImpl.java, block=80, lineNumber=234, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=getArea, methodDesc=(Lorg/locationtech/spatial4j/context/SpatialContext;)D], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CircleImpl.java, block=13, lineNumber=68, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/shape/impl/CircleImpl::getArea, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=toString, methodDesc=()Ljava/lang/String;], indexes=[19], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CircleImpl.java, block=79, lineNumber=229, description=mutated return of Object value for org/locationtech/spatial4j/shape/impl/CircleImpl::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=equals, methodDesc=(Lorg/locationtech/spatial4j/shape/Circle;Ljava/lang/Object;)Z], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CircleImpl.java, block=85, lineNumber=242, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=hasArea, methodDesc=()Z], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CircleImpl.java, block=19, lineNumber=85, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=getArea, methodDesc=(Lorg/locationtech/spatial4j/context/SpatialContext;)D], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CircleImpl.java, block=13, lineNumber=68, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=getBoundingBox, methodDesc=()Lorg/locationtech/spatial4j/shape/Rectangle;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CircleImpl.java, block=20, lineNumber=93, description=mutated return of Object value for org/locationtech/spatial4j/shape/impl/CircleImpl::getBoundingBox to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=getCenter, methodDesc=()Lorg/locationtech/spatial4j/shape/Point;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CircleImpl.java, block=10, lineNumber=57, description=mutated return of Object value for org/locationtech/spatial4j/shape/impl/CircleImpl::getCenter to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=getArea, methodDesc=(Lorg/locationtech/spatial4j/context/SpatialContext;)D], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=CircleImpl.java, block=13, lineNumber=68, description=Replaced double multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=getArea, methodDesc=(Lorg/locationtech/spatial4j/context/SpatialContext;)D], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CircleImpl.java, block=12, lineNumber=67, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=equals, methodDesc=(Lorg/locationtech/spatial4j/shape/Circle;Ljava/lang/Object;)Z], indexes=[26], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CircleImpl.java, block=87, lineNumber=243, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=getRadius, methodDesc=()D], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CircleImpl.java, block=11, lineNumber=62, description=replaced return of double value with -(x + 1) for org/locationtech/spatial4j/shape/impl/CircleImpl::getRadius, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=hasArea, methodDesc=()Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CircleImpl.java, block=17, lineNumber=85, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.shape.impl.CircleImpl, method=equals, methodDesc=(Lorg/locationtech/spatial4j/shape/Circle;Ljava/lang/Object;)Z], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CircleImpl.java, block=86, lineNumber=243, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: SPATIAL4J-51
+	Class Under Test: org.locationtech.spatial4j.shape.impl.CircleImpl
+	Run number: 1
+	Tool preparation time (ms): 4438
+	Tool test cases generation time (ms): 134554
+	Test cases execution time (ms): 547
+	Test case number: 44
+	Uncompilable Test Classes: 0
+	Broken tests number: 33
+	Failing tests number: 0
+	Lines total: 94
+	Lines covered: 14
+	Lines coverage ratio (%): 14.893617
+	Conditions total: 88
+	Conditions covered: 9
+	Conditions coverage ratio (%): 10.227273
+	Mutants total: 104
+	Mutants covered: 16
+	Mutants coverage ratio (%): 15.384616
+	Mutants killed: 16
+	Mutants killed ratio (%): 15.384616
+	Mutants alive: 88

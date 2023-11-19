@@ -1,0 +1,115 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  THREETEN-EXTRA-98
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.threeten.extra.chrono.CopticChronology
+
+---Compilation---
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateEpochDay_14354322000.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateEpochDay_14354322001.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateNow_536560670.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateNow_536560671.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateNow_6230625310.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateNow_6230625311.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateNow_6772184380.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateNow_6772184381.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateYearDay_5432110290.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateYearDay_5432110291.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateYearDay_8399007420.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_dateYearDay_8399007421.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_date_16221664960.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_date_16221664961.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_date_16953745550.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_date_16953745551.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_date_18000363800.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_date_18000363801.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_eraOf_10921179480.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_eraOf_10921179481.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_eras_17118103180.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_eras_17118103181.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_getCalendarType_20511328400.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_getCalendarType_20511328401.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_getId_18494878510.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_getId_18494878511.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_init_11405394930.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_init_11405394931.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_localDateTime_1318819760.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_localDateTime_1318819761.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_prolepticYear_4427485250.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_prolepticYear_4427485251.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_readResolve_21065563540.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_readResolve_21065563541.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_resolveDate_6296543330.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_resolveDate_6296543331.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_zonedDateTime_12531524310.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_zonedDateTime_12531524311.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_zonedDateTime_9629901780.java'
+Compiled 'org/threeten/extra/chrono/CopticChronology_zonedDateTime_9629901781.java'
+Compiled 'org/threeten/extra/chrono/EqualityUtils.java'
+Compiled 'org/threeten/extra/chrono/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 22 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=getCalendarType, methodDesc=()Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=3, lineNumber=136, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::getCalendarType to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=prolepticYear, methodDesc=(Ljava/time/chrono/Era;I)I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CopticChronology.java, block=16, lineNumber=322, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=zonedDateTime, methodDesc=(Ljava/time/Instant;Ljava/time/ZoneId;)Ljava/time/chrono/ChronoZonedDateTime;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=15, lineNumber=316, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::zonedDateTime to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=localDateTime, methodDesc=(Ljava/time/temporal/TemporalAccessor;)Ljava/time/chrono/ChronoLocalDateTime;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=13, lineNumber=289, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::localDateTime to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=eras, methodDesc=()Ljava/util/List;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=22, lineNumber=335, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::eras to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=resolveDate, methodDesc=(Ljava/util/Map;Ljava/time/format/ResolverStyle;)Lorg/threeten/extra/chrono/CopticDate;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=23, lineNumber=341, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::resolveDate to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=date, methodDesc=(Ljava/time/temporal/TemporalAccessor;)Lorg/threeten/extra/chrono/CopticDate;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=12, lineNumber=276, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::date to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=dateNow, methodDesc=(Ljava/time/ZoneId;)Lorg/threeten/extra/chrono/CopticDate;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=10, lineNumber=247, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::dateNow to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=readResolve, methodDesc=()Ljava/lang/Object;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=1, lineNumber=104, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::readResolve to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=dateEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/CopticDate;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=8, lineNumber=211, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::dateEpochDay to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=getId, methodDesc=()Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=2, lineNumber=119, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::getId to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=dateNow, methodDesc=()Lorg/threeten/extra/chrono/CopticDate;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=9, lineNumber=229, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::dateNow to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.CopticChronology, method=eraOf, methodDesc=(I)Lorg/threeten/extra/chrono/CopticEra;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CopticChronology.java, block=21, lineNumber=330, description=mutated return of Object value for org/threeten/extra/chrono/CopticChronology::eraOf to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: THREETEN-EXTRA-98
+	Class Under Test: org.threeten.extra.chrono.CopticChronology
+	Run number: 1
+	Tool preparation time (ms): 5626
+	Tool test cases generation time (ms): 139580
+	Test cases execution time (ms): 500
+	Test case number: 40
+	Uncompilable Test Classes: 0
+	Broken tests number: 25
+	Failing tests number: 0
+	Lines total: 24
+	Lines covered: 17
+	Lines coverage ratio (%): 70.83333
+	Conditions total: 4
+	Conditions covered: 1
+	Conditions coverage ratio (%): 25.0
+	Mutants total: 22
+	Mutants covered: 13
+	Mutants coverage ratio (%): 59.090908
+	Mutants killed: 13
+	Mutants killed ratio (%): 59.090908
+	Mutants alive: 9

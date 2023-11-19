@@ -1,0 +1,63 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-72
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.indicators.MACDIndicator
+
+---Compilation---
+Compiled 'org/ta4j/core/indicators/EqualityUtils.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_calculate_10682480410.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_calculate_10682480411.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_getLongTermEma_10559138060.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_getLongTermEma_10559138061.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_getShortTermEma_4019297340.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_getShortTermEma_4019297341.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_init_12098885530.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_init_12098885531.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_init_15587325210.java'
+Compiled 'org/ta4j/core/indicators/MACDIndicator_init_15587325211.java'
+Compiled 'org/ta4j/core/indicators/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 5 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.MACDIndicator, method=getLongTermEma, methodDesc=()Lorg/ta4j/core/indicators/EMAIndicator;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MACDIndicator.java, block=5, lineNumber=82, description=mutated return of Object value for org/ta4j/core/indicators/MACDIndicator::getLongTermEma to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.MACDIndicator, method=getShortTermEma, methodDesc=()Lorg/ta4j/core/indicators/EMAIndicator;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MACDIndicator.java, block=4, lineNumber=73, description=mutated return of Object value for org/ta4j/core/indicators/MACDIndicator::getShortTermEma to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-72
+	Class Under Test: org.ta4j.core.indicators.MACDIndicator
+	Run number: 1
+	Tool preparation time (ms): 8434
+	Tool test cases generation time (ms): 155378
+	Test cases execution time (ms): 168
+	Test case number: 10
+	Uncompilable Test Classes: 0
+	Broken tests number: 8
+	Failing tests number: 0
+	Lines total: 11
+	Lines covered: 2
+	Lines coverage ratio (%): 18.181818
+	Conditions total: 2
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 5
+	Mutants covered: 2
+	Mutants coverage ratio (%): 40.0
+	Mutants killed: 2
+	Mutants killed ratio (%): 40.0
+	Mutants alive: 3

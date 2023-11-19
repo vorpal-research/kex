@@ -1,0 +1,156 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-4
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.map.MultiValueMap
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/map/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_clear_12048989740.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_clear_12048989741.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_containsValue_16401846700.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_containsValue_16401846701.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_containsValue_5253894910.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_containsValue_5253894911.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_createCollection_14330415410.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_createCollection_14330415411.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_entrySet_13570179390.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_entrySet_13570179391.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_getCollection_17286663340.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_getCollection_17286663341.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_init_13760292550.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_init_13760292551.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_init_8961756280.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_init_8961756281.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_iterator_12650633480.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_iterator_12650633481.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_iterator_13349205790.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_iterator_13349205791.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_multiValueMap_17769037070.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_multiValueMap_17769037071.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_multiValueMap_3715825830.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_multiValueMap_3715825831.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_multiValueMap_7216903280.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_multiValueMap_7216903281.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_putAll_4221101950.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_putAll_4221101951.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_putAll_8061494320.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_put_19373398690.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_put_19373398691.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_readObject_1235714210.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_readObject_1235714211.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_removeMapping_2803881490.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_removeMapping_2803881491.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_size_13976121450.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_size_13976121451.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_totalSize_14842068540.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_totalSize_14842068541.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_values_21186806730.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_values_21186806731.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_writeObject_8491601210.java'
+Compiled 'org/apache/commons/collections4/map/MultiValueMap_writeObject_8491601211.java'
+Compiled 'org/apache/commons/collections4/map/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 50 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=values, methodDesc=()Ljava/util/Collection;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=36, lineNumber=330, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=put, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;], indexes=[64], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=27, lineNumber=277, description=mutated return of Object value for org/apache/commons/collections4/map/MultiValueMap::put to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=removeMapping, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Z], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=10, lineNumber=216, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=totalSize, methodDesc=()I], indexes=[34], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=59, lineNumber=467, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=putAll, methodDesc=(Ljava/lang/Object;Ljava/util/Collection;)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=47, lineNumber=383, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=iterator, methodDesc=(Ljava/lang/Object;)Ljava/util/Iterator;], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=54, lineNumber=410, description=mutated return of Object value for org/apache/commons/collections4/map/MultiValueMap::iterator to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=<init>, methodDesc=(Ljava/util/Map;Lorg/apache/commons/collections4/Factory;)V], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=4, lineNumber=152, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=containsValue, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Z], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=40, lineNumber=343, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=putAll, methodDesc=(Ljava/lang/Object;Ljava/util/Collection;)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=46, lineNumber=383, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=putAll, methodDesc=(Ljava/util/Map;)V], indexes=[49], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=32, lineNumber=299, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=entrySet, methodDesc=()Ljava/util/Set;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=35, lineNumber=316, description=mutated return of Object value for org/apache/commons/collections4/map/MultiValueMap::entrySet to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=size, methodDesc=(Ljava/lang/Object;)I], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=43, lineNumber=368, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=put, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;], indexes=[31], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=23, lineNumber=269, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=putAll, methodDesc=(Ljava/lang/Object;Ljava/util/Collection;)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=48, lineNumber=384, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=multiValueMap, methodDesc=(Ljava/util/Map;Ljava/lang/Class;)Lorg/apache/commons/collections4/map/MultiValueMap;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=1, lineNumber=111, description=mutated return of Object value for org/apache/commons/collections4/map/MultiValueMap::multiValueMap to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=size, methodDesc=(Ljava/lang/Object;)I], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=44, lineNumber=369, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=containsValue, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Z], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=39, lineNumber=342, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=put, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=22, lineNumber=266, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=multiValueMap, methodDesc=(Ljava/util/Map;)Lorg/apache/commons/collections4/map/MultiValueMap;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=0, lineNumber=94, description=mutated return of Object value for org/apache/commons/collections4/map/MultiValueMap::multiValueMap to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=containsValue, methodDesc=(Ljava/lang/Object;)Z], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=16, lineNumber=241, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=totalSize, methodDesc=()I], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=57, lineNumber=464, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=putAll, methodDesc=(Ljava/util/Map;)V], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=28, lineNumber=294, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=iterator, methodDesc=(Ljava/lang/Object;)Ljava/util/Iterator;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=53, lineNumber=409, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=values, methodDesc=()Ljava/util/Collection;], indexes=[24], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=38, lineNumber=330, description=mutated return of Object value for org/apache/commons/collections4/map/MultiValueMap::values to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=totalSize, methodDesc=()I], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=MultiValueMap.java, block=58, lineNumber=465, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=containsValue, methodDesc=(Ljava/lang/Object;)Z], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=17, lineNumber=242, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=clear, methodDesc=()V], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=MultiValueMap.java, block=9, lineNumber=197, description=removed call to java/util/Map::clear, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=put, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=MultiValueMap.java, block=25, lineNumber=277, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=iterator, methodDesc=()Ljava/util/Iterator;], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=56, lineNumber=431, description=mutated return of Object value for org/apache/commons/collections4/map/MultiValueMap::iterator to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=removeMapping, methodDesc=(Ljava/lang/Object;Ljava/lang/Object;)Z], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=11, lineNumber=217, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=createCollection, methodDesc=(I)Ljava/util/Collection;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=60, lineNumber=481, description=mutated return of Object value for org/apache/commons/collections4/map/MultiValueMap::createCollection to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.map.MultiValueMap, method=getCollection, methodDesc=(Ljava/lang/Object;)Ljava/util/Collection;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=MultiValueMap.java, block=42, lineNumber=357, description=mutated return of Object value for org/apache/commons/collections4/map/MultiValueMap::getCollection to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-4
+	Class Under Test: org.apache.commons.collections4.map.MultiValueMap
+	Run number: 1
+	Tool preparation time (ms): 11352
+	Tool test cases generation time (ms): 156211
+	Test cases execution time (ms): 823
+	Test case number: 43
+	Uncompilable Test Classes: 0
+	Broken tests number: 26
+	Failing tests number: 0
+	Lines total: 88
+	Lines covered: 54
+	Lines coverage ratio (%): 61.363636
+	Conditions total: 44
+	Conditions covered: 19
+	Conditions coverage ratio (%): 43.18182
+	Mutants total: 50
+	Mutants covered: 32
+	Mutants coverage ratio (%): 64.0
+	Mutants killed: 32
+	Mutants killed ratio (%): 64.0
+	Mutants alive: 18

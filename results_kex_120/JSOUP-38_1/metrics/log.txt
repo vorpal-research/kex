@@ -1,0 +1,61 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-38
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.jsoup.select.NodeTraversor
+
+---Compilation---
+Compiled 'org/jsoup/select/EqualityUtils.java'
+Compiled 'org/jsoup/select/NodeTraversor_filter_1314693560.java'
+Compiled 'org/jsoup/select/NodeTraversor_filter_8769312990.java'
+Compiled 'org/jsoup/select/NodeTraversor_filter_8769312991.java'
+Compiled 'org/jsoup/select/NodeTraversor_init_3773333230.java'
+Compiled 'org/jsoup/select/NodeTraversor_init_3773333231.java'
+Compiled 'org/jsoup/select/NodeTraversor_traverse_218684280.java'
+Compiled 'org/jsoup/select/NodeTraversor_traverse_5146112600.java'
+Compiled 'org/jsoup/select/NodeTraversor_traverse_5146112601.java'
+Compiled 'org/jsoup/select/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 54 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.NodeTraversor, method=filter, methodDesc=(Lorg/jsoup/select/NodeFilter;Lorg/jsoup/nodes/Node;)Lorg/jsoup/select/NodeFilter$FilterResult;], indexes=[190], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=NodeTraversor.java, block=52, lineNumber=127, description=mutated return of Object value for org/jsoup/select/NodeTraversor::filter to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.select.NodeTraversor, method=filter, methodDesc=(Lorg/jsoup/select/NodeFilter;Lorg/jsoup/nodes/Node;)Lorg/jsoup/select/NodeFilter$FilterResult;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=NodeTraversor.java, block=26, lineNumber=86, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-38
+	Class Under Test: org.jsoup.select.NodeTraversor
+	Run number: 1
+	Tool preparation time (ms): 4478
+	Tool test cases generation time (ms): 134830
+	Test cases execution time (ms): 191
+	Test case number: 8
+	Uncompilable Test Classes: 0
+	Broken tests number: 6
+	Failing tests number: 0
+	Lines total: 77
+	Lines covered: 5
+	Lines coverage ratio (%): 6.4935064
+	Conditions total: 66
+	Conditions covered: 2
+	Conditions coverage ratio (%): 3.030303
+	Mutants total: 54
+	Mutants covered: 2
+	Mutants coverage ratio (%): 3.7037036
+	Mutants killed: 2
+	Mutants killed ratio (%): 3.7037036
+	Mutants alive: 52

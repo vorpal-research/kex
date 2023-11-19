@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,SPATIAL4J-47,org.locationtech.spatial4j.distance.DistanceUtils,1,3783,139606,522,42,0,12,0,162,110,67.90124,118,54,45.76271,115,80,69.565216,80,69.565216,35,120,44
+ 
+ 
+ 
+

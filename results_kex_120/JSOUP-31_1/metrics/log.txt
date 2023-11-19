@@ -1,0 +1,73 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-31
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.jsoup.nodes.FormElement
+
+---Compilation---
+Compiled 'org/jsoup/nodes/EqualityUtils.java'
+Compiled 'org/jsoup/nodes/FormElement_addElement_5322098650.java'
+Compiled 'org/jsoup/nodes/FormElement_addElement_5322098651.java'
+Compiled 'org/jsoup/nodes/FormElement_clone_14811826280.java'
+Compiled 'org/jsoup/nodes/FormElement_clone_14811826281.java'
+Compiled 'org/jsoup/nodes/FormElement_elements_21194078980.java'
+Compiled 'org/jsoup/nodes/FormElement_elements_21194078981.java'
+Compiled 'org/jsoup/nodes/FormElement_formData_21217099420.java'
+Compiled 'org/jsoup/nodes/FormElement_formData_21217099421.java'
+Compiled 'org/jsoup/nodes/FormElement_init_3636430780.java'
+Compiled 'org/jsoup/nodes/FormElement_init_3636430781.java'
+Compiled 'org/jsoup/nodes/FormElement_removeChild_5743446590.java'
+Compiled 'org/jsoup/nodes/FormElement_removeChild_5743446591.java'
+Compiled 'org/jsoup/nodes/FormElement_submit_9147046910.java'
+Compiled 'org/jsoup/nodes/FormElement_submit_9147046911.java'
+Compiled 'org/jsoup/nodes/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 24 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.FormElement, method=submit, methodDesc=()Lorg/jsoup/Connection;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=FormElement.java, block=4, lineNumber=66, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.FormElement, method=addElement, methodDesc=(Lorg/jsoup/nodes/Element;)Lorg/jsoup/nodes/FormElement;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=FormElement.java, block=2, lineNumber=46, description=mutated return of Object value for org/jsoup/nodes/FormElement::addElement to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.FormElement, method=elements, methodDesc=()Lorg/jsoup/select/Elements;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=FormElement.java, block=1, lineNumber=36, description=mutated return of Object value for org/jsoup/nodes/FormElement::elements to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.FormElement, method=formData, methodDesc=()Ljava/util/List;], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=FormElement.java, block=11, lineNumber=87, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.nodes.FormElement, method=formData, methodDesc=()Ljava/util/List;], indexes=[201], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=FormElement.java, block=33, lineNumber=118, description=mutated return of Object value for org/jsoup/nodes/FormElement::formData to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-31
+	Class Under Test: org.jsoup.nodes.FormElement
+	Run number: 1
+	Tool preparation time (ms): 3996
+	Tool test cases generation time (ms): 135778
+	Test cases execution time (ms): 343
+	Test case number: 14
+	Uncompilable Test Classes: 0
+	Broken tests number: 12
+	Failing tests number: 0
+	Lines total: 45
+	Lines covered: 7
+	Lines coverage ratio (%): 15.555556
+	Conditions total: 32
+	Conditions covered: 2
+	Conditions coverage ratio (%): 6.25
+	Mutants total: 24
+	Mutants covered: 5
+	Mutants coverage ratio (%): 20.833332
+	Mutants killed: 5
+	Mutants killed ratio (%): 20.833332
+	Mutants alive: 19

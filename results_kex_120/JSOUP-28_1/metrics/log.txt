@@ -1,0 +1,123 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-28
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.jsoup.helper.DataUtil
+
+---Compilation---
+Compiled 'org/jsoup/helper/DataUtil_crossStreams_21313580510.java'
+Compiled 'org/jsoup/helper/DataUtil_crossStreams_21313580511.java'
+Compiled 'org/jsoup/helper/DataUtil_detectCharsetFromBom_18575145980.java'
+Compiled 'org/jsoup/helper/DataUtil_detectCharsetFromBom_18575145981.java'
+Compiled 'org/jsoup/helper/DataUtil_emptyByteBuffer_6551159520.java'
+Compiled 'org/jsoup/helper/DataUtil_emptyByteBuffer_6551159521.java'
+Compiled 'org/jsoup/helper/DataUtil_getCharsetFromContentType_18868912320.java'
+Compiled 'org/jsoup/helper/DataUtil_getCharsetFromContentType_18868912321.java'
+Compiled 'org/jsoup/helper/DataUtil_init_16121486250.java'
+Compiled 'org/jsoup/helper/DataUtil_init_16121486251.java'
+Compiled 'org/jsoup/helper/DataUtil_load_16127772670.java'
+Compiled 'org/jsoup/helper/DataUtil_load_16127772671.java'
+Compiled 'org/jsoup/helper/DataUtil_load_16608687410.java'
+Compiled 'org/jsoup/helper/DataUtil_load_16608687411.java'
+Compiled 'org/jsoup/helper/DataUtil_load_2506027290.java'
+Compiled 'org/jsoup/helper/DataUtil_load_2506027291.java'
+Compiled 'org/jsoup/helper/DataUtil_load_9386064590.java'
+Compiled 'org/jsoup/helper/DataUtil_load_9386064591.java'
+Compiled 'org/jsoup/helper/DataUtil_mimeBoundary_11490334860.java'
+Compiled 'org/jsoup/helper/DataUtil_mimeBoundary_11490334861.java'
+Compiled 'org/jsoup/helper/DataUtil_parseInputStream_3449214840.java'
+Compiled 'org/jsoup/helper/DataUtil_parseInputStream_3449214841.java'
+Compiled 'org/jsoup/helper/DataUtil_readToByteBuffer_9023351660.java'
+Compiled 'org/jsoup/helper/DataUtil_readToByteBuffer_9023351661.java'
+Compiled 'org/jsoup/helper/DataUtil_validateCharset_772633950.java'
+Compiled 'org/jsoup/helper/DataUtil_validateCharset_772633951.java'
+Compiled 'org/jsoup/helper/EqualityUtils.java'
+Compiled 'org/jsoup/helper/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 95 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=getCharsetFromContentType, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=68, lineNumber=266, description=mutated return of Object value for org/jsoup/helper/DataUtil::getCharsetFromContentType to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=validateCharset, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DataUtil.java, block=77, lineNumber=282, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=parseInputStream, methodDesc=(Ljava/io/InputStream;Ljava/lang/String;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Lorg/jsoup/nodes/Document;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=18, lineNumber=141, description=mutated return of Object value for org/jsoup/helper/DataUtil::parseInputStream to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=validateCharset, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DataUtil.java, block=73, lineNumber=277, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=getCharsetFromContentType, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[42], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=71, lineNumber=273, description=mutated return of Object value for org/jsoup/helper/DataUtil::getCharsetFromContentType to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=mimeBoundary, methodDesc=()Ljava/lang/String;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=83, lineNumber=298, description=mutated return of Object value for org/jsoup/helper/DataUtil::mimeBoundary to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=readToByteBuffer, methodDesc=(Ljava/io/InputStream;I)Ljava/nio/ByteBuffer;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DataUtil.java, block=63, lineNumber=250, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=getCharsetFromContentType, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DataUtil.java, block=67, lineNumber=266, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=validateCharset, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[43], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=78, lineNumber=282, description=mutated return of Object value for org/jsoup/helper/DataUtil::validateCharset to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=validateCharset, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[11], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=74, lineNumber=277, description=mutated return of Object value for org/jsoup/helper/DataUtil::validateCharset to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=validateCharset, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DataUtil.java, block=72, lineNumber=277, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=mimeBoundary, methodDesc=()Ljava/lang/String;], indexes=[19], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DataUtil.java, block=81, lineNumber=295, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=validateCharset, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[25], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DataUtil.java, block=75, lineNumber=280, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=validateCharset, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=80, lineNumber=286, description=mutated return of Object value for org/jsoup/helper/DataUtil::validateCharset to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=readToByteBuffer, methodDesc=(Ljava/io/InputStream;I)Ljava/nio/ByteBuffer;], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=DataUtil.java, block=65, lineNumber=250, description=removed call to org/jsoup/helper/Validate::isTrue, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=readToByteBuffer, methodDesc=(Ljava/io/InputStream;I)Ljava/nio/ByteBuffer;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=DataUtil.java, block=63, lineNumber=250, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=emptyByteBuffer, methodDesc=()Ljava/nio/ByteBuffer;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=66, lineNumber=256, description=mutated return of Object value for org/jsoup/helper/DataUtil::emptyByteBuffer to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=mimeBoundary, methodDesc=()Ljava/lang/String;], indexes=[33], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=DataUtil.java, block=82, lineNumber=295, description=Changed increment from 1 to -1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=getCharsetFromContentType, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DataUtil.java, block=69, lineNumber=268, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=parseInputStream, methodDesc=(Ljava/io/InputStream;Ljava/lang/String;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Lorg/jsoup/nodes/Document;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DataUtil.java, block=17, lineNumber=140, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=mimeBoundary, methodDesc=()Ljava/lang/String;], indexes=[19], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=DataUtil.java, block=81, lineNumber=295, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=load, methodDesc=(Ljava/io/InputStream;Ljava/lang/String;Ljava/lang/String;Lorg/jsoup/parser/Parser;)Lorg/jsoup/nodes/Document;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=13, lineNumber=122, description=mutated return of Object value for org/jsoup/helper/DataUtil::load to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=validateCharset, methodDesc=(Ljava/lang/String;)Ljava/lang/String;], indexes=[28], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=76, lineNumber=280, description=mutated return of Object value for org/jsoup/helper/DataUtil::validateCharset to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.jsoup.helper.DataUtil, method=load, methodDesc=(Ljava/io/InputStream;Ljava/lang/String;Ljava/lang/String;)Lorg/jsoup/nodes/Document;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=DataUtil.java, block=12, lineNumber=109, description=mutated return of Object value for org/jsoup/helper/DataUtil::load to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-28
+	Class Under Test: org.jsoup.helper.DataUtil
+	Run number: 1
+	Tool preparation time (ms): 4937
+	Tool test cases generation time (ms): 139173
+	Test cases execution time (ms): 714
+	Test case number: 26
+	Uncompilable Test Classes: 0
+	Broken tests number: 12
+	Failing tests number: 0
+	Lines total: 124
+	Lines covered: 30
+	Lines coverage ratio (%): 24.193548
+	Conditions total: 114
+	Conditions covered: 12
+	Conditions coverage ratio (%): 10.526316
+	Mutants total: 95
+	Mutants covered: 24
+	Mutants coverage ratio (%): 25.263157
+	Mutants killed: 24
+	Mutants killed ratio (%): 25.263157
+	Mutants alive: 71

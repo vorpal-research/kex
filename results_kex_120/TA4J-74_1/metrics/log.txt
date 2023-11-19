@@ -1,0 +1,53 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-74
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.rules.TimeRangeRule
+
+---Compilation---
+Compiled 'org/ta4j/core/rules/EqualityUtils.java'
+Compiled 'org/ta4j/core/rules/ReflectionUtils.java'
+Compiled 'org/ta4j/core/rules/TimeRangeRule_init_6361144380.java'
+Compiled 'org/ta4j/core/rules/TimeRangeRule_init_6361144381.java'
+Compiled 'org/ta4j/core/rules/TimeRangeRule_isSatisfied_11856561270.java'
+Compiled 'org/ta4j/core/rules/TimeRangeRule_isSatisfied_11856561271.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 5 mutants 
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-74
+	Class Under Test: org.ta4j.core.rules.TimeRangeRule
+	Run number: 1
+	Tool preparation time (ms): 9874
+	Tool test cases generation time (ms): 161178
+	Test cases execution time (ms): 454
+	Test case number: 4
+	Uncompilable Test Classes: 0
+	Broken tests number: 4
+	Failing tests number: 0
+	Lines total: 12
+	Lines covered: 5
+	Lines coverage ratio (%): 41.666664
+	Conditions total: 4
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 5
+	Mutants covered: 0
+	Mutants coverage ratio (%): 0.0
+	Mutants killed: 0
+	Mutants killed ratio (%): 0.0
+	Mutants alive: 5

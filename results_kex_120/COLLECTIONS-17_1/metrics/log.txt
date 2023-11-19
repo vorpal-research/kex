@@ -1,0 +1,129 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-17
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/trie/analyzer/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/ReflectionUtils.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_bitIndex_17668662490.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_bitIndex_17668662491.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_bitsPerElement_13390379110.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_bitsPerElement_13390379111.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_init_3398555440.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_init_3398555441.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_isBitSet_12100038540.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_isBitSet_12100038541.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_isPrefix_13259916340.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_isPrefix_13259916341.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_lengthInBits_17866944960.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_lengthInBits_17866944961.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_mask_1122172800.java'
+Compiled 'org/apache/commons/collections4/trie/analyzer/StringKeyAnalyzer_mask_1122172801.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 56 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[22], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=9, lineNumber=60, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=isBitSet, methodDesc=(Ljava/lang/String;II)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=StringKeyAnalyzer.java, block=26, lineNumber=115, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=lengthInBits, methodDesc=(Ljava/lang/String;)I], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=3, lineNumber=51, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=lengthInBits, methodDesc=(Ljava/lang/String;)I], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=4, lineNumber=51, description=Replaced integer multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[177], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=StringKeyAnalyzer.java, block=22, lineNumber=105, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitsPerElement, methodDesc=()I], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=StringKeyAnalyzer.java, block=2, lineNumber=46, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[81], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=StringKeyAnalyzer.java, block=11, lineNumber=77, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[42], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=11, lineNumber=66, description=Replaced integer division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[36], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=11, lineNumber=65, description=Replaced integer division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[50], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=11, lineNumber=68, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=isPrefix, methodDesc=(Ljava/lang/String;IILjava/lang/String;)Z], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=30, lineNumber=127, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=lengthInBits, methodDesc=(Ljava/lang/String;)I], indexes=[15], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=StringKeyAnalyzer.java, block=5, lineNumber=51, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[49], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=11, lineNumber=68, description=Replaced integer division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=isBitSet, methodDesc=(Ljava/lang/String;II)Z], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=24, lineNumber=114, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=isPrefix, methodDesc=(Ljava/lang/String;IILjava/lang/String;)Z], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=31, lineNumber=127, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=6, lineNumber=60, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=isBitSet, methodDesc=(Ljava/lang/String;II)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=25, lineNumber=114, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[58], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=11, lineNumber=69, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[14], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=7, lineNumber=60, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[57], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=11, lineNumber=69, description=Replaced integer division with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[81], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=11, lineNumber=77, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=mask, methodDesc=(I)I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=1, lineNumber=41, description=Replaced Unsigned Shift Right with Shift Left, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=8, lineNumber=60, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=isPrefix, methodDesc=(Ljava/lang/String;IILjava/lang/String;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=30, lineNumber=127, description=Replaced integer modulus with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=6, lineNumber=60, description=Replaced integer modulus with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[167], mutator=org.pitest.mutationtest.engine.gregor.mutators.IncrementsMutator], filename=StringKeyAnalyzer.java, block=20, lineNumber=77, description=Changed increment from 1 to -1, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=8, lineNumber=60, description=Replaced integer modulus with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=isBitSet, methodDesc=(Ljava/lang/String;II)Z], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=StringKeyAnalyzer.java, block=25, lineNumber=114, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[13], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=7, lineNumber=60, description=Replaced integer modulus with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[173], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=StringKeyAnalyzer.java, block=21, lineNumber=104, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=bitIndex, methodDesc=(Ljava/lang/String;IILjava/lang/String;II)I], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=9, lineNumber=60, description=Replaced integer modulus with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=mask, methodDesc=(I)I], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=StringKeyAnalyzer.java, block=1, lineNumber=41, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer, method=isPrefix, methodDesc=(Ljava/lang/String;IILjava/lang/String;)Z], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=StringKeyAnalyzer.java, block=31, lineNumber=127, description=Replaced integer modulus with multiplication, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-17
+	Class Under Test: org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer
+	Run number: 1
+	Tool preparation time (ms): 7865
+	Tool test cases generation time (ms): 633954
+	Test cases execution time (ms): 232
+	Test case number: 14
+	Uncompilable Test Classes: 0
+	Broken tests number: 5
+	Failing tests number: 0
+	Lines total: 40
+	Lines covered: 21
+	Lines coverage ratio (%): 52.499996
+	Conditions total: 34
+	Conditions covered: 13
+	Conditions coverage ratio (%): 38.235294
+	Mutants total: 56
+	Mutants covered: 33
+	Mutants coverage ratio (%): 58.928574
+	Mutants killed: 33
+	Mutants killed ratio (%): 58.928574
+	Mutants alive: 23

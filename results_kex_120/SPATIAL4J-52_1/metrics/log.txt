@@ -1,0 +1,85 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  SPATIAL4J-52
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.locationtech.spatial4j.io.PolyshapeReader
+
+---Compilation---
+Compiled 'org/locationtech/spatial4j/io/EqualityUtils.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_getFormatName_6997097930.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_getFormatName_6997097931.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_init_5273912480.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_init_5273912481.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_readIfSupported_15791840490.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_readIfSupported_15791840491.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_readPolygon_15631337210.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_readPolygon_15631337211.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_read_3323632840.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_read_3323632841.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_read_3416123840.java'
+Compiled 'org/locationtech/spatial4j/io/PolyshapeReader_read_3416123841.java'
+Compiled 'org/locationtech/spatial4j/io/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 31 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=readIfSupported, methodDesc=(Ljava/lang/Object;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=PolyshapeReader.java, block=4, lineNumber=61, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=readIfSupported, methodDesc=(Ljava/lang/Object;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PolyshapeReader.java, block=3, lineNumber=61, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=read, methodDesc=(Ljava/io/Reader;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[46], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PolyshapeReader.java, block=10, lineNumber=85, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=read, methodDesc=(Ljava/io/Reader;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[37], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=PolyshapeReader.java, block=8, lineNumber=84, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=readIfSupported, methodDesc=(Ljava/lang/Object;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PolyshapeReader.java, block=4, lineNumber=61, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=readIfSupported, methodDesc=(Ljava/lang/Object;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[17], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=PolyshapeReader.java, block=3, lineNumber=61, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=read, methodDesc=(Ljava/io/Reader;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[27], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PolyshapeReader.java, block=7, lineNumber=82, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=getFormatName, methodDesc=()Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PolyshapeReader.java, block=1, lineNumber=49, description=mutated return of Object value for org/locationtech/spatial4j/io/PolyshapeReader::getFormatName to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=read, methodDesc=(Ljava/io/Reader;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=PolyshapeReader.java, block=9, lineNumber=84, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=read, methodDesc=(Ljava/io/Reader;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[37], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PolyshapeReader.java, block=8, lineNumber=84, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=read, methodDesc=(Ljava/io/Reader;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[40], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=PolyshapeReader.java, block=9, lineNumber=84, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.locationtech.spatial4j.io.PolyshapeReader, method=readIfSupported, methodDesc=(Ljava/lang/Object;)Lorg/locationtech/spatial4j/shape/Shape;], indexes=[39], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=PolyshapeReader.java, block=6, lineNumber=67, description=mutated return of Object value for org/locationtech/spatial4j/io/PolyshapeReader::readIfSupported to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: SPATIAL4J-52
+	Class Under Test: org.locationtech.spatial4j.io.PolyshapeReader
+	Run number: 1
+	Tool preparation time (ms): 3551
+	Tool test cases generation time (ms): 135087
+	Test cases execution time (ms): 391
+	Test case number: 12
+	Uncompilable Test Classes: 0
+	Broken tests number: 10
+	Failing tests number: 0
+	Lines total: 75
+	Lines covered: 18
+	Lines coverage ratio (%): 24.0
+	Conditions total: 47
+	Conditions covered: 6
+	Conditions coverage ratio (%): 12.765958
+	Mutants total: 31
+	Mutants covered: 12
+	Mutants coverage ratio (%): 38.709675
+	Mutants killed: 12
+	Mutants killed ratio (%): 38.709675
+	Mutants alive: 19

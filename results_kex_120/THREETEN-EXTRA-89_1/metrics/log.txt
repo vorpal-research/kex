@@ -1,0 +1,139 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  THREETEN-EXTRA-89
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.threeten.extra.chrono.Symmetry010Chronology
+
+---Compilation---
+Compiled 'org/threeten/extra/chrono/EqualityUtils.java'
+Compiled 'org/threeten/extra/chrono/ReflectionUtils.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateEpochDay_14967523440.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateEpochDay_14967523441.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateNow_13091266850.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateNow_13091266851.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateNow_19858452830.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateNow_19858452831.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateNow_6855643140.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateNow_6855643141.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateYearDay_19059937810.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateYearDay_19059937811.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateYearDay_5228820100.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_dateYearDay_5228820101.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_date_11321481640.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_date_11321481641.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_date_12368099890.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_date_12368099891.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_date_13100180480.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_date_13100180481.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_eraOf_16182887510.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_eraOf_16182887511.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_eras_13378597510.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_eras_13378597511.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_getCalendarType_18698838890.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_getCalendarType_18698838891.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_getId_20715288780.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_getId_20715288781.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_getLeapYearsBefore_15061971410.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_getLeapYearsBefore_15061971411.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_init_7665889260.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_init_7665889261.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_isLeapYear_8597737410.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_isLeapYear_8597737411.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_localDateTime_2420685910.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_localDateTime_2420685911.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_prolepticYear_687979580.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_prolepticYear_687979581.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_range_21156796480.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_range_21156796481.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_readResolve_17326057870.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_readResolve_17326057871.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_zonedDateTime_13369407450.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_zonedDateTime_13369407451.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_zonedDateTime_8792018640.java'
+Compiled 'org/threeten/extra/chrono/Symmetry010Chronology_zonedDateTime_8792018641.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 40 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=isLeapYear, methodDesc=(J)Z], indexes=[20], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=18, lineNumber=433, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=isLeapYear, methodDesc=(J)Z], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=Symmetry010Chronology.java, block=16, lineNumber=433, description=Replaced long multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=prolepticYear, methodDesc=(Ljava/time/chrono/Era;I)I], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=Symmetry010Chronology.java, block=32, lineNumber=497, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=eraOf, methodDesc=(I)Ljava/time/chrono/IsoEra;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=19, lineNumber=448, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::eraOf to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=Symmetry010Chronology.java, block=35, lineNumber=510, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=isLeapYear, methodDesc=(J)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=Symmetry010Chronology.java, block=16, lineNumber=433, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=isLeapYear, methodDesc=(J)Z], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=Symmetry010Chronology.java, block=16, lineNumber=433, description=Replaced long modulus with multiplication, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=range, methodDesc=(Ljava/time/temporal/ChronoField;)Ljava/time/temporal/ValueRange;], indexes=[71], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=31, lineNumber=491, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::range to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=Symmetry010Chronology.java, block=35, lineNumber=510, description=Replaced long multiplication with division, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=35, lineNumber=510, description=replaced return of long value with value + 1 for org/threeten/extra/chrono/Symmetry010Chronology::getLeapYearsBefore, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=isLeapYear, methodDesc=(J)Z], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=Symmetry010Chronology.java, block=16, lineNumber=433, description=Replaced long addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=dateNow, methodDesc=(Ljava/time/ZoneId;)Lorg/threeten/extra/chrono/Symmetry010Date;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=10, lineNumber=349, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::dateNow to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=date, methodDesc=(Ljava/time/temporal/TemporalAccessor;)Lorg/threeten/extra/chrono/Symmetry010Date;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=12, lineNumber=378, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::date to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=readResolve, methodDesc=()Ljava/lang/Object;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=1, lineNumber=209, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::readResolve to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=localDateTime, methodDesc=(Ljava/time/temporal/TemporalAccessor;)Ljava/time/chrono/ChronoLocalDateTime;], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=13, lineNumber=391, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::localDateTime to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=isLeapYear, methodDesc=(J)Z], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=Symmetry010Chronology.java, block=16, lineNumber=433, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=zonedDateTime, methodDesc=(Ljava/time/Instant;Ljava/time/ZoneId;)Ljava/time/chrono/ChronoZonedDateTime;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=15, lineNumber=418, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::zonedDateTime to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=getLeapYearsBefore, methodDesc=(J)J], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=Symmetry010Chronology.java, block=35, lineNumber=510, description=Replaced long subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=dateEpochDay, methodDesc=(J)Lorg/threeten/extra/chrono/Symmetry010Date;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=8, lineNumber=313, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::dateEpochDay to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=dateNow, methodDesc=()Lorg/threeten/extra/chrono/Symmetry010Date;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=9, lineNumber=331, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::dateNow to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=eras, methodDesc=()Ljava/util/List;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=20, lineNumber=460, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::eras to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=getId, methodDesc=()Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=2, lineNumber=224, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::getId to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.threeten.extra.chrono.Symmetry010Chronology, method=getCalendarType, methodDesc=()Ljava/lang/String;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=Symmetry010Chronology.java, block=3, lineNumber=238, description=mutated return of Object value for org/threeten/extra/chrono/Symmetry010Chronology::getCalendarType to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: THREETEN-EXTRA-89
+	Class Under Test: org.threeten.extra.chrono.Symmetry010Chronology
+	Run number: 1
+	Tool preparation time (ms): 7219
+	Tool test cases generation time (ms): 143624
+	Test cases execution time (ms): 466
+	Test case number: 44
+	Uncompilable Test Classes: 0
+	Broken tests number: 25
+	Failing tests number: 0
+	Lines total: 47
+	Lines covered: 30
+	Lines coverage ratio (%): 63.829784
+	Conditions total: 15
+	Conditions covered: 4
+	Conditions coverage ratio (%): 26.666668
+	Mutants total: 40
+	Mutants covered: 23
+	Mutants coverage ratio (%): 57.5
+	Mutants killed: 23
+	Mutants killed ratio (%): 57.5
+	Mutants alive: 17

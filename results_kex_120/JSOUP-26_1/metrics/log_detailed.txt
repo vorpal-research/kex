@@ -1,0 +1,153 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-26
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+Creating directory ./temp
+Creating directory ./temp/data
+Creating directory ./temp/testcases
+Executing /home/kex/./runtool
+>> BENCHMARK
+>> /var/benchmarks/projects/jsoup/src/main/java
+>> /var/benchmarks/projects/jsoup/target/classes
+>> 18
+>> /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar
+>> 0
+expecting CLASSPATH or READY
+<< READY
+>> 120
+
+
+### COMPUTING METRICS ###: org.jsoup.examples.Wikipedia
+
+
+Starting class org.jsoup.examples.Wikipedia
+
+
+Ending class org.jsoup.examples.Wikipedia
+Creating directory results_kex_120/JSOUP-26_1/temp/testcases/bin
+Creating dummy JUnit test file
+
+---Compilation---
+
+===
+javac command line:
+/usr/bin/javac -sourcepath /home/kex/results_kex_120/JSOUP-26_1/temp/testcases -cp /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar -d results_kex_120/JSOUP-26_1/temp/testcases/bin /home/kex/results_kex_120/JSOUP-26_1/temp/testcases/SBSTDummyForCoverageAndMutationCalculation.java
+
+
+---Timing Information---
+Running tests with the following classpath: 
+/var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar:/var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar:/var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar:/var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar:/var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar:/usr/local/bin/lib/junit.jar:/usr/local/bin/lib/hamcrest-core.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/bin
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation]
+Executions terminated
+
+---The tests are re-executed other four times to find the flaky ones---
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation]
+Executions terminated
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation]
+Executions terminated
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation]
+Executions terminated
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation]
+Executions terminated
+
+=== Run Jacoco for Coverage ===
+Number of instrumented file = 2459
+Running tests with the following classpath: 
+/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/jsoup-1.16.2-SNAPSHOT_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/junit-jupiter-params-5.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/gson-2.10.1_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/jetty-util-ajax-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/junit-jupiter-engine-5.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/jetty-server-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/junit-platform-engine-1.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/junit-jupiter-api-5.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/apiguardian-api-1.1.2_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/opentest4j-1.2.0_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/javax.servlet-api-3.1.0_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/jetty-util-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/jetty-http-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/jetty-security-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/jsr305-3.0.2_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/jetty-io-9.4.51.v20230217_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/junit-jupiter-5.9.3_instrumented.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/jetty-servlet-9.4.51.v20230217_instrumented.jar:/usr/local/bin/lib/hamcrest-core.jar:/usr/local/bin/lib/junit.jar:/home/kex/results_kex_120/JSOUP-26_1/temp/testcases/bin
+Running the tests: [SBSTDummyForCoverageAndMutationCalculation]
+Executions terminated
+Number of file with coverage information = 264
+Number of file with coverage information = 343
+Number of file with coverage information = 218
+Number of file with coverage information = 33
+Number of file with coverage information = 134
+Number of file with coverage information = 357
+Number of file with coverage information = 127
+Number of file with coverage information = 179
+Number of file with coverage information = 3
+Number of file with coverage information = 7
+Number of file with coverage information = 79
+Number of file with coverage information = 327
+Number of file with coverage information = 109
+Number of file with coverage information = 62
+Number of file with coverage information = 35
+Number of file with coverage information = 111
+Number of file with coverage information = 1
+Number of file with coverage information = 70
+Could not calculate coverage metrics!
+java.lang.NullPointerException
+	at sbst.benchmark.TestSuite.jacoco(TestSuite.java:438)
+	at sbst.benchmark.TestSuite.<init>(TestSuite.java:71)
+	at sbst.benchmark.TranscriptWriter.endClass(TranscriptWriter.java:136)
+	at sbst.benchmark.RunTool.execute(RunTool.java:141)
+	at sbst.benchmark.RunTool.run(RunTool.java:62)
+	at sbst.benchmark.Main.main(Main.java:160)
+
+=== Run PIT ===
+Could not calculate mutation metrics!
+java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
+	at java.util.ArrayList.rangeCheck(ArrayList.java:659)
+	at java.util.ArrayList.get(ArrayList.java:435)
+	at sbst.benchmark.pitest.PITWrapper.<init>(PITWrapper.java:51)
+	at sbst.benchmark.TestSuite.mutationAnalysis(TestSuite.java:494)
+	at sbst.benchmark.TestSuite.<init>(TestSuite.java:73)
+	at sbst.benchmark.TranscriptWriter.endClass(TranscriptWriter.java:136)
+	at sbst.benchmark.RunTool.execute(RunTool.java:141)
+	at sbst.benchmark.RunTool.run(RunTool.java:62)
+	at sbst.benchmark.Main.main(Main.java:160)
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: JSOUP-26
+	Class Under Test: org.jsoup.examples.Wikipedia
+	Run number: 1
+	Tool preparation time (ms): 3968
+	Tool test cases generation time (ms): 17773
+	Test cases execution time (ms): 31
+	Test case number: 0
+	Uncompilable Test Classes: 0
+	Broken tests number: 0
+	Failing tests number: 0
+	Lines total: 0
+	Lines covered: 0
+	Lines coverage ratio (%): 0.0
+	Conditions total: 0
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 0
+	Mutants covered: 0
+	Mutants coverage ratio (%): 0.0
+	Mutants killed: 0
+	Mutants killed ratio (%): 0.0
+	Mutants alive: 0
+
+
+Class org.jsoup.examples.Wikipedia ended.
+Stopping process...
+Tool subprocess is an instance of java.lang.UNIXProcess
+Tool subprocess Id is 201896
+Killing master process 201896
+Executing command kill -9 201896
+Execution of command kill -9 201896 finished.
+Process was destroyed

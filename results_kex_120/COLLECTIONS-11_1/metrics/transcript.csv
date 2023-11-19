@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,COLLECTIONS-11,org.apache.commons.collections4.bidimap.DualTreeBidiMap,1,11762,162737,674,38,0,28,0,60,24,40.0,12,2,16.666668,31,11,35.48387,11,35.48387,20,120,40
+ 
+ 
+ 
+

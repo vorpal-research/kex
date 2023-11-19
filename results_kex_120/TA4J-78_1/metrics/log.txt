@@ -1,0 +1,65 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  TA4J-78
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.ta4j.core.indicators.UlcerIndexIndicator
+
+---Compilation---
+Compiled 'org/ta4j/core/indicators/EqualityUtils.java'
+Compiled 'org/ta4j/core/indicators/ReflectionUtils.java'
+Compiled 'org/ta4j/core/indicators/UlcerIndexIndicator_calculate_5123960910.java'
+Compiled 'org/ta4j/core/indicators/UlcerIndexIndicator_calculate_5123960911.java'
+Compiled 'org/ta4j/core/indicators/UlcerIndexIndicator_init_17619686930.java'
+Compiled 'org/ta4j/core/indicators/UlcerIndexIndicator_init_17619686931.java'
+Compiled 'org/ta4j/core/indicators/UlcerIndexIndicator_toString_8072286500.java'
+Compiled 'org/ta4j/core/indicators/UlcerIndexIndicator_toString_8072286501.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 10 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.UlcerIndexIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[18], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=UlcerIndexIndicator.java, block=1, lineNumber=64, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.UlcerIndexIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=UlcerIndexIndicator.java, block=1, lineNumber=64, description=Replaced integer subtraction with addition, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.UlcerIndexIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=UlcerIndexIndicator.java, block=1, lineNumber=63, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.UlcerIndexIndicator, method=toString, methodDesc=()Ljava/lang/String;], indexes=[16], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=UlcerIndexIndicator.java, block=5, lineNumber=81, description=mutated return of Object value for org/ta4j/core/indicators/UlcerIndexIndicator::toString to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.ta4j.core.indicators.UlcerIndexIndicator, method=calculate, methodDesc=(I)Lorg/ta4j/core/num/Num;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=UlcerIndexIndicator.java, block=1, lineNumber=63, description=Replaced integer subtraction with addition, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: TA4J-78
+	Class Under Test: org.ta4j.core.indicators.UlcerIndexIndicator
+	Run number: 1
+	Tool preparation time (ms): 14883
+	Tool test cases generation time (ms): 174023
+	Test cases execution time (ms): 150
+	Test case number: 6
+	Uncompilable Test Classes: 0
+	Broken tests number: 6
+	Failing tests number: 0
+	Lines total: 19
+	Lines covered: 4
+	Lines coverage ratio (%): 21.052631
+	Conditions total: 4
+	Conditions covered: 0
+	Conditions coverage ratio (%): 0.0
+	Mutants total: 10
+	Mutants covered: 5
+	Mutants coverage ratio (%): 50.0
+	Mutants killed: 5
+	Mutants killed ratio (%): 50.0
+	Mutants alive: 5

@@ -1,0 +1,61 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-12
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.functors.CloneTransformer
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/functors/CloneTransformer_cloneTransformer_1978131750.java'
+Compiled 'org/apache/commons/collections4/functors/CloneTransformer_cloneTransformer_1978131751.java'
+Compiled 'org/apache/commons/collections4/functors/CloneTransformer_init_8807305150.java'
+Compiled 'org/apache/commons/collections4/functors/CloneTransformer_init_8807305151.java'
+Compiled 'org/apache/commons/collections4/functors/CloneTransformer_transform_1236770130.java'
+Compiled 'org/apache/commons/collections4/functors/CloneTransformer_transform_1236770131.java'
+Compiled 'org/apache/commons/collections4/functors/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/functors/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 4 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.CloneTransformer, method=transform, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CloneTransformer.java, block=3, lineNumber=67, description=mutated return of Object value for org/apache/commons/collections4/functors/CloneTransformer::transform to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.CloneTransformer, method=cloneTransformer, methodDesc=()Lorg/apache/commons/collections4/Transformer;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=CloneTransformer.java, block=0, lineNumber=49, description=mutated return of Object value for org/apache/commons/collections4/functors/CloneTransformer::cloneTransformer to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.functors.CloneTransformer, method=transform, methodDesc=(Ljava/lang/Object;)Ljava/lang/Object;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=CloneTransformer.java, block=2, lineNumber=66, description=negated conditional, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-12
+	Class Under Test: org.apache.commons.collections4.functors.CloneTransformer
+	Run number: 1
+	Tool preparation time (ms): 18337
+	Tool test cases generation time (ms): 162295
+	Test cases execution time (ms): 122
+	Test case number: 6
+	Uncompilable Test Classes: 0
+	Broken tests number: 3
+	Failing tests number: 0
+	Lines total: 5
+	Lines covered: 4
+	Lines coverage ratio (%): 80.0
+	Conditions total: 2
+	Conditions covered: 1
+	Conditions coverage ratio (%): 50.0
+	Mutants total: 4
+	Mutants covered: 3
+	Mutants coverage ratio (%): 75.0
+	Mutants killed: 3
+	Mutants killed ratio (%): 75.0
+	Mutants alive: 1

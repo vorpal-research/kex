@@ -1,0 +1,151 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  COLLECTIONS-7
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-compute-metrics
+
+
+### COMPUTING METRICS ###: org.apache.commons.collections4.ListUtils
+
+---Compilation---
+Compiled 'org/apache/commons/collections4/EqualityUtils.java'
+Compiled 'org/apache/commons/collections4/ListUtils_defaultIfNull_1974449900.java'
+Compiled 'org/apache/commons/collections4/ListUtils_defaultIfNull_1974449901.java'
+Compiled 'org/apache/commons/collections4/ListUtils_emptyIfNull_7355388300.java'
+Compiled 'org/apache/commons/collections4/ListUtils_emptyIfNull_7355388301.java'
+Compiled 'org/apache/commons/collections4/ListUtils_fixedSizeList_14697183160.java'
+Compiled 'org/apache/commons/collections4/ListUtils_fixedSizeList_14697183161.java'
+Compiled 'org/apache/commons/collections4/ListUtils_getFirst_6308210080.java'
+Compiled 'org/apache/commons/collections4/ListUtils_getFirst_6308210081.java'
+Compiled 'org/apache/commons/collections4/ListUtils_getLast_2325409260.java'
+Compiled 'org/apache/commons/collections4/ListUtils_getLast_2325409261.java'
+Compiled 'org/apache/commons/collections4/ListUtils_hashCodeForList_1238716650.java'
+Compiled 'org/apache/commons/collections4/ListUtils_indexOf_20247772180.java'
+Compiled 'org/apache/commons/collections4/ListUtils_indexOf_20247772181.java'
+Compiled 'org/apache/commons/collections4/ListUtils_init_2700702450.java'
+Compiled 'org/apache/commons/collections4/ListUtils_init_2700702451.java'
+Compiled 'org/apache/commons/collections4/ListUtils_intersection_10325888380.java'
+Compiled 'org/apache/commons/collections4/ListUtils_intersection_10325888381.java'
+Compiled 'org/apache/commons/collections4/ListUtils_isEqualList_19725371450.java'
+Compiled 'org/apache/commons/collections4/ListUtils_lazyList_12741320540.java'
+Compiled 'org/apache/commons/collections4/ListUtils_lazyList_12741320541.java'
+Compiled 'org/apache/commons/collections4/ListUtils_lazyList_2037664390.java'
+Compiled 'org/apache/commons/collections4/ListUtils_lazyList_2037664391.java'
+Compiled 'org/apache/commons/collections4/ListUtils_longestCommonSubsequence_18774712480.java'
+Compiled 'org/apache/commons/collections4/ListUtils_longestCommonSubsequence_18774712481.java'
+Compiled 'org/apache/commons/collections4/ListUtils_longestCommonSubsequence_19208554330.java'
+Compiled 'org/apache/commons/collections4/ListUtils_longestCommonSubsequence_19208554331.java'
+Compiled 'org/apache/commons/collections4/ListUtils_longestCommonSubsequence_4982285430.java'
+Compiled 'org/apache/commons/collections4/ListUtils_longestCommonSubsequence_4982285431.java'
+Compiled 'org/apache/commons/collections4/ListUtils_partition_20943937010.java'
+Compiled 'org/apache/commons/collections4/ListUtils_partition_20943937011.java'
+Compiled 'org/apache/commons/collections4/ListUtils_predicatedList_11558619860.java'
+Compiled 'org/apache/commons/collections4/ListUtils_predicatedList_11558619861.java'
+Compiled 'org/apache/commons/collections4/ListUtils_removeAll_9483062020.java'
+Compiled 'org/apache/commons/collections4/ListUtils_retainAll_1384649670.java'
+Compiled 'org/apache/commons/collections4/ListUtils_selectRejected_11905172330.java'
+Compiled 'org/apache/commons/collections4/ListUtils_select_15904407490.java'
+Compiled 'org/apache/commons/collections4/ListUtils_subtract_11937402730.java'
+Compiled 'org/apache/commons/collections4/ListUtils_subtract_11937402731.java'
+Compiled 'org/apache/commons/collections4/ListUtils_sum_12222283280.java'
+Compiled 'org/apache/commons/collections4/ListUtils_sum_12222283281.java'
+Compiled 'org/apache/commons/collections4/ListUtils_synchronizedList_12289860930.java'
+Compiled 'org/apache/commons/collections4/ListUtils_synchronizedList_12289860931.java'
+Compiled 'org/apache/commons/collections4/ListUtils_transformedList_11595840020.java'
+Compiled 'org/apache/commons/collections4/ListUtils_transformedList_11595840021.java'
+Compiled 'org/apache/commons/collections4/ListUtils_union_8257702200.java'
+Compiled 'org/apache/commons/collections4/ListUtils_union_8257702201.java'
+Compiled 'org/apache/commons/collections4/ListUtils_unmodifiableList_19987605480.java'
+Compiled 'org/apache/commons/collections4/ListUtils_unmodifiableList_19987605481.java'
+Compiled 'org/apache/commons/collections4/ReflectionUtils.java'
+
+---Timing Information---
+
+---The tests are re-executed other four times to find the flaky ones---
+
+=== Run Jacoco for Coverage ===
+
+=== Run PIT ===
+Executing Mutation Analysis using 69 mutants 
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=synchronizedList, methodDesc=(Ljava/util/List;)Ljava/util/List;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=69, lineNumber=685, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::synchronizedList to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=isEqualList, methodDesc=(Ljava/util/Collection;Ljava/util/Collection;)Z], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=28, lineNumber=315, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=hashCodeForList, methodDesc=(Ljava/util/Collection;)I], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=9, lineNumber=220, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=intersection, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[56], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=25, lineNumber=277, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=emptyIfNull, methodDesc=(Ljava/util/List;)Ljava/util/List;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=3, lineNumber=159, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=intersection, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[47], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=24, lineNumber=276, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=emptyIfNull, methodDesc=(Ljava/util/List;)Ljava/util/List;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=5, lineNumber=159, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::emptyIfNull to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=longestCommonSubsequence, methodDesc=(Ljava/util/List;Ljava/util/List;Lorg/apache/commons/collections4/Equator;)Ljava/util/List;], indexes=[43], mutator=org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator], filename=ListUtils.java, block=49, lineNumber=460, description=removed call to org/apache/commons/collections4/sequence/EditScript::visit, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=isEqualList, methodDesc=(Ljava/util/Collection;Ljava/util/Collection;)Z], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=29, lineNumber=316, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=fixedSizeList, methodDesc=(Ljava/util/List;)Ljava/util/List;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=6, lineNumber=174, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::fixedSizeList to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=longestCommonSubsequence, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[7], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=48, lineNumber=437, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::longestCommonSubsequence to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=unmodifiableList, methodDesc=(Ljava/util/List;)Ljava/util/List;], indexes=[5], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=72, lineNumber=742, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::unmodifiableList to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=indexOf, methodDesc=(Ljava/util/List;Lorg/apache/commons/collections4/Predicate;)I], indexes=[6], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=17, lineNumber=243, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=hashCodeForList, methodDesc=(Ljava/util/Collection;)I], indexes=[8], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=10, lineNumber=221, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=indexOf, methodDesc=(Ljava/util/List;Lorg/apache/commons/collections4/Predicate;)I], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=16, lineNumber=243, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=longestCommonSubsequence, methodDesc=(Ljava/util/List;Ljava/util/List;Lorg/apache/commons/collections4/Equator;)Ljava/util/List;], indexes=[48], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=49, lineNumber=461, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::longestCommonSubsequence to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=union, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[9], mutator=org.pitest.mutationtest.engine.gregor.mutators.MathMutator], filename=ListUtils.java, block=71, lineNumber=725, description=Replaced integer addition with subtraction, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=indexOf, methodDesc=(Ljava/util/List;Lorg/apache/commons/collections4/Predicate;)I], indexes=[42], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=22, lineNumber=251, description=replaced return of integer sized value with (x == 0 ? 1 : 0), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=partition, methodDesc=(Ljava/util/List;I)Ljava/util/List;], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ListUtils.java, block=50, lineNumber=488, description=changed conditional boundary, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=defaultIfNull, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[4], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=0, lineNumber=147, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=intersection, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=23, lineNumber=269, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=partition, methodDesc=(Ljava/util/List;I)Ljava/util/List;], indexes=[27], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=52, lineNumber=491, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::partition to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=defaultIfNull, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[12], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=2, lineNumber=147, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::defaultIfNull to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=partition, methodDesc=(Ljava/util/List;I)Ljava/util/List;], indexes=[10], mutator=org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator], filename=ListUtils.java, block=50, lineNumber=488, description=negated conditional, testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=union, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[27], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=71, lineNumber=728, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::union to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=intersection, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[77], mutator=org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator], filename=ListUtils.java, block=27, lineNumber=282, description=mutated return of Object value for org/apache/commons/collections4/ListUtils::intersection to ( if (x != null) null else throw new RuntimeException ), testsInOrder=[]]
+mutationResult.getState() KILLED
+* Killed mutant MutationDetails [id=MutationIdentifier [location=Location [clazz=org.apache.commons.collections4.ListUtils, method=intersection, methodDesc=(Ljava/util/List;Ljava/util/List;)Ljava/util/List;], indexes=[21], mutator=org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator], filename=ListUtils.java, block=23, lineNumber=269, description=changed conditional boundary, testsInOrder=[]]
+
+>>> RESULTS:
+	Tool name: kex
+	Benchmark: COLLECTIONS-7
+	Class Under Test: org.apache.commons.collections4.ListUtils
+	Run number: 1
+	Tool preparation time (ms): 10741
+	Tool test cases generation time (ms): 153167
+	Test cases execution time (ms): 568
+	Test case number: 48
+	Uncompilable Test Classes: 0
+	Broken tests number: 33
+	Failing tests number: 0
+	Lines total: 99
+	Lines covered: 39
+	Lines coverage ratio (%): 39.39394
+	Conditions total: 58
+	Conditions covered: 15
+	Conditions coverage ratio (%): 25.862068
+	Mutants total: 69
+	Mutants covered: 27
+	Mutants coverage ratio (%): 39.130436
+	Mutants killed: 27
+	Mutants killed ratio (%): 39.130436
+	Mutants alive: 42
