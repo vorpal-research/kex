@@ -24,7 +24,10 @@ class JavaBuilder(val pkg: String = "") {
             '\'' -> "\\'"
             '\"' -> "\\\""
             '\\' -> "\\\\"
-            else -> char
+            else -> when {
+                char.code in 32..126 -> char
+                else -> String.format("\\u%04X", char.code)
+            }
         }
     }
 

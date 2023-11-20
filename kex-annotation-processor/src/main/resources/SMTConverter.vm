@@ -627,7 +627,7 @@ class ${solver}Converter(
     }
 
     fun convert(call: CallTerm, ef: Factory_, ctx: Context_): Dynamic_ {
-        val expr = ef.getVarByTypeAndName(call.type, call.name, fresh = true)
+        val expr = ef.getVarByTypeAndName(call.type, call.name, true)
         return call.withAxioms(expr, ef, ctx)
     }
 

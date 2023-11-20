@@ -60,6 +60,9 @@ class SymbolicTraceBuilder(
     override val termMap: Map<Term, WrappedValue>
         get() = terms.toMap()
 
+    override val instructionTrace: List<Instruction>
+        get() = traceBuilder
+
     override val symbolicState: SymbolicState
         get() {
             checkCall()

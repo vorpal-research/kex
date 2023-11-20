@@ -37,7 +37,7 @@ class BfsPathSelectorImpl(
     override suspend fun hasNext(): Boolean = deque.isNotEmpty()
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
-        val persistentResult = result.trace.toPersistentState()
+        val persistentResult = result.symbolicState.toPersistentState()
         if (persistentResult.path in coveredPaths) return
         coveredPaths += persistentResult.path
         addCandidates(persistentResult)
