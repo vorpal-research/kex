@@ -29,7 +29,17 @@ class UnknownGenerator(
                 val kfgClass = (descriptor.type.getKfgType(types) as ClassType).klass
 
                 actionSequence += ReflectionNewInstance(kfgClass.asType)
-                actionSequence.list.addSetupFieldsCalls(descriptor.fields, kfgClass, types, fallback)
+                for ((field, value) in descriptor.fields) {
+                    val fieldType = field.second.getKfgType(types).rtUnmapped
+                    val kfgField = try {
+                        kfgClass.getField(field.first, fieldType)
+                    } catch (e: UnknownInstanceException) {
+                        log.warn("Field ${field.first}: ${field.second} is not found in class $kfgClass")
+                        continue
+                    }
+                    val valueAS = fallback.generate(value)
+                    actionSequence += ReflectionSetField(kfgField, valueAS)
+                }
             }
             is ArrayDescriptor -> {
                 val kfgArray = (descriptor.type.getKfgType(types) as ArrayType)
@@ -44,9 +54,9 @@ class UnknownGenerator(
                     }
                 }
             }
+
             is ClassDescriptor -> {
                 val kfgClass = (descriptor.type.getKfgType(types) as ClassType).klass
-                actionSequence.list.addSetupFieldsCalls(descriptor.fields, kfgClass, types, fallback)
                 for ((field, value) in descriptor.fields) {
                     val fieldType = field.second.getKfgType(types).rtUnmapped
                     val kfgField = try {
@@ -59,6 +69,7 @@ class UnknownGenerator(
                     actionSequence += ReflectionSetStaticField(kfgField, valueAS)
                 }
             }
+
             else -> UnknownSequence(
                 "${descriptor.term}",
                 descriptor.wrappedType,

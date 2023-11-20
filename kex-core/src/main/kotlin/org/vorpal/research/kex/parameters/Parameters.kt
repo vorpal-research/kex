@@ -126,7 +126,7 @@ private fun Descriptor.insertMocks(types: TypeFactory, descriptorToMock: Mutable
 
 private fun Descriptor.notMockable(types: TypeFactory): Boolean {
     val klass = (type.getKfgType(types) as? ClassType)?.klass
-    return klass == null || instantiationManager.isInstantiable(klass) || type.isKexRt || this is MockDescriptor
+    return klass == null || instantiationManager.isInstantiable(klass) || type.isKexRt || this !is ObjectDescriptor
 }
 
 private fun Descriptor.replaceWithMock(
