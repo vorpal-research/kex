@@ -15,6 +15,9 @@ import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kthelper.logging.error
+import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.logging.warn
 import kotlin.random.Random
 
 @Serializable
@@ -97,26 +100,63 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
     return Parameters(instance, arguments, filteredStatics, others)
 }
 
+private fun Descriptor.insertMocks(types: TypeFactory, descriptorToMock: MutableMap<Descriptor, MockDescriptor>) {
+    when (this) {
+        is ConstantDescriptor -> {}
+        is ClassDescriptor -> {
+            this.fields.mapValuesTo(this.fields) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
+        }
+
+        is ObjectDescriptor -> {
+            this.fields.mapValuesTo(this.fields) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
+        }
+
+        is MockDescriptor -> {
+            this.fields.mapValuesTo(this.fields) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
+            for ((_, returns) in methodReturns) {
+                returns.mapTo(returns) { value -> value.replaceWithMock(types, descriptorToMock) }
+            }
+        }
+
+        is ArrayDescriptor -> {
+            this.elements.mapValuesTo(this.elements) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
+        }
+    }
+}
+
+private fun Descriptor.notMockable(types: TypeFactory): Boolean {
+    val klass = (type.getKfgType(types) as? ClassType)?.klass
+    return klass == null || instantiationManager.isInstantiable(klass) || type.isKexRt || this is MockDescriptor
+}
+
+private fun Descriptor.replaceWithMock(
+    types: TypeFactory,
+    descriptorToMock: MutableMap<Descriptor, MockDescriptor>
+): Descriptor {
+    val descriptor = this
+    if (descriptorToMock[descriptor] != null) return descriptorToMock[descriptor]!!
+    val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass
+    descriptor.insertMocks(types, descriptorToMock)
+    return if (descriptor.notMockable(types)) {
+        descriptor
+    } else {
+        klass ?: return descriptor.also { log.error { "Got null class to mock." } }
+        val mock = if (descriptor is ObjectDescriptor) {
+            MockDescriptor(klass.methods, descriptor).also { it.fields.putAll(descriptor.fields) }
+        } else {
+            log.warn { "Strange descriptor to mock. Expected ObjectDescriptor. Got: $descriptor" }
+            MockDescriptor(descriptor.term, descriptor.type as KexClass, klass.methods)
+        }
+        descriptorToMock[descriptor] = mock
+        mock
+    }
+}
 
 private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
     types: TypeFactory,
     descriptorToMock: MutableMap<Descriptor, MockDescriptor>
 ): Collection<Descriptor> {
-    return map { descriptor ->
-        if (descriptorToMock[descriptor] != null) return@map descriptorToMock[descriptor]!!
-        val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass
-        if (klass == null || instantiationManager.isInstantiable(klass) || descriptor.type.isKexRt) {
-            descriptor
-        } else {
-            val mock = if (descriptor is ObjectDescriptor) {
-                MockDescriptor(klass.methods, descriptor)
-            } else {
-                MockDescriptor(descriptor.term, descriptor.type as KexClass, klass.methods)
-            }
-            descriptorToMock[descriptor] = mock
-            mock
-        }
-    }
+    return map { it.replaceWithMock(types, descriptorToMock) }
 }
 
 fun Parameters<Descriptor>.generateInitialMocks(

@@ -59,6 +59,7 @@ fun methodCalls(
         .map { clause -> clause.predicate }
         .filter { predicate -> predicate.type.name == "S" }
         .filterIsInstance<CallPredicate>()
+        .filter { predicate -> predicate.hasLhv }
         .map { predicate ->
             val term = predicate.lhv
             val descriptor = termToDescriptor[term]
@@ -100,8 +101,6 @@ suspend fun Method.checkAsync(
         val (withMocks, descriptorToMock) = initialDescriptors.generateInitialMocks(ctx.types)
         val methodCalls = methodCalls(state, termToDescriptor, descriptorToMock)
         setupMocks(methodCalls, termToDescriptor, descriptorToMock)
-
-
 
 
         withMocks

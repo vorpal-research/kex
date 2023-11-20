@@ -373,15 +373,6 @@ open class ActionSequence2JavaPrinter(
     protected open fun printMockSequence(mockSequence: MockSequence): List<String> =
         unreachable { log.error("Mock calls are not supported in AS 2 Java printer") }
 
-    /*
-        = mutableListOf<String>().apply {
-            val mockCalls = mockSequence.mockCalls
-            addAll(printMockNewInstance(mockSequence, mockCalls[0] as MockNewInstance))
-            addAll(mockCalls.subList(1, mockCalls.size).flatMap { printMockCall(mockSequence, it) })
-            addAll(mockSequence.reflectionCalls.flatMap { printReflectionCall(mockSequence, it) })
-        }
-    */
-
 
     protected val Class.javaString: String get() = this.asType.javaString
 

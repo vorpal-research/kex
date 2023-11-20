@@ -9,6 +9,7 @@ import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.runIf
 
 
@@ -258,56 +259,105 @@ class ExecutorAS2JavaPrinter(
         return res
     }
 
-    private fun printDeclarations(
-        owner: ActionSequence,
-        result: MutableList<String>
+    private fun printDeclarations(owner: ActionSequence, result: MutableList<String>) {
+        when (owner) {
+            is ReflectionList -> printReflectionListDeclarations(owner, result)
+            is MockSequence -> printMockSequenceDeclarations(owner, result)
+            else -> {
+                log.warn { "Printing declarations for unsupported action sequence may break test. Unsupported AS: $owner" }
+                owner.printAsJava()
+            }
+        }
+    }
+
+    private fun printMockSequenceDeclarations(owner: MockSequence, result: MutableList<String>) {
+        if (owner.name in printedDeclarations) return
+        printedDeclarations += owner.name
+
+        for (mockCall in owner.mockCalls) {
+            when (mockCall) {
+                is MockNewInstance -> result += printMockNewInstance(owner, mockCall)
+                is MockSetupMethod -> mockCall.returnValues.forEach { printDeclarations(it, result) }
+            }
+        }
+        for (reflectionCall in owner.reflectionCalls) {
+            printReflectionCallDeclarations(reflectionCall, result, owner)
+        }
+    }
+
+    private fun printReflectionListDeclarations(owner: ReflectionList, result: MutableList<String>) {
+        if (owner.name in printedDeclarations) return
+        printedDeclarations += owner.name
+
+        for (api in owner) {
+            printReflectionCallDeclarations(api, result, owner)
+        }
+    }
+
+    private fun printReflectionCallDeclarations(
+        api: ReflectionCall,
+        result: MutableList<String>,
+        owner: ActionSequence
     ) {
-        fun printDeclarations(api: ReflectionCall): Unit = when (api) {
+        when (api) {
             is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
             is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
             is ReflectionSetField -> printDeclarations(api.value, result)
             is ReflectionSetStaticField -> printDeclarations(api.value, result)
             is ReflectionArrayWrite -> printDeclarations(api.value, result)
         }
-
-
-        when (owner) {
-            is ReflectionList -> {
-                if (owner.name in printedDeclarations) return
-                printedDeclarations += owner.name
-
-                for (api in owner) {
-                    printDeclarations(api)
-                }
-            }
-
-            is MockSequence -> {
-                if (owner.name in printedDeclarations) return
-                printedDeclarations += owner.name
-
-                for (mockCall in owner.mockCalls) {
-                    when (mockCall) {
-                        is MockNewInstance -> result += printMockNewInstance(owner, mockCall)
-                        is MockSetupMethod -> mockCall.returnValues.forEach { printDeclarations(it, result) }
-                    }
-                }
-                for (reflectionCall in owner.reflectionCalls) {
-                    printDeclarations(reflectionCall)
-                }
-            }
-
-            else -> {
-                owner.printAsJava()
-            }
-        }
     }
 
 
-    private fun printInsides(
-        owner: ActionSequence,
+    private fun printInsides(owner: ActionSequence, result: MutableList<String>): Unit = when (owner) {
+        is ReflectionList -> printReflectionListInsides(owner, result)
+        is MockSequence -> printMockSequenceInsides(owner, result)
+        else -> {
+            log.warn { "Printing insides for unsupported action sequence may break test. Unsupported AS: $owner" }
+            owner.printAsJava()
+        }
+    }
+
+    private fun printMockSequenceInsides(
+        owner: MockSequence,
         result: MutableList<String>
     ) {
-        fun printInsides(api: ReflectionCall): Unit = when (api) {
+        if (owner.name in printedInsides) return
+        printedInsides += owner.name
+
+        for (mockCall in owner.mockCalls) {
+            when (mockCall) {
+                is MockSetupMethod -> {
+                    mockCall.returnValues.forEach { printInsides(it, result) }
+                    result += printMockSetupMethod(owner, mockCall)
+                }
+
+                is MockNewInstance -> {}
+            }
+        }
+        for (reflectionCall in owner.reflectionCalls) {
+            printReflectionCallInsides(reflectionCall, result, owner)
+        }
+    }
+
+    private fun printReflectionListInsides(
+        owner: ReflectionList,
+        result: MutableList<String>
+    ) {
+        if (owner.name in printedInsides) return
+        printedInsides += owner.name
+
+        for (api in owner) {
+            printReflectionCallInsides(api, result, owner)
+        }
+    }
+
+    private fun printReflectionCallInsides(
+        api: ReflectionCall,
+        result: MutableList<String>,
+        owner: ActionSequence
+    ) {
+        when (api) {
             is ReflectionSetField -> {
                 printInsides(api.value, result)
                 result += printReflectionSetField(owner, api)
@@ -324,38 +374,6 @@ class ExecutorAS2JavaPrinter(
             }
 
             else -> {}
-        }
-
-
-        when (owner) {
-            is ReflectionList -> {
-                if (owner.name in printedInsides) return
-                printedInsides += owner.name
-
-                for (api in owner) {
-                    printInsides(api)
-                }
-            }
-
-            is MockSequence -> {
-                if (owner.name in printedInsides) return
-                printedInsides += owner.name
-
-                for (mockCall in owner.mockCalls) {
-                    when (mockCall) {
-                        is MockSetupMethod -> {
-                            mockCall.returnValues.forEach { printInsides(it, result) }
-                            result += printMockSetupMethod(owner, mockCall)
-                        }
-
-                        is MockNewInstance -> {}
-                    }
-                }
-            }
-
-            else -> {
-                owner.printAsJava()
-            }
         }
     }
 
