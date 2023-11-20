@@ -43,8 +43,13 @@ class TestExecutor(
         TraceCollectorProxy.disableCollector()
         log.debug("Collected state: {}", collector.symbolicState)
         return when {
-            exception != null -> ExceptionResult(convertToDescriptor(exception), collector.symbolicState)
-            else -> SuccessResult(collector.symbolicState)
+            exception != null -> ExceptionResult(
+                convertToDescriptor(exception),
+                collector.instructionTrace,
+                collector.symbolicState
+            )
+
+            else -> SuccessResult(collector.instructionTrace, collector.symbolicState)
         }
     }
 

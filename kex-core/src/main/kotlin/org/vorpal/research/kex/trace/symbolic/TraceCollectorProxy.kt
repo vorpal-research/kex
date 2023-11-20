@@ -8,6 +8,7 @@ import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.serialization.KexSerializer
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.value.NameMapperContext
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import java.nio.file.Path
 
 private class EmptyTraceCollector : InstructionTraceCollector {
@@ -26,6 +27,7 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         override fun plus(other: PathCondition): SymbolicState = this
     }
 
+    override val instructionTrace = emptyList<Instruction>()
     override val symbolicState = EmptyState()
 
     override fun track(value: String, concreteValue: Any?) {}

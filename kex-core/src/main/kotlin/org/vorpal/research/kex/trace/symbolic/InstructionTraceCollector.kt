@@ -1,6 +1,9 @@
 package org.vorpal.research.kex.trace.symbolic
 
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+
 interface InstructionTraceCollector {
+    val instructionTrace: List<Instruction>
     val symbolicState: SymbolicState
 
     fun track(value: String, concreteValue: Any?)
