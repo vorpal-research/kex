@@ -116,8 +116,7 @@ class ContextGuidedSelector(
     }
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
-        executionTree.addTrace(result.trace.toPersistentState())
-//        executionTree.view()
+        executionTree.addTrace(result.symbolicState.toPersistentState())
     }
 
     override fun reverse(pathClause: PathClause): PathClause? = pathClause.reversed()

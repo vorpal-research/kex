@@ -64,7 +64,13 @@ class KexExecutor(args: Array<String>) {
             }
         }
         classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
-        classManager.initialize(*listOfNotNull(*containers.toTypedArray(), getRuntime(), getIntrinsics()).toTypedArray())
+        classManager.initialize(
+            *listOfNotNull(
+                *containers.toTypedArray(),
+                getRuntime(),
+                getIntrinsics()
+            ).toTypedArray()
+        )
     }
 
     @ExperimentalSerializationApi
@@ -105,8 +111,13 @@ class KexExecutor(args: Array<String>) {
             TraceCollectorProxy.disableCollector()
             log.debug("Collected state: {}", collector.symbolicState)
             val result = when {
-                exception != null -> ExceptionResult(convertToDescriptor(exception), collector.symbolicState)
-                else -> SuccessResult(collector.symbolicState)
+                exception != null -> ExceptionResult(
+                    convertToDescriptor(exception),
+                    collector.instructionTrace,
+                    collector.symbolicState
+                )
+
+                else -> SuccessResult(collector.instructionTrace, collector.symbolicState)
             }
             val jsonString = serializer.toJson(result)
             output.toFile().writeText(jsonString)
