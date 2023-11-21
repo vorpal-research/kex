@@ -32,7 +32,21 @@ class KfgClassLoader(
             "class org.vorpal.research.kex.test.concolic.SetConcolicTests",
             "class org.vorpal.research.kex.test.concolic.StringConcolicTests",
             "class org.vorpal.research.kex.test.concolic.TestEnum",
-            "class org.vorpal.research.kex.test.concolic.MockTests",
+
+            "class org.vorpal.research.kex.test.concolic.mock.ToMock",
+            "class org.vorpal.research.kex.test.concolic.mock.MockTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockReturnsMockTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockPrimitivesTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockEnumTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockWithFieldsTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockStaticsTests",
+
+//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$Cont",
+//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$WithStaticInt",
+//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$StaticRecursion",
+//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$RecursionWithStaticField",
+//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$RecursionWithStaticField\$ContStatic",
+
             "class org.vorpal.research.kex.test.debug.ObjectGenerationTests",
         ).mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
         private val EXCLUDES = setOf(

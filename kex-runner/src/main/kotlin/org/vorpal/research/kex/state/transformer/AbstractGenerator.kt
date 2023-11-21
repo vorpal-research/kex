@@ -59,9 +59,9 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     fun generateAll() {
         hashSetOf<Term>().apply {
             addAll(model.assignments.keys)
+            addAll(model.typeMap.keys)
             addAll(model.assignments.values)
             model.arrays.values.forEach { addAll(it.keys) }
-            addAll(model.typeMap.keys)
         }
             .forEach { term -> reanimateTerm(term) }
     }
@@ -91,7 +91,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
         }
         generateThis()
         generateArgs()
-        generateAll()
+//        generateAll()
         return instance to args
     }
 

@@ -100,26 +100,46 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
     return Parameters(instance, arguments, filteredStatics, others)
 }
 
-private fun Descriptor.insertMocks(types: TypeFactory, descriptorToMock: MutableMap<Descriptor, MockDescriptor>) {
+private fun Descriptor.insertMocks(
+    types: TypeFactory,
+    descriptorToMock: MutableMap<Descriptor, MockDescriptor>,
+    visited: MutableSet<Descriptor>
+) {
+    fun <T> insertIntoMap(map: MutableMap<T, Descriptor>) =
+        map.mapValuesTo(map) { (_, value) -> value.replaceWithMock(types, descriptorToMock, visited) }
+
+    if (this in visited) return
+    visited.add(this)
+
     when (this) {
         is ConstantDescriptor -> {}
         is ClassDescriptor -> {
-            this.fields.mapValuesTo(this.fields) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
+            insertIntoMap(this.fields)
+//            this.fields.mapValuesTo(this.fields) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
         }
 
         is ObjectDescriptor -> {
-            this.fields.mapValuesTo(this.fields) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
+            insertIntoMap(this.fields)
+//            this.fields.mapValuesTo(this.fields) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
         }
 
         is MockDescriptor -> {
-            this.fields.mapValuesTo(this.fields) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
+//            insertIntoMap(this.fields)
+            this.fields.mapValuesTo(this.fields) { (_, value) ->
+                value.replaceWithMock(
+                    types,
+                    descriptorToMock,
+                    visited
+                )
+            }
             for ((_, returns) in methodReturns) {
-                returns.mapTo(returns) { value -> value.replaceWithMock(types, descriptorToMock) }
+                returns.mapTo(returns) { value -> value.replaceWithMock(types, descriptorToMock, visited) }
             }
         }
 
         is ArrayDescriptor -> {
-            this.elements.mapValuesTo(this.elements) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
+            insertIntoMap(this.elements)
+//            this.elements.mapValuesTo(this.elements) { (_, value) -> value.replaceWithMock(types, descriptorToMock) }
         }
     }
 }
@@ -131,13 +151,14 @@ private fun Descriptor.notMockable(types: TypeFactory): Boolean {
 
 private fun Descriptor.replaceWithMock(
     types: TypeFactory,
-    descriptorToMock: MutableMap<Descriptor, MockDescriptor>
+    descriptorToMock: MutableMap<Descriptor, MockDescriptor>,
+    visited: MutableSet<Descriptor>
 ): Descriptor {
     val descriptor = this
     if (descriptorToMock[descriptor] != null) return descriptorToMock[descriptor]!!
     val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass
-    descriptor.insertMocks(types, descriptorToMock)
     return if (descriptor.notMockable(types)) {
+        descriptor.insertMocks(types, descriptorToMock, visited)
         descriptor
     } else {
         klass ?: return descriptor.also { log.error { "Got null class to mock." } }
@@ -147,7 +168,9 @@ private fun Descriptor.replaceWithMock(
             log.warn { "Strange descriptor to mock. Expected ObjectDescriptor. Got: $descriptor" }
             MockDescriptor(descriptor.term, descriptor.type as KexClass, klass.methods)
         }
+        visited.add(descriptor)
         descriptorToMock[descriptor] = mock
+        mock.insertMocks(types, descriptorToMock, visited)
         mock
     }
 }
@@ -156,7 +179,8 @@ private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
     types: TypeFactory,
     descriptorToMock: MutableMap<Descriptor, MockDescriptor>
 ): Collection<Descriptor> {
-    return map { it.replaceWithMock(types, descriptorToMock) }
+    val visited = mutableSetOf<Descriptor>()
+    return map { it.replaceWithMock(types, descriptorToMock, visited) }
 }
 
 fun Parameters<Descriptor>.generateInitialMocks(

@@ -1,87 +1,10 @@
-package org.vorpal.research.kex.test.concolic;
+package org.vorpal.research.kex.test.concolic.mock;
 
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics;
 
 
 @SuppressWarnings("ALL")
-public class MockTests {
-    public interface ToMock {
-        int foo();
-
-        String bar();
-
-        ToMock recursion();
-    }
-
-/*
-    public void testMockEasy(ToMock i) {
-        if (i.foo() == 42) {
-            AssertIntrinsics.kexAssert(true);
-        } else {
-            AssertIntrinsics.kexAssert(true);
-        }
-    }
-
-    public void testMockTwo(ToMock i) {
-        if (i.foo() == 42) {
-            if (i.foo() == 25) {
-                AssertIntrinsics.kexAssert(true);
-            } else {
-                AssertIntrinsics.kexAssert(true);
-            }
-        } else {
-            AssertIntrinsics.kexAssert(true);
-        }
-    }
-
-    public void testMockMultipleEasy(ToMock first, ToMock second) {
-        if (first.foo() == 42) {
-            if (second.foo() == 25) {
-                AssertIntrinsics.kexAssert(true);
-            } else {
-                AssertIntrinsics.kexAssert(true);
-            }
-        } else {
-            AssertIntrinsics.kexAssert(true);
-        }
-    }
-
-    public void testMockMultipleHard(ToMock first, ToMock second) {
-        if (first.foo() == 42) {
-            if (second.foo() == 29) {
-                if (first.foo() == second.foo() * 2) {
-                    AssertIntrinsics.kexAssert(true);
-                } else {
-                    AssertIntrinsics.kexAssert(true);
-                }
-            } else {
-                AssertIntrinsics.kexAssert(true);
-            }
-        } else {
-            AssertIntrinsics.kexAssert(true);
-        }
-    }
-
-*/
-/*
-    public void testMockFooBarBoth(ToMock a) {
-        if (a.foo() == 25) {
-            if (a.bar() == "Not again...") {
-                AssertIntrinsics.kexAssert(true);
-            } else {
-                AssertIntrinsics.kexAssert(true);
-            }
-        } else {
-            if (a.bar() == null) {
-                AssertIntrinsics.kexAssert(true);
-            } else {
-                AssertIntrinsics.kexAssert(true);
-            }
-        }
-    }
-*//*
-
-
+public class MockReturnsMockTests {
     public void testMockReturnUnimplemented(ToMock a) {
         ToMock b = a.recursion();
         if (a == b) {
@@ -122,7 +45,9 @@ public class MockTests {
             }
         }
     }
-*/
+
+    /*
+    // Unstable begins
 
     abstract class AbstractToMock {
         ToMock field;
@@ -143,7 +68,6 @@ public class MockTests {
         }
     }
 
-/*
     interface PrimitiveMocking {
         byte bt();
 
@@ -181,27 +105,27 @@ public class MockTests {
         }
 
         if (mock.s() == 50) {
-            ok();
+            AssertIntrinsics.kexAssert(true);
         } else {
-            ok();
+            AssertIntrinsics.kexAssert(true);
         }
 
         if (mock.i() == 60) {
-            ok();
+            AssertIntrinsics.kexAssert(true);
         } else {
-            ok();
+            AssertIntrinsics.kexAssert(true);
         }
 
         if (mock.c() == 200) {
-            ok();
+            AssertIntrinsics.kexAssert(true);
         } else {
-            ok();
+            AssertIntrinsics.kexAssert(true);
         }
 
         if (mock.l() == 1e5) {
-            ok();
+            AssertIntrinsics.kexAssert(true);
         } else {
-            ok();
+            AssertIntrinsics.kexAssert(true);
         }
 
     }
@@ -219,6 +143,7 @@ public class MockTests {
         }
     }
 
+
     public class Impl {
         ToMock field;
     }
@@ -232,14 +157,84 @@ public class MockTests {
         }
     }
 
-
     public void testArrayOfMocks(ToMock[][] array) {
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < 1; i++) {
+            for (int j = 0; j < 1; j++) {
                 AssertIntrinsics.kexAssert(array[i][j].foo() == 10 * i + j);
             }
         }
     }
-*/
 
+    static class WithStaticMock {
+        static ToMock mock;
+    }
+
+    public void testMockStatic() {
+        if (WithStaticMock.mock.foo() == 42) {
+            AssertIntrinsics.kexAssert(true);
+        } else {
+            AssertIntrinsics.kexAssert(true);
+        }
+    }
+
+    public static abstract class WithStaticInt {
+        static int staticInt;
+
+        public abstract int foo();
+    }
+
+    public void testMockHasStaticField() {
+        if (WithStaticInt.staticInt == 42) {
+            AssertIntrinsics.kexAssert(true);
+        } else {
+            AssertIntrinsics.kexAssert(true);
+        }
+    }
+
+    public void testMockHasStaticField(WithStaticInt mock) {
+        if (WithStaticInt.staticInt == 42) {
+            if (mock.foo() == 11) {
+                AssertIntrinsics.kexAssert(true);
+            } else {
+                AssertIntrinsics.kexAssert(true);
+
+            }
+        } else {
+            AssertIntrinsics.kexAssert(true);
+        }
+    }
+
+    static abstract class RecursionWithField {
+        RecursionWithField stRec;
+
+        abstract RecursionWithField fun();
+    }
+
+    public void testMockStaticRecursion(RecursionWithField argMock) {
+        RecursionWithField a = argMock.fun();
+        if (a.fun() == a.stRec) {
+            if (a.stRec.fun() == a) {
+                AssertIntrinsics.kexAssert(true);
+            }
+        }
+    }
+
+    static abstract class RecursionWithStaticField {
+
+        static abstract class ContStatic {
+            static RecursionWithStaticField stRec;
+        }
+
+        abstract RecursionWithStaticField fun();
+    }
+
+    public void testMockStaticFieldRecursion(RecursionWithStaticField argMock) {
+        RecursionWithStaticField a = argMock.fun();
+        if (a.fun() == RecursionWithStaticField.ContStatic.stRec) {
+            if (RecursionWithStaticField.ContStatic.stRec.fun() == a) {
+                AssertIntrinsics.kexAssert(true);
+            }
+        }
+    }
+*/
 }

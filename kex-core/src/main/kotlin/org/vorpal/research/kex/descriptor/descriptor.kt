@@ -20,6 +20,7 @@ import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.joinToString
 import kotlin.random.Random
 
 sealed class Descriptor(term: Term, type: KexType) {
@@ -696,6 +697,21 @@ class MockDescriptor(term: Term, type: KexClass, methods: Collection<Method> = e
         if (this == other) return true
         visited += this
         return allReturns.any { it.contains(other, visited) } || fields.values.any { it.contains(other, visited) }
+    }
+
+    override fun print(map: MutableMap<Descriptor, String>): String {
+        if (this in map) return map[this]!!
+        val base = super.print(map)
+        return base + "\n" + methodReturns.joinToString(separator = "\n") { method, values ->
+            "$method : ${
+                values.joinToString(
+                    separator = ", ",
+                    prefix = "{",
+                    postfix = "}"
+                ) { value -> value.print(map) }
+            }"
+        }
+
     }
 
     override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {

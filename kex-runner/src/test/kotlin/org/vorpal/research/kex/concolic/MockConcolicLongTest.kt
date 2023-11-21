@@ -11,8 +11,34 @@ import kotlin.time.ExperimentalTime
 @InternalSerializationApi
 @DelicateCoroutinesApi
 class MockConcolicLongTest : ConcolicTest("mock-concolic") {
+    val prefix = "org/vorpal/research/kex/test/concolic/mock/"
+
     @Test
     fun mockTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/concolic/MockTests"], 1.0)
+        assertCoverage(cm[prefix + "MockTests"], 1.0)
+    }
+    @Test
+    fun mockReturnsMockTest() {
+        assertCoverage(cm[prefix + "MockReturnsMockTests"], 1.0)
+    }
+
+    @Test
+    fun mockPrimitivesTest() {
+        assertCoverage(cm[prefix + "MockPrimitivesTests"], 1.0)
+    }
+
+    @Test
+    fun mockEnumTest() {
+        assertCoverage(cm[prefix + "MockEnumTests"], 1.0)
+    }
+
+    @Test
+    fun mockWithFieldsTests() {
+        assertCoverage(cm[prefix + "MockWithFieldsTests"], 1.0)
+    }
+
+    @Test
+    fun mockStaticsTests() {
+        assertCoverage(cm[prefix + "MockStaticsTests"], 1.0)
     }
 }
