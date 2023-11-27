@@ -297,11 +297,29 @@ abstract class SymbolicState {
     abstract operator fun plus(other: PathClause): SymbolicState
     abstract operator fun plus(other: ClauseList): SymbolicState
     abstract operator fun plus(other: PathCondition): SymbolicState
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SymbolicState
+
+        if (clauses != other.clauses) return false
+        if (path != other.path) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = clauses.hashCode()
+        result = 31 * result + path.hashCode()
+        return result
+    }
 }
 
 @Serializable
 @SerialName("SymbolicStateImpl")
-internal data class SymbolicStateImpl(
+internal class SymbolicStateImpl(
     override val clauses: ClauseList,
     override val path: PathCondition,
     override val concreteTypes: @Contextual Map<Term, KexType>,
@@ -331,11 +349,21 @@ internal data class SymbolicStateImpl(
     override fun toString(): String {
         return "SymbolicStateImpl(clauses=$clauses, path=$path)"
     }
+
+    fun copy(
+        clauses: ClauseList = this.clauses,
+        path: PathCondition = this.path,
+        concreteTypes: Map<Term, KexType> = this.concreteTypes,
+        concreteValues: Map<Term, Descriptor> = this.concreteValues,
+        termMap: Map<Term, WrappedValue> = this.termMap,
+    ): SymbolicState = SymbolicStateImpl(
+        clauses, path, concreteTypes, concreteValues, termMap
+    )
 }
 
 @Serializable
 @SerialName("PersistentSymbolicState")
-data class PersistentSymbolicState(
+class PersistentSymbolicState(
     override val clauses: PersistentClauseList,
     override val path: PersistentPathCondition,
     override val concreteTypes: @Contextual PersistentMap<Term, KexType>,
@@ -362,6 +390,16 @@ data class PersistentSymbolicState(
     )
     override fun plus(other: PathCondition): PersistentSymbolicState = copy(
         path = path + other,
+    )
+
+    fun copy(
+        clauses: PersistentClauseList = this.clauses,
+        path: PersistentPathCondition = this.path,
+        concreteTypes: PersistentMap<Term, KexType> = this.concreteTypes,
+        concreteValues: PersistentMap<Term, Descriptor> = this.concreteValues,
+        termMap: PersistentMap<Term, WrappedValue> = this.termMap,
+    ): PersistentSymbolicState = PersistentSymbolicState(
+        clauses, path, concreteTypes, concreteValues, termMap
     )
 }
 

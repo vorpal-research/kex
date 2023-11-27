@@ -3,6 +3,7 @@ package org.vorpal.research.kex.asm.analysis.concolic.cgs
 import kotlinx.coroutines.yield
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
+import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelectorManager
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.ktype.kexType
@@ -37,8 +38,17 @@ import org.vorpal.research.kthelper.collection.dequeOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
 
-class ContextGuidedSelector(
+
+class ContextGuidedSelectorManager(
     override val ctx: ExecutionContext,
+    override val targets: Set<Method>
+) : ConcolicPathSelectorManager {
+    override fun createPathSelectorFor(target: Method): ConcolicPathSelector =
+        ContextGuidedSelector(ctx)
+}
+
+class ContextGuidedSelector(
+    override val ctx: ExecutionContext
 ) : ConcolicPathSelector {
     private val executionTree = ExecutionTree(ctx)
     private var currentDepth = 0
