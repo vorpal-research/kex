@@ -10,7 +10,9 @@ import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.util.isSubtypeOfCached
 import org.vorpal.research.kfg.ClassManager
-import org.vorpal.research.kfg.ir.*
+import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.ConcreteClass
+import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.SystemTypeNames
@@ -22,7 +24,7 @@ import kotlin.random.Random
 
 val instantiationManager: ClassInstantiationManager get() = StringClassInstantiationManagerImpl
 
-class NoConcreteInstanceException(val klass: Class) : Exception()
+class NoConcreteInstanceException(val klass: Class) : Exception("No concrete instance for $klass")
 
 interface ClassInstantiationManager {
     fun isDirectlyInstantiable(klass: Class, accessLevel: AccessModifier): Boolean

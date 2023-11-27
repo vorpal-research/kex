@@ -40,6 +40,9 @@ class KfgClassLoader(
             "class org.vorpal.research.kex.test.concolic.mock.MockEnumTests",
             "class org.vorpal.research.kex.test.concolic.mock.MockWithFieldsTests",
             "class org.vorpal.research.kex.test.concolic.mock.MockStaticsTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockCollectionsTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockCollectionsTests\$Container",
+            "class org.vorpal.research.kex.test.concolic.mock.MockCollectionsTests\$NoMock",
 
 //            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$Cont",
 //            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$WithStaticInt",

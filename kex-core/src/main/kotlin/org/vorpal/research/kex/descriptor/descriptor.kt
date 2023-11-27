@@ -637,9 +637,7 @@ class MockDescriptor(term: Term, type: KexClass, methods: Collection<Method> = e
         original.type as KexClass,
         methods
     ) {
-        for ((field, value) in original.fields) {
-            fields[field] = value
-        }
+        fields.putAll(original.fields)
     }
 
     val methodReturns: Map<Method, MutableList<Descriptor>> =

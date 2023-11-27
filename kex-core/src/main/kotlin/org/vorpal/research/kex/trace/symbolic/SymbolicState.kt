@@ -2,12 +2,7 @@
 
 package org.vorpal.research.kex.trace.symbolic
 
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toPersistentList
-import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.collections.immutable.*
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -338,7 +333,7 @@ data class PersistentSymbolicState(
     override val concreteValues: @Contextual PersistentMap<Term, @Contextual Descriptor>,
     override val termMap: @Contextual PersistentMap<Term, @Contextual WrappedValue>,
 ) : SymbolicState() {
-    override fun toString() = clauses.joinToString("\n") { it.predicate.toString() }
+    override fun toString() = clauses.joinToString("\n") { it.predicate.toString() } + "\n${path.lastOrNull()}"
 
     override fun plus(other: SymbolicState): PersistentSymbolicState = PersistentSymbolicState(
         clauses = clauses + other.clauses,
