@@ -28,6 +28,7 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.collection.stackOf
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.toInt
 import org.vorpal.research.kthelper.`try`
 
@@ -328,6 +329,7 @@ class SymbolicTraceBuilder(
             is KexClass -> type
             else -> this
         }
+
         else -> this
     }
 
@@ -1237,6 +1239,7 @@ class SymbolicTraceBuilder(
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
+        log.warn { "\nkfgValue: $kfgValue\ntermValue: $termValue" }
         val descriptorValue = concreteValue.getAsDescriptor()
         val realType = removeMockitoMockSuffix(descriptorValue.type.name)
         log.debug { "decriptorValue type: ${descriptorValue.type.name}, realType: $realType" }
@@ -1246,6 +1249,8 @@ class SymbolicTraceBuilder(
             if (checkedType.isSubtypeOfCached(kfgType)) return@safeCall
         }
         typeChecked[termValue] = kfgType
+//        log.debug { "WOW. concreteValue: $concreteValue\n descriptorValue: $descriptorValue\n kfgType: $kfgType\nrealType: $realType" }
+//        log.debug { "CHECK: kfgType.kexType: ${kfgType.kexType}" }
 
         val predicate = path {
             (termValue `is` kfgType.kexType) equality true
@@ -1271,7 +1276,8 @@ class SymbolicTraceBuilder(
             else -> {
                 val descriptorValue = concreteValue.getAsDescriptor()
                 val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
-                actualKfgType.isSubtypeOfCached(expectedKfgType)
+//                actualKfgType.isSubtypeOfCached(expectedKfgType)
+                actualKfgType.isSubtypeOfCached(expectedKfgType) || actualKfgType.sameButMockito(expectedKfgType)
             }
         }
         if (kfgValue is NullConstant) return@safeCall
@@ -1289,12 +1295,16 @@ class SymbolicTraceBuilder(
         stateBuilder += PathClause(PathClauseType.TYPE_CHECK, instruction, predicate)
     }
 
-    private fun removeMockitoMockSuffix(type: String): String = if (!type.contains("\$MockitoMock")) {
+    fun removeMockitoMockSuffix(type: String): String = if (!type.contains("\$MockitoMock")) {
         type
     } else {
         val suffixIndex = type.indexOf("\$MockitoMock")
         type.removeRange(suffixIndex, type.length)
     }
+
+    fun Type.sameButMockito(
+        expectedKfgType: Type
+    ) = removeMockitoMockSuffix(name) == expectedKfgType.name
 
     override fun addArrayIndexConstraints(
         inst: String,
