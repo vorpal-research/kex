@@ -10,9 +10,9 @@ import kotlinx.coroutines.yield
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorImpl
-import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
-import org.vorpal.research.kex.asm.analysis.concolic.gui.GUIProxySelector
+import org.vorpal.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorManager
+import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelectorManager
+import org.vorpal.research.kex.asm.analysis.concolic.coverage.CoverageGuidedSelectorManager
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.compile.CompilerHelper
@@ -41,34 +41,66 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
+interface TestNameGenerator {
+    fun generateName(method: Method, parameters: Parameters<Descriptor>): String
+}
+
+class TestNameGeneratorImpl : TestNameGenerator {
+    private var testIndex = AtomicInteger(0)
+
+    override fun generateName(method: Method, parameters: Parameters<Descriptor>): String =
+        method.klassName + testIndex.getAndIncrement()
+
+}
+
 @ExperimentalSerializationApi
 @InternalSerializationApi
 class InstructionConcolicChecker(
     val ctx: ExecutionContext,
+    val pathSelector: ConcolicPathSelector,
+    val testNameGenerator: TestNameGenerator,
 ) {
     val cm: ClassManager
         get() = ctx.cm
 
     private val compilerHelper = CompilerHelper(ctx)
 
-    private val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
-    private val guiEnabled = kexConfig.getBooleanValue("gui", "enabled", false)
-
-    private var testIndex = AtomicInteger(0)
-
     companion object {
+
+        private fun buildSelectorManager(
+            ctx: ExecutionContext,
+            targets: Set<Method>,
+            strategyName: String,
+        ): ConcolicPathSelectorManager = when (strategyName) {
+            "bfs" -> BfsPathSelectorManager(ctx, targets)
+            "cgs" -> ContextGuidedSelectorManager(ctx, targets)
+            "coverage" -> CoverageGuidedSelectorManager(ctx, targets)
+            else -> unreachable { log.error("Unknown type of search strategy $strategyName") }
+        }
+
         @ExperimentalTime
         @DelicateCoroutinesApi
         fun run(context: ExecutionContext, targets: Set<Method>) {
             val executors = kexConfig.getIntValue("concolic", "numberOfExecutors", 8)
             val timeLimit = kexConfig.getIntValue("concolic", "timeLimit", 100)
+            val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
 
             val actualNumberOfExecutors = maxOf(1, minOf(executors, targets.size))
             val coroutineContext = newFixedThreadPoolContextWithMDC(actualNumberOfExecutors, "concolic-dispatcher")
+
+            val selectorManager = buildSelectorManager(context, targets, searchStrategy)
+            val testNameGenerator = TestNameGeneratorImpl()
+
             runBlocking(coroutineContext) {
                 withTimeoutOrNull(timeLimit.seconds) {
                     targets.map {
-                        async { InstructionConcolicChecker(context).visit(it) }
+                        async {
+                            InstructionConcolicChecker(
+                                context,
+                                selectorManager.createPathSelectorFor(it),
+                                testNameGenerator
+                            ).visit(it)
+                        }
                     }.awaitAll()
                 }
             }
@@ -101,7 +133,7 @@ class InstructionConcolicChecker(
         collectTrace(method, parameters.asDescriptors)
 
     private suspend fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
-        val generator = UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
+        val generator = UnsafeGenerator(ctx, method, testNameGenerator.generateName(method, parameters))
         generator.generate(parameters)
         val testFile = generator.emit()
 
@@ -123,16 +155,6 @@ class InstructionConcolicChecker(
         null
     }
 
-    private fun buildPathSelector(): ConcolicPathSelector {
-        val pathSelector = when (searchStrategy) {
-            "bfs" -> BfsPathSelectorImpl(ctx)
-            "cgs" -> ContextGuidedSelector(ctx)
-            else -> unreachable { log.error("Unknown type of search strategy $searchStrategy") }
-        }
-
-        return if (guiEnabled) GUIProxySelector(pathSelector) else pathSelector
-    }
-
     private suspend fun handleStartingTrace(
         method: Method,
         pathIterator: ConcolicPathSelector,
@@ -147,17 +169,14 @@ class InstructionConcolicChecker(
     }
 
     private suspend fun processMethod(method: Method) {
-        testIndex = AtomicInteger(0)
-        val pathIterator = buildPathSelector()
-
-        handleStartingTrace(method, pathIterator, getRandomTrace(method))
-        if (pathIterator.isEmpty()) {
-            handleStartingTrace(method, pathIterator, getDefaultTrace(method))
+        handleStartingTrace(method, pathSelector, getRandomTrace(method))
+        if (pathSelector.isEmpty()) {
+            handleStartingTrace(method, pathSelector, getDefaultTrace(method))
         }
         yield()
 
-        while (pathIterator.hasNext()) {
-            val state = pathIterator.next()
+        while (pathSelector.hasNext()) {
+            val state = pathSelector.next()
             log.debug { "Checking state: $state" }
             log.debug { "Path:\n${state.path.asState()}" }
             yield()
@@ -166,7 +185,7 @@ class InstructionConcolicChecker(
             when (newState) {
                 is ExecutionCompletedResult -> when {
                     newState.trace.isEmpty() -> log.warn { "Collected empty state from $state" }
-                    else -> pathIterator.addExecutionTrace(method, newState)
+                    else -> pathSelector.addExecutionTrace(method, newState)
                 }
 
                 else -> log.warn("Failure during execution: $newState")

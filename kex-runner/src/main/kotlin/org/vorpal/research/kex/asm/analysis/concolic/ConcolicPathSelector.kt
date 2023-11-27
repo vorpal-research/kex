@@ -7,6 +7,12 @@ import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kfg.ir.Method
 
+interface ConcolicPathSelectorManager {
+    val ctx: ExecutionContext
+    val targets: Set<Method>
+    fun createPathSelectorFor(target: Method): ConcolicPathSelector
+}
+
 interface ConcolicPathSelector : SuspendableIterator<PersistentSymbolicState> {
     val ctx: ExecutionContext
 

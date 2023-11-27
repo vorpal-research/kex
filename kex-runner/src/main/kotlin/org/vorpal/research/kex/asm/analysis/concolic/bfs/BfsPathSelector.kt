@@ -2,6 +2,7 @@ package org.vorpal.research.kex.asm.analysis.concolic.bfs
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
+import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelectorManager
 import org.vorpal.research.kex.state.predicate.DefaultSwitchPredicate
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.InequalityPredicate
@@ -25,6 +26,13 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.collection.dequeOf
 import org.vorpal.research.kthelper.logging.log
 
+class BfsPathSelectorManager(
+    override val ctx: ExecutionContext,
+    override val targets: Set<Method>
+) : ConcolicPathSelectorManager {
+    override fun createPathSelectorFor(target: Method): ConcolicPathSelector =
+        BfsPathSelectorImpl(ctx)
+}
 
 class BfsPathSelectorImpl(
     override val ctx: ExecutionContext,

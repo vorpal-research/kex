@@ -447,6 +447,7 @@ class SymbolicTraceBuilder(
             for ((value, term) in method.parameterValues.asList.zip(call.params.asList)) {
                 valueMap[value] = term
             }
+            stateBuilder += StateClause(call.call, state { true equality true })
             lastCall = null
         } else {
             if (!traceCollectingEnabled) return@safeCall
@@ -713,9 +714,10 @@ class SymbolicTraceBuilder(
             predicate
         )
 
-        /**
-         * we do not use 'postProcess' here, because actual call predicate may not end up in the final state
-         */
+//        postProcess(instruction, state { true equality true })
+//        /**
+//         * we do not use 'postProcess' here, because actual call predicate may not end up in the final state
+//         */
         traceBuilder += instruction
         updateCatches(instruction)
     }
@@ -1013,8 +1015,10 @@ class SymbolicTraceBuilder(
          * we do not use 'postProcess' here because jump instruction is not converted into any predicate
          */
         previousBlock = instruction.parent
-        traceBuilder += instruction
-        updateCatches(instruction)
+
+        postProcess(instruction, state { true equality true })
+//        traceBuilder += instruction
+//        updateCatches(instruction)
     }
 
     override fun newArray(
@@ -1123,14 +1127,10 @@ class SymbolicTraceBuilder(
             terms[termReceiver] = kfgReceiver.wrapped()
             concreteTypeMap[termReceiver] = concreteValue.getConcreteType(termReceiver.type)
 
-            stateBuilder += StateClause(instruction, predicate)
+            postProcess(instruction, predicate)
+        } else {
+            postProcess(instruction, state { true equality true })
         }
-
-        /**
-         * we do not use 'postProcess' here because return inst is not always converted into predicate
-         */
-        traceBuilder += instruction
-        updateCatches(instruction)
     }
 
     private fun numericValue(value: Any?): Number = when (value) {
@@ -1295,8 +1295,8 @@ class SymbolicTraceBuilder(
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
-        val descriptorValue = concreteValue.getAsDescriptor()
-        val kfgType = descriptorValue.type.getKfgType(ctx.types)
+        val concreteType = concreteValue.getConcreteType(termValue.type)
+        val kfgType = concreteType.getKfgType(ctx.types)
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
             if (checkedType.isSubtypeOfCached(kfgType)) return@safeCall
@@ -1304,7 +1304,7 @@ class SymbolicTraceBuilder(
         typeChecked[termValue] = kfgType
 
         val predicate = path {
-            (termValue `is` descriptorValue.type) equality true
+            (termValue `is` concreteType) equality true
         }
 
         processPath(PathClauseType.OVERLOAD_CHECK, instruction, predicate)
@@ -1323,8 +1323,7 @@ class SymbolicTraceBuilder(
         val comparisonResult = when (concreteValue) {
             null -> false
             else -> {
-                val descriptorValue = concreteValue.getAsDescriptor()
-                val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
+                val actualKfgType = concreteValue.getConcreteType(termValue.type).getKfgType(ctx.types)
                 actualKfgType.isSubtypeOfCached(expectedKfgType)
             }
         }
