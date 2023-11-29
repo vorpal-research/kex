@@ -31,11 +31,12 @@ class BfsPathSelectorManager(
     override val targets: Set<Method>
 ) : ConcolicPathSelectorManager {
     override fun createPathSelectorFor(target: Method): ConcolicPathSelector =
-        BfsPathSelectorImpl(ctx)
+        BfsPathSelectorImpl(ctx, target)
 }
 
 class BfsPathSelectorImpl(
     override val ctx: ExecutionContext,
+    val method: Method
 ) : ConcolicPathSelector {
     private val coveredPaths = mutableSetOf<PersistentPathCondition>()
     private val candidates = mutableSetOf<PersistentPathCondition>()
@@ -51,7 +52,7 @@ class BfsPathSelectorImpl(
         addCandidates(persistentResult)
     }
 
-    override suspend fun next(): PersistentSymbolicState = deque.pollFirst()
+    override suspend fun next(): Pair<Method, PersistentSymbolicState> = method to deque.pollFirst()
 
     override fun reverse(pathClause: PathClause): PathClause? = pathClause.reversed()
 

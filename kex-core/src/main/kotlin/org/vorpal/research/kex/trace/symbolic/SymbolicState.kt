@@ -179,6 +179,8 @@ data class PersistentClauseList(
 
     override fun plus(other: ClauseList): PersistentClauseList = PersistentClauseList(state.addAll(other.state))
     override fun plus(other: Clause): PersistentClauseList = PersistentClauseList(state.add(other))
+
+    fun dropLast(n: Int): PersistentClauseList = subState(0, maxOf(0, size - n))
 }
 
 @Serializable
@@ -268,6 +270,8 @@ data class PersistentPathCondition(
 
     override fun plus(other: PathCondition): PersistentPathCondition = PersistentPathCondition(path.addAll(other.path))
     override fun plus(other: PathClause): PersistentPathCondition = PersistentPathCondition(path.add(other))
+
+    fun dropLast(n: Int): PersistentPathCondition = subPath(0, maxOf(0, size - n))
 }
 
 @Serializable

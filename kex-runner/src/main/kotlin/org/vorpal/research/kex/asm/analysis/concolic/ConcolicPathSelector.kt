@@ -13,7 +13,7 @@ interface ConcolicPathSelectorManager {
     fun createPathSelectorFor(target: Method): ConcolicPathSelector
 }
 
-interface ConcolicPathSelector : SuspendableIterator<PersistentSymbolicState> {
+interface ConcolicPathSelector : SuspendableIterator<Pair<Method, PersistentSymbolicState>> {
     val ctx: ExecutionContext
 
     suspend fun isEmpty(): Boolean
