@@ -2,8 +2,6 @@ package org.vorpal.research.kex.test.javadebug;
 
 import org.vorpal.research.kex.test.concolic.Point;
 
-import java.util.ArrayList;
-
 @SuppressWarnings("ALL")
 public class JavaTest {
     public int foo(Point a, Point b) {
@@ -27,12 +25,12 @@ public class JavaTest {
         return res;
     }
 
-    public int testWrapper(ArrayList<Integer> b) {
-        if (b.get(0) < 0) {
-            throw new IllegalArgumentException();
-        }
-        return b.size();
-    }
+//    public int testWrapper(ArrayList<Integer> b) {
+//        if (b.get(0) < 0) {
+//            throw new IllegalArgumentException();
+//        }
+//        return b.size();
+//    }
 
     public boolean testFoo(boolean b) {
         if (b) {

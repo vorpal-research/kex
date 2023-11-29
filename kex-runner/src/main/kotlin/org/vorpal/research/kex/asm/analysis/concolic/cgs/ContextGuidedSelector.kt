@@ -4,6 +4,7 @@ import kotlinx.coroutines.yield
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
 import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelectorManager
+import org.vorpal.research.kex.asm.analysis.concolic.coverage.ExecutionGraph
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.ktype.kexType
@@ -43,12 +44,16 @@ class ContextGuidedSelectorManager(
     override val ctx: ExecutionContext,
     override val targets: Set<Method>
 ) : ConcolicPathSelectorManager {
+    val graph = ExecutionGraph(ctx)
+
     override fun createPathSelectorFor(target: Method): ConcolicPathSelector =
-        ContextGuidedSelector(ctx)
+        ContextGuidedSelector(ctx, target, graph)
 }
 
 class ContextGuidedSelector(
-    override val ctx: ExecutionContext
+    override val ctx: ExecutionContext,
+    val method: Method,
+    val graph: ExecutionGraph
 ) : ConcolicPathSelector {
     private val executionTree = ExecutionTree(ctx)
     private var currentDepth = 0
@@ -87,7 +92,7 @@ class ContextGuidedSelector(
         false
     }.getOrElse { false }
 
-    override suspend fun next(): PersistentSymbolicState {
+    override suspend fun next(): Pair<Method, PersistentSymbolicState> {
         val currentState = states.pollFirst()!!
         visitedContexts += currentState.context
 
@@ -95,7 +100,7 @@ class ContextGuidedSelector(
         val stateSize = currentStateState.clauses.indexOf(currentState.activeClause)
         val state = currentStateState.clauses.subState(0, stateSize)
 
-        return persistentSymbolicState(
+        return method to persistentSymbolicState(
             state,
             currentState.path + currentState.revertedClause,
             currentStateState.concreteTypes,
@@ -127,6 +132,7 @@ class ContextGuidedSelector(
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
         executionTree.addTrace(result.symbolicState.toPersistentState())
+        graph.addTrace(method, result)
     }
 
     override fun reverse(pathClause: PathClause): PathClause? = pathClause.reversed()
