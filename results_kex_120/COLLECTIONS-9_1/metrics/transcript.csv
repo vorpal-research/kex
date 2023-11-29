@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,COLLECTIONS-9,org.apache.commons.collections4.map.CompositeMap,1,10018,144474,676,44,0,21,0,92,63,68.478264,52,24,46.153847,101,73,72.27723,73,72.27723,28,120,46
- 
- 
- 
-

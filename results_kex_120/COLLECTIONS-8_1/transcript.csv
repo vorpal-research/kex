@@ -1,5 +1,4 @@
 tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,COLLECTIONS-8,org.apache.commons.collections4.functors.ChainedTransformer,1,11738,156555,174,11,0,7,0,20,8,40.0,8,3,37.5,14,5,35.714287,5,35.714287,9,120,13
  
  
  

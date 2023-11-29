@@ -1,5 +1,4 @@
 tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,THREETEN-EXTRA-87,org.threeten.extra.PeriodDuration,1,6603,142688,490,52,0,32,0,123,43,34.95935,78,12,15.384616,82,36,43.90244,36,43.90244,46,120,54
  
  
  

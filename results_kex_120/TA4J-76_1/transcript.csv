@@ -1,5 +1,4 @@
 tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-76,org.ta4j.core.Position,1,13066,173326,794,62,0,40,0,86,29,33.720932,52,16,30.769232,58,22,37.931034,22,37.931034,36,120,64
  
  
  

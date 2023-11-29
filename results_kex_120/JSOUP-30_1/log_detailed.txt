@@ -46,6 +46,168 @@ Creating directory ./temp/testcases
 
  Executing with internal budget of 120 sec and external budget of 240 sec 
 expecting: READY
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                              ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                               ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                 ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                  ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                   ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                    ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                     ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                      ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                       ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                        ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                         ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                          ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                           ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                            ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                             ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                              ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                               ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                                ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                                 ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                                  ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                                   ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                                    ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                                     ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                                      ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                                       ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:34: error: unmappable character for encoding ASCII
+        setField(term193473, term193473.getClass(), "queue", "???????????????????????????");
+                                                                                        ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                              ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                               ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                 ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                  ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                   ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                    ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                     ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                      ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                       ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                        ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                         ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                          ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                           ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                            ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                             ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                              ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                               ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                                ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                                 ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                                  ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                                   ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                                    ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                                     ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                                      ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                                       ^
+/home/kex/temp/testcases/org/jsoup/parser/TokenQueue_consumeToAny_1122534535_throw_java_lang_NullPointerException1.java:37: error: unmappable character for encoding ASCII
+        setField(term193585, term193585.getClass(), "queue", "???????????????????????????");
+                                                                                        ^
 << READY
 
 
@@ -53,8 +215,20 @@ expecting: READY
 >> >>/home/kex/./temp/testcases
 Stopping process...
 Tool subprocess is an instance of java.lang.UNIXProcess
-Tool subprocess Id is 142551
-Killing master process 142551
-Executing command kill -9 142551
-Execution of command kill -9 142551 finished.
+Tool subprocess Id is 38945
+Killing master process 38945
+Executing command kill -9 38945
+Execution of command kill -9 38945 finished.
+Killing child process 38946
+Executing command kill -9 38946
+Execution of command kill -9 38946 finished.
+Killing child process 38948
+Executing command kill -9 38948
+Execution of command kill -9 38948 finished.
+Killing child process 40603
+Executing command kill -9 40603
+Execution of command kill -9 40603 finished.
+Killing child process 40628
+Executing command kill -9 40628
+Execution of command kill -9 40628 finished.
 Process was destroyed

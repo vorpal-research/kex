@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-74,org.ta4j.core.rules.TimeRangeRule,1,9874,161178,454,4,0,4,0,12,5,41.666664,4,0,0.0,5,0,0.0,0,0.0,5,120,6
- 
- 
- 
-

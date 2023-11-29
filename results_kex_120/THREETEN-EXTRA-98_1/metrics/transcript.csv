@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,THREETEN-EXTRA-98,org.threeten.extra.chrono.CopticChronology,1,5626,139580,500,40,0,25,0,24,17,70.83333,4,1,25.0,22,13,59.090908,13,59.090908,9,120,42
- 
- 
- 
-

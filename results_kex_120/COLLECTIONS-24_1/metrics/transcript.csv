@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,COLLECTIONS-24,org.apache.commons.collections4.functors.EqualPredicate,1,11129,158735,244,12,0,4,0,16,13,81.25,6,4,66.66667,10,7,70.0,7,70.0,3,120,14
- 
- 
- 
-

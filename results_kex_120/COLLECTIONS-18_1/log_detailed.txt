@@ -51,15 +51,30 @@ Creating directory ./temp/testcases
 
  Executing with internal budget of 120 sec and external budget of 240 sec 
 expecting: READY
-<< READY
+java.util.concurrent.FutureTask.get(FutureTask.java:205)
+sbst.benchmark.RunTool.token(RunTool.java:180)
+sbst.benchmark.RunTool.execute(RunTool.java:121)
+sbst.benchmark.RunTool.run(RunTool.java:62)
+sbst.benchmark.Main.main(Main.java:160)
+Error: 
+null
 
 
  Execution finished with no timeout
 >> >>/home/kex/./temp/testcases
 Stopping process...
 Tool subprocess is an instance of java.lang.UNIXProcess
-Tool subprocess Id is 139251
-Killing master process 139251
-Executing command kill -9 139251
-Execution of command kill -9 139251 finished.
+Tool subprocess Id is 12389
+Killing master process 12389
+Executing command kill -9 12389
+Execution of command kill -9 12389 finished.
+Killing child process 12390
+Executing command kill -9 12390
+Execution of command kill -9 12390 finished.
+Killing child process 12392
+Executing command kill -9 12392
+Execution of command kill -9 12392 finished.
+Killing child process 13697
+Executing command kill -9 13697
+Execution of command kill -9 13697 finished.
 Process was destroyed

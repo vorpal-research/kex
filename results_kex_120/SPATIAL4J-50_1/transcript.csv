@@ -1,5 +1,4 @@
 tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,SPATIAL4J-50,org.locationtech.spatial4j.shape.impl.BufferedLine,1,3845,134756,578,38,0,21,0,98,21,21.428572,64,11,17.1875,94,20,21.276596,20,21.276596,74,120,40
  
  
  

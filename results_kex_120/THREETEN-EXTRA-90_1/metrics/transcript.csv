@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,THREETEN-EXTRA-90,org.threeten.extra.LocalDateRange,1,7616,144938,597,70,0,38,0,123,85,69.10569,120,43,35.833332,145,108,74.48276,108,74.48276,37,120,72
- 
- 
- 
-

@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,COLLECTIONS-3,org.apache.commons.collections4.iterators.SingletonIterator,1,11642,157803,249,12,0,6,0,21,16,76.190475,14,7,50.0,9,8,88.88889,8,88.88889,1,120,14
- 
- 
- 
-

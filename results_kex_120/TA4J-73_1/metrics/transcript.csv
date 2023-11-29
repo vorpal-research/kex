@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-73,org.ta4j.core.criteria.pnl.GrossProfitCriterion,1,9176,154674,187,8,0,8,0,11,2,18.181818,4,1,25.0,7,1,14.285715,1,14.285715,6,120,10
- 
- 
- 
-

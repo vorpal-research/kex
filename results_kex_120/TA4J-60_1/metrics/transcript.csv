@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-60,org.ta4j.core.utils.BarSeriesUtils,1,10925,156174,215,16,0,15,0,78,6,7.692308,74,4,5.4054055,67,5,7.4626865,5,7.4626865,62,120,18
- 
- 
- 
-

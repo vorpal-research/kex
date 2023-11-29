@@ -46,15 +46,276 @@ Creating directory ./temp/testcases
 
  Executing with internal budget of 120 sec and external budget of 240 sec 
 expecting: READY
-<< READY
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                  ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                   ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                    ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                     ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                      ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                       ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                        ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                         ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                          ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                           ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                            ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                             ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                              ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                               ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                 ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                  ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                   ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                    ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                     ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                      ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                       ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                        ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                         ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                          ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                           ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:33: error: unmappable character for encoding ASCII
+        setField(term318176, term318176.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                            ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                  ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                   ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                    ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                     ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                      ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                       ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                        ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                         ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                          ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                           ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                            ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                             ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                              ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                               ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                 ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                  ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                   ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                    ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                     ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                      ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                       ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                        ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                         ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                          ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                           ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:36: error: unmappable character for encoding ASCII
+        setField(term318389, term318389.getClass(), "lastIcSeq", "???????????????????????????");
+                                                                                            ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                   ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                    ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                     ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                      ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                       ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                        ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                         ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                          ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                           ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                            ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                             ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                              ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                               ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                 ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                  ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                   ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                    ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                     ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                      ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                       ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                        ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                         ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                          ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                           ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                            ^
+/home/kex/temp/testcases/org/jsoup/parser/CharacterReader_containsIgnoreCase_2016817048_throw_java_lang_NullPointerException3.java:46: error: unmappable character for encoding ASCII
+        args[0] = "???????????????????????????";
+                                             ^
+java.util.concurrent.FutureTask.get(FutureTask.java:205)
+sbst.benchmark.RunTool.token(RunTool.java:180)
+sbst.benchmark.RunTool.execute(RunTool.java:121)
+sbst.benchmark.RunTool.run(RunTool.java:62)
+sbst.benchmark.Main.main(Main.java:160)
+Error: 
+null
 
 
  Execution finished with no timeout
 >> >>/home/kex/./temp/testcases
 Stopping process...
 Tool subprocess is an instance of java.lang.UNIXProcess
-Tool subprocess Id is 142867
-Killing master process 142867
-Executing command kill -9 142867
-Execution of command kill -9 142867 finished.
+Tool subprocess Id is 42744
+Killing master process 42744
+Executing command kill -9 42744
+Execution of command kill -9 42744 finished.
+Killing child process 42745
+Executing command kill -9 42745
+Execution of command kill -9 42745 finished.
+Killing child process 42748
+Executing command kill -9 42748
+Execution of command kill -9 42748 finished.
+Killing child process 45525
+Executing command kill -9 45525
+Execution of command kill -9 45525 finished.
+Killing child process 45550
+Executing command kill -9 45550
+Execution of command kill -9 45550 finished.
 Process was destroyed

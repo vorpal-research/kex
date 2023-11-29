@@ -1,5 +1,4 @@
 tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,JSOUP-38,org.jsoup.select.NodeTraversor,1,4478,134830,191,8,0,6,0,77,5,6.4935064,66,2,3.030303,54,2,3.7037036,2,3.7037036,52,120,10
  
  
  

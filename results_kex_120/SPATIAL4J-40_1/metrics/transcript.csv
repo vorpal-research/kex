@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,SPATIAL4J-40,org.locationtech.spatial4j.distance.GeodesicSphereDistCalc,1,4553,134984,343,16,0,18,0,27,2,7.4074073,6,0,0.0,26,0,0.0,0,0.0,26,120,18
- 
- 
- 
-

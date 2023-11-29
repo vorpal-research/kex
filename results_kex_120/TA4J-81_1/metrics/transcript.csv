@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-81,org.ta4j.core.indicators.statistics.SimpleLinearRegressionIndicator,1,14410,177933,195,8,0,9,0,34,3,8.823529,10,1,10.0,21,7,33.333336,7,33.333336,14,120,10
- 
- 
- 
-

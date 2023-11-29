@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,THREETEN-EXTRA-97,org.threeten.extra.scale.TaiInstant,1,4455,135839,458,40,0,15,0,64,48,75.0,24,10,41.666664,52,41,78.84615,41,78.84615,11,120,42
- 
- 
- 
-

@@ -47,8 +47,20 @@ expecting: READY
 >> >>/home/kex/./temp/testcases
 Stopping process...
 Tool subprocess is an instance of java.lang.UNIXProcess
-Tool subprocess Id is 148508
-Killing master process 148508
-Executing command kill -9 148508
-Execution of command kill -9 148508 finished.
+Tool subprocess Id is 102132
+Killing master process 102132
+Executing command kill -9 102132
+Execution of command kill -9 102132 finished.
+Killing child process 102133
+Executing command kill -9 102133
+Execution of command kill -9 102133 finished.
+Killing child process 102135
+Executing command kill -9 102135
+Execution of command kill -9 102135 finished.
+Killing child process 102591
+Executing command kill -9 102591
+Execution of command kill -9 102591 finished.
+Killing child process 102595
+Executing command kill -9 102595
+Execution of command kill -9 102595 finished.
 Process was destroyed

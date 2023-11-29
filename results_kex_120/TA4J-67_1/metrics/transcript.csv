@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-67,org.ta4j.core.indicators.SMAIndicator,1,15398,177248,119,6,0,6,0,10,1,10.0,2,0,0.0,8,1,12.5,1,12.5,7,120,8
- 
- 
- 
-

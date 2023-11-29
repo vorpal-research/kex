@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-63,org.ta4j.core.indicators.LWMAIndicator,1,13570,159993,165,6,0,5,0,17,8,47.058823,4,2,50.0,12,10,83.33333,10,83.33333,2,120,8
- 
- 
- 
-

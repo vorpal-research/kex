@@ -1,5 +1,4 @@
 tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-66,org.ta4j.core.analysis.cost.LinearTransactionCostModel,1,13480,170663,227,10,0,10,0,16,9,56.25,8,2,25.0,8,2,25.0,2,25.0,6,120,12
  
  
  

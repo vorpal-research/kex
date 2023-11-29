@@ -1,5 +1,4 @@
 tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-75,org.ta4j.core.indicators.aroon.AroonDownIndicator,1,9734,158091,441,8,0,8,0,19,1,5.263158,6,0,0.0,12,1,8.333334,1,8.333334,11,120,10
  
  
  

@@ -1,5 +1,4 @@
 tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-64,org.ta4j.core.criteria.NumberOfBreakEvenPositionsCriterion,1,12766,169918,156,10,0,10,0,12,2,16.666668,4,1,25.0,7,1,14.285715,1,14.285715,6,120,12
  
  
  

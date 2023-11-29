@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,SPATIAL4J-52,org.locationtech.spatial4j.io.PolyshapeReader,1,3551,135087,391,12,0,10,0,75,18,24.0,47,6,12.765958,31,12,38.709675,12,38.709675,19,120,14
- 
- 
- 
-
