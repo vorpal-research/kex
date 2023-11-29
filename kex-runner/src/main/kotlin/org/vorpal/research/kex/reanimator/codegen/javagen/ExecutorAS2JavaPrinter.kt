@@ -106,6 +106,7 @@ class ExecutorAS2JavaPrinter(
                 import(it.javaClass)
                 importStatic("org.junit.Assert.assertThrows")
             }
+            importStatic("org.junit.Assert.assertTrue")
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
             importStatic("${equalityUtils.klass.pkg}.${equalityUtils.klass.name}.*")
 
@@ -257,19 +258,19 @@ class ExecutorAS2JavaPrinter(
                 executionFinalInfo.instance?.let { instanceInfo ->
                     val instanceName = if (method.isConstructor) "instance" else actionSequences.instance?.stackName
                     if (!instanceInfo.isConstantValue && instanceName != null) {
-                        +"assert($instanceName.equals(${instanceInfo.stackName}))"
-                        +"${equalityUtils.customEquals.name}(${actionSequences.instance?.stackName}, ${instanceInfo.stackName})"
+                        +"assertTrue($instanceName.equals(${instanceInfo.stackName}))"
+                        +"assertTrue(${equalityUtils.customEquals.name}(${instanceName}, ${instanceInfo.stackName}))"
                     }
                 }
                 for ((i, arg) in actionSequences.arguments.withIndex()) {
                     if (!arg.isConstantValue) {
-                        +"assert(${arg.stackName}.equals(${executionFinalInfo.args[i].stackName}))"
-                        +"${equalityUtils.customEquals.name}(${arg.stackName}, ${executionFinalInfo.args[i].stackName})"
+                        +"assertTrue(${arg.stackName}.equals(${executionFinalInfo.args[i].stackName}))"
+                        +"assertTrue(${equalityUtils.customEquals.name}(${arg.stackName}, ${executionFinalInfo.args[i].stackName}))"
                     }
                 }
                 (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue?.let { retValueInfo ->
-                    +"assert(retValue.equals(${retValueInfo.stackName}))"
-                    +"${equalityUtils.customEquals.name}(retValue, ${retValueInfo.stackName})"
+                    +"assertTrue(retValue.equals(${retValueInfo.stackName}))"
+                    +"assertTrue(${equalityUtils.customEquals.name}(retValue, ${retValueInfo.stackName}))"
                 }
             }
         }

@@ -1,5 +1,9 @@
 package org.vorpal.research.kex.asserter
 
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.parameters.Parameters
+
 sealed class ExecutionFinalInfo<T>(val instance: T?, val args: List<T>) {
     fun isException(): Boolean = this is ExecutionExceptionFinalInfo
 }
@@ -17,5 +21,11 @@ class ExecutionSuccessFinalInfo<T>(instance: T?, args: List<T>, val retValue: T?
 }
 
 // TODO: think about storing descriptors and action sequences
-class ExecutionExceptionFinalInfo<T>(instance: T?, args: List<T>, val exception: T, val javaClass: String):
+class ExecutionExceptionFinalInfo<T>(instance: T?, args: List<T>, val javaClass: String):
         ExecutionFinalInfo<T>(instance, args)
+
+fun Parameters<Descriptor>.extractExceptionFinalInfo(exceptionJavaName: String): ExecutionExceptionFinalInfo<Descriptor> =
+    ExecutionExceptionFinalInfo(instance, arguments, exceptionJavaName)
+
+fun Parameters<Descriptor>.extractSuccessFinalInfo(returnValueDescriptor: Descriptor?) =
+    ExecutionSuccessFinalInfo(instance, arguments, returnValueDescriptor)

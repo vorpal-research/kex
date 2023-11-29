@@ -121,10 +121,10 @@ class InstructionConcolicChecker(
                 val testWithAssertionsGenerator =
                     UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
                 val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
-                val finalInfoActionSequences = finalInfoDescriptors?.let {
-                    executionFinalInfoGenerator.generateFinalInfoActionSequences(it)
-                }
-                testWithAssertionsGenerator.generate(parameters, finalInfoActionSequences)
+                testWithAssertionsGenerator.generate(
+                    parameters,
+                    executionFinalInfoGenerator.generateFinalInfoActionSequences(finalInfoDescriptors)
+                )
                 val testFile2 = testWithAssertionsGenerator.emit()
 
                 compilerHelper.compileFile(testFile2)

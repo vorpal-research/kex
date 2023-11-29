@@ -17,16 +17,10 @@ import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPrecondi
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionChannel
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionProvider
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionReceiver
-import org.vorpal.research.kex.asm.analysis.symbolic.ConditionCheckQuery
-import org.vorpal.research.kex.asm.analysis.symbolic.DefaultCallResolver
-import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicCallResolver
-import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicInvokeDynamicResolver
-import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
-import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicTraverser
-import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
-import org.vorpal.research.kex.asm.analysis.symbolic.UpdateAndReportQuery
+import org.vorpal.research.kex.asm.analysis.symbolic.*
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncremental
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncrementalAndSlice
+import org.vorpal.research.kex.asserter.ExecutionFinalInfo
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -227,9 +221,14 @@ abstract class AbstractCrashReproductionChecker<T>(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<Parameters<Descriptor>?> = checkAndBuildPrecondition(method, state, queries)
+    ): List<ParametersDescription> = checkAndBuildPrecondition(method, state, queries).map { ParametersDescription(it, null) }
 
-    final override fun report(inst: Instruction, parameters: Parameters<Descriptor>, testPostfix: String): Boolean =
+    final override fun report(
+        inst: Instruction,
+        parameters: Parameters<Descriptor>,
+        testPostfix: String,
+        executionFinalInfo: ExecutionFinalInfo<Descriptor>?
+    ): Boolean =
         reportAndProducePrecondition(inst, parameters, testPostfix)
 
     abstract suspend fun checkAndBuildPrecondition(
@@ -290,7 +289,7 @@ class DescriptorCrashReproductionChecker(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<Parameters<Descriptor>?> = method.checkAsyncIncremental(ctx, state, queries)
+    ): List<Parameters<Descriptor>?> = method.checkAsyncIncremental(ctx, state, queries).map { it.initialState }
 
     override fun reportAndProducePrecondition(
         inst: Instruction,

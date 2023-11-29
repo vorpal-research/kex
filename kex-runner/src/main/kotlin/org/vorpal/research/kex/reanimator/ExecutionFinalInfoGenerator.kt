@@ -40,7 +40,7 @@ class ExecutionFinalInfoGenerator(val ctx: ExecutionContext, val method: Method)
                     }
                     val exceptionClassName = exceptionDescriptor.type.javaName
 
-                    ExecutionExceptionFinalInfo(instance, args, executionResult.cause, exceptionClassName)
+                    ExecutionExceptionFinalInfo(instance, args, exceptionClassName)
                 }
                 is SuccessResult -> {
                     val retInst = method.body.bodyBlocks
@@ -60,19 +60,16 @@ class ExecutionFinalInfoGenerator(val ctx: ExecutionContext, val method: Method)
         else -> null
     }
 
-    fun generateFinalInfoActionSequences(executionFinalInfo: ExecutionFinalInfo<Descriptor>) : ExecutionFinalInfo<ActionSequence> {
+    fun generateFinalInfoActionSequences(executionFinalInfo: ExecutionFinalInfo<Descriptor>?) : ExecutionFinalInfo<ActionSequence>? {
+        if (executionFinalInfo == null) return null
         val instance = executionFinalInfo.instance?.let { asGenerator.generate(it) }
         val args = executionFinalInfo.args.map { asGenerator.generate(it) }
         return when(executionFinalInfo) {
             is ExecutionExceptionFinalInfo ->
-                ExecutionExceptionFinalInfo(instance, args, asGenerator.generate(executionFinalInfo.exception), executionFinalInfo.javaClass)
+                ExecutionExceptionFinalInfo(instance, args, executionFinalInfo.javaClass)
             is ExecutionSuccessFinalInfo ->
                 ExecutionSuccessFinalInfo(instance, args, executionFinalInfo.retValue?.let { asGenerator.generate(it) })
         }
     }
-
-    fun Parameters<Descriptor>.extractFinalInfo(): ExecutionFinalInfo<Descriptor> =
-            ExecutionSuccessFinalInfo(instance, arguments, null)
-
 
 }
