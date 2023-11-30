@@ -58,11 +58,6 @@ class GreedyAlgorithm(
             importantTests.add(importantTests.size, maxTest!!)
         }
 
-//        println("Result: ${importantTests}")
-//        println("Initial Coverage: ${String.format("%.2f", requestSet.size.toDouble() / requirements.size.toDouble())}")
-//        println("Coverage: ${String.format("%.2f", satisfiedReq.toDouble() / requirements.size.toDouble())}")
-//        println("Reduced: ${String.format("%.2f", importantTests.size.toDouble() / tests.size.toDouble())}")
-
         val allTests = tests.keys.toList()
         return allTests.subtract(importantTests.toSet()).toList()
     }
