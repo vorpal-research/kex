@@ -57,6 +57,16 @@ class RunnerCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-runner", arg
     }")
     mode.isRequired = false
     options += mode
+
+    val minimization = Option(
+        "mn",
+        "minimization",
+        true,
+        "Choose whether to do minimization on the resulting tests"
+    )
+    minimization.isRequired = false
+    options += minimization
+
     options
 })
 

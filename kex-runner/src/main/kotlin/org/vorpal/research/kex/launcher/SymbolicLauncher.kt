@@ -16,7 +16,8 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexAnalysisLauncher(classPaths, targetName) {
+class SymbolicLauncher(classPaths: List<String>, targetName: String, minimizationFlag: Boolean)
+    : KexAnalysisLauncher(classPaths, targetName) {
 
     override fun prepareClassPath(ctx: ExecutionContext): Pipeline.() -> Unit = {}
 
@@ -27,12 +28,17 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
             is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).mapTo(mutableSetOf()) { it.allMethods }
         }
 
+    private val minimization = minimizationFlag
+
     override fun launch() {
         for (setOfTargets in batchedTargets) {
             InstructionSymbolicChecker.run(context, setOfTargets)
         }
 
-        Minimizer(containers, context.cm, analysisLevel).execute()
+        if (minimization) {
+            Minimizer(containers, context.cm, analysisLevel).execute()
+        }
+
         reportCoverage(containers, context.cm, analysisLevel, "symbolic")
     }
 }

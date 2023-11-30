@@ -19,7 +19,8 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalysisLauncher(classPaths, targetName) {
+class ConcolicLauncher(classPaths: List<String>, targetName: String, minimizationFlag: Boolean)
+    : KexAnalysisLauncher(classPaths, targetName) {
     override fun prepareClassPath(ctx: ExecutionContext): Pipeline.() -> Unit = {
 //        +SymbolicTraceInstrumenter(ctx.cm)
 //        +ClassWriter(ctx, kexConfig.instrumentedCodeDirectory)
@@ -32,6 +33,8 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
             is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).mapTo(mutableSetOf()) { it.allMethods }
         }
 
+    private val minimization = minimizationFlag
+
     override fun launch() {
         ExecutorMasterController.use {
             it.start(context)
@@ -40,7 +43,11 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
                 InstructionConcolicChecker.run(context, setOfTargets)
             }
         }
-//        Minimizer(containers, context.cm, analysisLevel).execute()
+
+        if (minimization) {
+            Minimizer(containers, context.cm, analysisLevel).execute()
+        }
+
         reportCoverage(containers, context.cm, analysisLevel, "concolic")
     }
 }
