@@ -66,9 +66,9 @@ class ExecutionFinalInfoGenerator(val ctx: ExecutionContext, val method: Method)
         val args = executionFinalInfo.args.map { asGenerator.generate(it) }
         return when(executionFinalInfo) {
             is ExecutionExceptionFinalInfo ->
-                ExecutionExceptionFinalInfo(instance, args, executionFinalInfo.javaClass)
+                ExecutionExceptionFinalInfo(instance, args, executionFinalInfo.javaClass).rtUnmapped
             is ExecutionSuccessFinalInfo ->
-                ExecutionSuccessFinalInfo(instance, args, executionFinalInfo.retValue?.let { asGenerator.generate(it) })
+                ExecutionSuccessFinalInfo(instance, args, executionFinalInfo.retValue?.let { asGenerator.generate(it) }).rtUnmapped
         }
     }
 

@@ -2,6 +2,9 @@ package org.vorpal.research.kex.reanimator
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
+import org.vorpal.research.kex.asserter.ExecutionExceptionFinalInfo
+import org.vorpal.research.kex.asserter.ExecutionFinalInfo
+import org.vorpal.research.kex.asserter.ExecutionSuccessFinalInfo
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorRtMapper
 import org.vorpal.research.kex.ktype.KexRtManager
@@ -45,6 +48,19 @@ val Parameters<ActionSequence>.rtUnmapped: Parameters<ActionSequence>
         val args = arguments.map { mapper.map(it) }
         val statics = statics.mapTo(mutableSetOf()) { mapper.map(it) }
         return Parameters(instance, args, statics)
+    }
+
+val ExecutionFinalInfo<ActionSequence>.rtUnmapped: ExecutionFinalInfo<ActionSequence>
+    get() {
+        val mapper = ActionSequenceRtMapper(KexRtManager.Mode.UNMAP)
+        return when (this) {
+            is ExecutionSuccessFinalInfo -> {
+                ExecutionSuccessFinalInfo(instance?.let { mapper.map(it) }, args.map { mapper.map(it) }, retValue?.let { mapper.map(it) })
+            }
+            is ExecutionExceptionFinalInfo -> {
+                ExecutionExceptionFinalInfo(instance?.let { mapper.map(it) }, args.map { mapper.map(it) }, javaClass)
+            }
+        }
     }
 
 class Reanimator(

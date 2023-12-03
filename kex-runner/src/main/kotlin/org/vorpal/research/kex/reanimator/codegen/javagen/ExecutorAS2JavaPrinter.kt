@@ -118,11 +118,14 @@ class ExecutorAS2JavaPrinter(
                                 testParams += field(it.name, type("Object"))
                         }
                     }
-                    actionSequences.arguments
-                        .plus(executionFinalInfo?.args ?: listOf())
-                        .plus(listOfNotNull(executionFinalInfo?.instance))
-                        .plus(listOfNotNull((executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue))
-                        .forEach { descriptor ->
+                    val terms =
+                        if (executionFinalInfo as? ExecutionSuccessFinalInfo != null) actionSequences.arguments
+                            .plus(executionFinalInfo.args)
+                            .plus(listOfNotNull(executionFinalInfo.instance))
+                            .plus(listOfNotNull(executionFinalInfo.retValue))
+                        else actionSequences.arguments
+
+                    terms.forEach { descriptor ->
                         val type = when (descriptor) {
                             is UnknownSequence -> descriptor.type
                             is ActionList -> descriptor.firstNotNullOfOrNull {
@@ -178,9 +181,11 @@ class ExecutorAS2JavaPrinter(
             for (cs in actionSequences.asList)
                 cs.printAsJava()
 
-            executionFinalInfo?.args?.forEach { it.printAsJava() }
-            executionFinalInfo?.instance?.printAsJava()
-            (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue?.printAsJava()
+            if (executionFinalInfo as? ExecutionSuccessFinalInfo != null) {
+                executionFinalInfo.args.forEach { it.printAsJava() }
+                executionFinalInfo.instance?.printAsJava()
+                executionFinalInfo.retValue?.printAsJava()
+            }
 
             if (surroundInTryCatch) statement("} catch (${exceptionClassName ?: "Throwable"} e) {}")
         }
