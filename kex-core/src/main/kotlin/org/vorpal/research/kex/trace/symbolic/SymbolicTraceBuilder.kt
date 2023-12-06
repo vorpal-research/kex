@@ -1276,7 +1276,7 @@ class SymbolicTraceBuilder(
             else -> {
                 val descriptorValue = concreteValue.getAsDescriptor()
                 val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
-//                actualKfgType.isSubtypeOfCached(expectedKfgType)
+                // TODO: fix "...$MockitoMock$..." classes on the terms/descriptors generation
                 actualKfgType.isSubtypeOfCached(expectedKfgType) || actualKfgType.sameButMockito(expectedKfgType)
             }
         }
@@ -1295,16 +1295,14 @@ class SymbolicTraceBuilder(
         stateBuilder += PathClause(PathClauseType.TYPE_CHECK, instruction, predicate)
     }
 
-    fun removeMockitoMockSuffix(type: String): String = if (!type.contains("\$MockitoMock")) {
+    fun removeMockitoMockSuffix(type: String): String = if (!type.contains("\$MockitoMock\$")) {
         type
     } else {
-        val suffixIndex = type.indexOf("\$MockitoMock")
+        val suffixIndex = type.indexOf("\$MockitoMock\$")
         type.removeRange(suffixIndex, type.length)
     }
 
-    fun Type.sameButMockito(
-        expectedKfgType: Type
-    ) = removeMockitoMockSuffix(name) == expectedKfgType.name
+    fun Type.sameButMockito(expectedKfgType: Type) = removeMockitoMockSuffix(name) == expectedKfgType.name
 
     override fun addArrayIndexConstraints(
         inst: String,

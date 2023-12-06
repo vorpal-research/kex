@@ -22,7 +22,7 @@ class KfgClassLoader(
 
     companion object {
         private val INCLUDES = setOf(
-            // TODO: Mock. Config file!
+            // TODO: Mock. Config file! Enough rebuilding all kex
             "class org.vorpal.research.kex.test.concolic.kaf.Lesson2",
             "class org.vorpal.research.kex.test.concolic.kaf.Lesson6",
             "class org.vorpal.research.kex.test.concolic.EnumConcolicTests",
@@ -34,15 +34,19 @@ class KfgClassLoader(
             "class org.vorpal.research.kex.test.concolic.TestEnum",
 
             "class org.vorpal.research.kex.test.concolic.mock.ToMock",
+            "class org.vorpal.research.kex.test.concolic.mock.NoMock",
             "class org.vorpal.research.kex.test.concolic.mock.MockTests",
             "class org.vorpal.research.kex.test.concolic.mock.MockReturnsMockTests",
             "class org.vorpal.research.kex.test.concolic.mock.MockPrimitivesTests",
             "class org.vorpal.research.kex.test.concolic.mock.MockEnumTests",
             "class org.vorpal.research.kex.test.concolic.mock.MockWithFieldsTests",
             "class org.vorpal.research.kex.test.concolic.mock.MockStaticsTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockCollectionsTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockCollectionsTests\$Container",
-            "class org.vorpal.research.kex.test.concolic.mock.MockCollectionsTests\$NoMock",
+            "class org.vorpal.research.kex.test.concolic.mock.MockListTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockListTests\$Container",
+            "class org.vorpal.research.kex.test.concolic.mock.MockSetTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockSetTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockGenericsTests",
+            "class org.vorpal.research.kex.test.concolic.mock.MockGenericsTests\$GenericMock",
 
 //            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$Cont",
 //            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$WithStaticInt",

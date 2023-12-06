@@ -22,6 +22,7 @@ class ExecutorAS2JavaPrinter(
     private val surroundInTryCatch = kexConfig.getBooleanValue("testGen", "surroundInTryCatch", true)
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private val reflectionUtils = ReflectionUtilsPrinter.reflectionUtils(packageName)
+    private val mockUtils = MockUtilsPrinter.mockUtils(packageName)
     private val printedDeclarations = hashSetOf<String>()
     private val printedInsides = hashSetOf<String>()
 
@@ -62,7 +63,7 @@ class ExecutorAS2JavaPrinter(
             import("java.lang.reflect.Constructor")
             import("java.lang.reflect.Field")
             import("java.lang.reflect.Array")
-            import("org.mockito.Mockito") // TODO make configurable
+            import("org.mockito.Mockito") // TODO. Mock: make configurable
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
 
             with(klass) {

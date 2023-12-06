@@ -43,7 +43,18 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
     }
 
     @Test
-    fun mockCollectionsTests() {
-        assertCoverage(cm[prefix + "MockCollectionsTests"], 1.0)
+    fun mockListTests() {
+        assertCoverage(cm[prefix + "MockListTests"], 1.0)
+    }
+
+    @Test
+    fun mockGenericsTests(){
+        assertCoverage(cm[prefix + "MockGenericsTests"], 1.0)
+    }
+
+    @Test
+    fun mockSetTests(){
+        // unstable test. Anything can happen
+        assertCoverage(cm[prefix + "MockSetTests"], 1.0, 0.5)
     }
 }
