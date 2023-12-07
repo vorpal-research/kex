@@ -553,6 +553,8 @@ data object NullDomainValue : NullityAbstractDomainValue {
         is TermDomainValue -> satisfiesInequality(other.nullity)
         else -> unreachable { log.error("$this != $other is unexpected satisfiability check") }
     }
+
+    override fun satisfiesType(type: Type): AbstractDomainValue = DomainStorage.falseDomain
 }
 
 data object NullableDomainValue : NullityAbstractDomainValue {
