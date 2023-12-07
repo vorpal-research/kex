@@ -60,10 +60,10 @@ import kotlin.math.abs
 object ConstantPropagator : Transformer<ConstantPropagator>, IncrementalTransformer {
     private const val epsilon = 1e-5
 
-    infix fun Double.eq(other: Double) = (this - other) < epsilon
-    infix fun Double.neq(other: Double) = (this - other) >= epsilon
-    infix fun Float.eq(other: Float) = (this - other) < epsilon
-    infix fun Float.neq(other: Float) = (this - other) >= epsilon
+    infix fun Double.eq(other: Double) = abs(this - other) < epsilon
+    infix fun Double.neq(other: Double) = abs(this - other) >= epsilon
+    infix fun Float.eq(other: Float) = abs(this - other) < epsilon
+    infix fun Float.neq(other: Float) = abs(this - other) >= epsilon
 
     override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
         return IncrementalPredicateState(
