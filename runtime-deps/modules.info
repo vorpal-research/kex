@@ -3,6 +3,7 @@ java.base/sun.security.util=ALL-UNNAMED
 java.base/sun.reflect.annotation=ALL-UNNAMED
 java.base/java.text=ALL-UNNAMED
 java.base/java.lang.invoke=ALL-UNNAMED
+java.base/java.module.invoke=ALL-UNNAMED
 java.base/jdk.internal.misc=ALL-UNNAMED
 java.base/sun.reflect.generics.repository=ALL-UNNAMED
 java.base/java.io=ALL-UNNAMED

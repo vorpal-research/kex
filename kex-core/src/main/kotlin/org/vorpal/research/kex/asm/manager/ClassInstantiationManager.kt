@@ -284,6 +284,23 @@ class ClassInstantiationDetector(
     override fun cleanup() {}
 
     override fun visit(klass: Class) {
+        /*    Packages to filter
+              TODO: Mock. Config
+
+                "package org.mockito.*",
+                "package net.bytebuddy.*",
+                "package org.objenesis.*"
+        */
+        if (klass.pkg.canonicalName.let {
+                it.startsWith("org.mockito")
+                        || it.startsWith("net.bytebuddy")
+                        || it.startsWith("org.objenesis")
+//                        || it.startsWith("org.vorpal.research.kex.intrinsics")
+                        || it.startsWith("org.junit")
+            }) {
+//            log.debug { "Filtered instantiation of class: $klass" }
+            return
+        }
         if (StringClassInstantiationManagerImpl.isDirectlyInstantiable(klass, baseAccessLevel))
             addInstantiableClass(klass, klass)
         super.visit(klass)

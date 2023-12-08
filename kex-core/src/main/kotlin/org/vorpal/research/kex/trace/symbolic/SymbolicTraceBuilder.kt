@@ -1241,7 +1241,7 @@ class SymbolicTraceBuilder(
         val termValue = mkValue(kfgValue)
         log.warn { "\nkfgValue: $kfgValue\ntermValue: $termValue" }
         val descriptorValue = concreteValue.getAsDescriptor()
-        val realType = removeMockitoMockSuffix(descriptorValue.type.name)
+        val realType = descriptorValue.type.name.removeMockitoMockSuffix()
         log.debug { "decriptorValue type: ${descriptorValue.type.name}, realType: $realType" }
         val kfgType = parseStringToType(cm.type, realType)
         if (termValue in typeChecked) {
@@ -1268,7 +1268,7 @@ class SymbolicTraceBuilder(
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
-        val realType = removeMockitoMockSuffix(type)
+        val realType = type.removeMockitoMockSuffix()
         log.debug { "type: $type\nrealType: $realType" }
         val expectedKfgType = parseStringToType(cm.type, realType)
         val comparisonResult = when (concreteValue) {
@@ -1295,14 +1295,14 @@ class SymbolicTraceBuilder(
         stateBuilder += PathClause(PathClauseType.TYPE_CHECK, instruction, predicate)
     }
 
-    fun removeMockitoMockSuffix(type: String): String = if (!type.contains("\$MockitoMock\$")) {
-        type
+    fun String.removeMockitoMockSuffix(): String = if (!contains("\$MockitoMock\$")) {
+        this
     } else {
-        val suffixIndex = type.indexOf("\$MockitoMock\$")
-        type.removeRange(suffixIndex, type.length)
+        val suffixIndex = indexOf("\$MockitoMock\$")
+        removeRange(suffixIndex, length)
     }
 
-    fun Type.sameButMockito(expectedKfgType: Type) = removeMockitoMockSuffix(name) == expectedKfgType.name
+    fun Type.sameButMockito(expectedKfgType: Type) = name.removeMockitoMockSuffix() == expectedKfgType.name
 
     override fun addArrayIndexConstraints(
         inst: String,
