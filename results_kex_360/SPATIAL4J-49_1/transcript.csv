@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,SPATIAL4J-49,org.locationtech.spatial4j.io.GeoJSONWriter,1,2570,121053,705,243,0,245,0,105,3,2.857143,36,0,0.0,44,0,0.0,0,0.0,44,120,245
+ 
+ 
+ 
+

@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,TA4J-54,org.ta4j.core.indicators.KAMAIndicator,1,3570,121942,592,198,0,200,0,20,0,0.0,4,0,0.0,12,0,0.0,0,0.0,12,120,200
+ 
+ 
+ 
+

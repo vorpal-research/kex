@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,JSOUP-36,org.jsoup.nodes.DocumentType,1,6576,122491,117,171,144,29,0,38,8,21.052631,26,3,11.538462,23,7,30.434782,0,0.0,23,120,173
+ 
+ 
+ 
+

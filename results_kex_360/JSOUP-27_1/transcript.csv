@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,JSOUP-27,org.jsoup.parser.HtmlTreeBuilder,1,4307,241006,209,146,105,43,0,466,72,15.4506445,254,22,8.661418,177,34,19.20904,0,0.0,177,120,148
+ 
+ 
+ 
+

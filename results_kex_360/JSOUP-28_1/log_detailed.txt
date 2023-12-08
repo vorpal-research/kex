@@ -1,0 +1,72 @@
+
+>>> TOOL NAME:  kex
+
+>>> BENCHMARK:  JSOUP-28
+
+>>> RUN NUMBER: 1
+
+>>> MODE: --only-generate-tests
+Creating directory ./temp
+Creating directory ./temp/data
+Creating directory ./temp/testcases
+Executing /home/kex/./runtool
+>> BENCHMARK
+>> /var/benchmarks/projects/jsoup/src/main/java
+>> /var/benchmarks/projects/jsoup/target/classes
+>> 18
+>> /var/benchmarks/projects/jsoup/target/jsoup-1.16.2-SNAPSHOT.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-params-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/gson-2.10.1.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-util-ajax-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-engine-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-server-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-platform-engine-1.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-api-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/apiguardian-api-1.1.2.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/opentest4j-1.2.0.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/javax.servlet-api-3.1.0.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-util-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-http-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-security-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jsr305-3.0.2.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-io-9.4.51.v20230217.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/junit-jupiter-5.9.3.jar
+>> /var/benchmarks/projects/jsoup/target/dependency/jetty-servlet-9.4.51.v20230217.jar
+>> 1
+expecting CLASSPATH or READY
+<< READY
+>> 120
+Deleting file or directory ./temp/testcases
+Creating directory ./temp/testcases
+
+
+### CLASS UNDER TEST ###: org.jsoup.helper.DataUtil
+>> org.jsoup.helper.DataUtil
+
+
+ Executing with internal budget of 120 sec and external budget of 240 sec 
+expecting: READY
+<< READY
+
+
+ Execution finished with no timeout
+>> >>/home/kex/./temp/testcases
+Stopping process...
+Tool subprocess is an instance of java.lang.UNIXProcess
+Tool subprocess Id is 80895
+Killing master process 80895
+Executing command kill -9 80895
+Execution of command kill -9 80895 finished.
+Killing child process 80896
+Executing command kill -9 80896
+Execution of command kill -9 80896 finished.
+Killing child process 80899
+Executing command kill -9 80899
+Execution of command kill -9 80899 finished.
+Killing child process 80970
+Executing command kill -9 80970
+Execution of command kill -9 80970 finished.
+Killing child process 84089
+Executing command kill -9 84089
+Execution of command kill -9 84089 finished.
+Process was destroyed

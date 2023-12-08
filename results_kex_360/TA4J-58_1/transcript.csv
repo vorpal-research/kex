@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,TA4J-58,org.ta4j.core.rules.StopGainRule,1,3686,121352,808,317,0,319,0,24,12,50.0,6,3,50.0,1,0,0.0,0,0.0,1,120,319
+ 
+ 
+ 
+

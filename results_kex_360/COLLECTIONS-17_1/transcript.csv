@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,COLLECTIONS-17,org.apache.commons.collections4.trie.analyzer.StringKeyAnalyzer,1,14557,121095,109,20,1,20,0,40,21,52.499996,34,13,38.235294,56,34,60.714287,0,0.0,56,120,22
+ 
+ 
+ 
+

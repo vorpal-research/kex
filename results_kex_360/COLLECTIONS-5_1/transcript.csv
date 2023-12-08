@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,COLLECTIONS-5,org.apache.commons.collections4.functors.PrototypeFactory,1,13853,121128,49,3,0,5,0,13,2,15.384616,4,1,25.0,4,0,0.0,0,0.0,4,120,5
+ 
+ 
+ 
+

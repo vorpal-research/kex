@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,COLLECTIONS-7,org.apache.commons.collections4.ListUtils,1,7287,146112,375,86,0,77,0,99,27,27.272728,58,20,34.482758,69,34,49.275364,34,49.275364,35,120,88
+ 
+ 
+ 
+

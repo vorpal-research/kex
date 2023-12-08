@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,TA4J-59,org.ta4j.core.criteria.pnl.AverageProfitCriterion,1,3530,121048,450,127,0,129,0,18,4,22.222223,8,0,0.0,10,0,0.0,0,0.0,10,120,129
+ 
+ 
+ 
+

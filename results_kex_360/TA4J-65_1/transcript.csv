@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,TA4J-65,org.ta4j.core.criteria.NumberOfLosingPositionsCriterion,1,3607,121081,649,138,0,140,0,5,2,40.0,2,0,0.0,3,0,0.0,0,0.0,3,120,140
+ 
+ 
+ 
+

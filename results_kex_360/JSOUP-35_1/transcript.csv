@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,JSOUP-35,org.jsoup.safety.Cleaner,1,7051,121119,34,60,59,3,0,41,4,9.756097,16,0,0.0,21,1,4.7619047,0,0.0,21,120,62
+ 
+ 
+ 
+

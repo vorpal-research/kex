@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,SPATIAL4J-41,org.locationtech.spatial4j.io.WKTReader,1,2450,157559,537,172,0,174,0,153,12,7.8431377,68,2,2.9411764,89,0,0.0,0,0.0,89,120,174
+ 
+ 
+ 
+

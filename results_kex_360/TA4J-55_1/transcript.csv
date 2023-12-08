@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,TA4J-55,org.ta4j.core.aggregator.DurationBarAggregator,1,3564,121043,91,15,0,17,0,52,9,17.307693,36,1,2.777778,28,0,0.0,0,0.0,28,120,17
+ 
+ 
+ 
+

@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,TA4J-80,org.ta4j.core.criteria.NumberOfConsecutivePositionsCriterion,1,5498,121056,658,109,0,111,0,22,7,31.818182,16,3,18.75,12,0,0.0,0,0.0,12,120,111
+ 
+ 
+ 
+

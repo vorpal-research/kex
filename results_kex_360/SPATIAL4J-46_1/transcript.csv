@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,SPATIAL4J-46,org.locationtech.spatial4j.SpatialPredicate,1,2314,121040,752,176,0,178,0,31,30,96.77419,8,6,75.0,1,0,0.0,0,0.0,1,120,178
+ 
+ 
+ 
+

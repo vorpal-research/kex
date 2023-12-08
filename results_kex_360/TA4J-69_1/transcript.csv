@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,TA4J-69,org.ta4j.core.Trade,1,3258,157230,1187,557,0,550,0,60,20,33.333336,22,18,81.818184,40,25,62.5,25,62.5,15,120,559
+ 
+ 
+ 
+

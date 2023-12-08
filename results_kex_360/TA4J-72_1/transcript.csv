@@ -1,0 +1,6 @@
+tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
+kex,TA4J-72,org.ta4j.core.indicators.MACDIndicator,1,3330,122464,359,74,0,76,0,11,2,18.181818,2,0,0.0,3,0,0.0,0,0.0,3,120,76
+ 
+ 
+ 
+
