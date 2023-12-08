@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-62,org.ta4j.core.indicators.helpers.LossIndicator,1,3465,121128,520,124,0,126,0,8,0,0.0,4,0,0.0,7,0,0.0,0,0.0,7,120,126
- 
- 
- 
-

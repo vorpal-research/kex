@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,THREETEN-EXTRA-96,org.threeten.extra.chrono.PaxDate,1,3221,168328,114,76,47,14,0,137,61,44.525547,113,28,24.77876,123,55,44.715446,0,0.0,123,120,78
- 
- 
- 
-

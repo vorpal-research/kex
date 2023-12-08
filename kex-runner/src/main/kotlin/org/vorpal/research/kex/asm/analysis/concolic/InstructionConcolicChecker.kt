@@ -128,10 +128,9 @@ class InstructionConcolicChecker(
                 val testFile2 = testWithAssertionsGenerator.emit()
 
                 compilerHelper.compileFile(testFile2)
-                collectTrace(testWithAssertionsGenerator.testKlassName).also { testFile.deleteIfExists() }
-            } else {
-                result
+                testFile.deleteIfExists()
             }
+            result
         } catch (e: Exception) {
             result
         }

@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-57,org.ta4j.core.criteria.helpers.StandardErrorCriterion,1,3587,121046,475,83,0,85,0,11,5,45.454548,2,0,0.0,4,0,0.0,0,0.0,4,120,85
- 
- 
- 
-

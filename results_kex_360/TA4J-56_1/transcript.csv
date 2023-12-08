@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-56,org.ta4j.core.criteria.pnl.NetLossCriterion,1,3587,121040,380,81,0,83,0,11,2,18.181818,4,0,0.0,6,0,0.0,0,0.0,6,120,83
- 
- 
- 
-

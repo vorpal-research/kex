@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-70,org.ta4j.core.indicators.statistics.PearsonCorrelationIndicator,1,3233,121057,208,45,0,47,0,24,0,0.0,4,0,0.0,8,0,0.0,0,0.0,8,120,47
- 
- 
- 
-

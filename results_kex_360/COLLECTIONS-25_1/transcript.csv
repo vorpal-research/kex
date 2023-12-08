@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,COLLECTIONS-25,org.apache.commons.collections4.sequence.EditScript,1,15618,121118,169,33,0,35,0,20,18,90.0,2,1,50.0,1,0,0.0,0,0.0,1,120,35
- 
- 
- 
-

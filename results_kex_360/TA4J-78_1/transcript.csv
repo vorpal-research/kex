@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,TA4J-78,org.ta4j.core.indicators.UlcerIndexIndicator,1,4407,121660,502,128,0,130,0,19,0,0.0,4,0,0.0,10,0,0.0,0,0.0,10,120,130
- 
- 
- 
-

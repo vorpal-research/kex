@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,THREETEN-EXTRA-89,org.threeten.extra.chrono.Symmetry010Chronology,1,2705,121787,205,64,41,22,0,47,21,44.68085,15,2,13.333334,40,16,40.0,0,0.0,40,120,66
- 
- 
- 
-

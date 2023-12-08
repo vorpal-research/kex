@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,THREETEN-EXTRA-91,org.threeten.extra.chrono.DiscordianChronology,1,3018,122282,96,34,15,21,0,48,21,43.75,19,6,31.578945,39,14,35.897438,0,0.0,39,120,36
- 
- 
- 
-

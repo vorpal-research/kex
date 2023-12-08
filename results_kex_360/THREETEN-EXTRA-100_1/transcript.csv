@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,THREETEN-EXTRA-100,org.threeten.extra.chrono.EthiopicEra,1,2693,121040,74,8,3,4,0,8,7,87.5,3,2,66.66667,3,3,100.0,0,0.0,3,120,10
- 
- 
- 
-

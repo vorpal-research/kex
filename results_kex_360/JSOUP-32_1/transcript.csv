@@ -1,6 +1,0 @@
-tool,benchmark,class,run,preparationTime,generationTime,executionTime,testcaseNumber,uncompilableNumber,brokenTests,failTests,linesTotal,linesCovered,linesCoverageRatio,conditionsTotal,conditionsCovered,conditionsCoverageRatio,mutantsTotal,mutantsCovered,mutantsCoverageRatio,mutantsKilled,mutantsKillRatio,mutantsAlive,timeBudget,totalTestClasses
-kex,JSOUP-32,org.jsoup.parser.CharacterReader,1,4563,241010,316,640,508,131,0,355,208,58.59155,274,105,38.321167,196,103,52.551018,0,0.0,196,120,642
- 
- 
- 
-
