@@ -752,7 +752,7 @@ data class ArrayDomainValue(
     }
 
     override fun assign(other: AbstractDomainValue): AbstractDomainValue = when (other) {
-        is NullityAbstractDomainValue -> PtrDomainValue(nullity.assign(other), type)
+        is NullityAbstractDomainValue -> ArrayDomainValue(nullity.assign(other), type, length)
         is PtrDomainValue -> ArrayDomainValue(nullity.assign(other.nullity), type.assign(other.type), length)
         is ArrayDomainValue -> ArrayDomainValue(
             nullity.assign(other.nullity),
