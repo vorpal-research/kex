@@ -4,6 +4,7 @@ import com.jetbrains.rd.util.concurrentMapOf
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
+import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.predicate.DefaultSwitchPredicate
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
@@ -13,25 +14,34 @@ import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.predicate
 import org.vorpal.research.kex.state.term.ConstBoolTerm
 import org.vorpal.research.kex.state.term.InstanceOfTerm
+import org.vorpal.research.kex.state.term.boolValue
 import org.vorpal.research.kex.state.term.numericValue
 import org.vorpal.research.kex.state.transformer.TermCollector
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PathClauseType
-import org.vorpal.research.kex.trace.symbolic.PersistentPathCondition
+import org.vorpal.research.kex.trace.symbolic.PersistentClauseList
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.toPersistentState
+import org.vorpal.research.kex.util.isSubtypeOfCached
+import org.vorpal.research.kex.util.next
+import org.vorpal.research.kfg.arrayIndexOOBClass
+import org.vorpal.research.kfg.classCastClass
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.EmptyUsageContext
 import org.vorpal.research.kfg.ir.value.IntConstant
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
+import org.vorpal.research.kfg.nullptrClass
+import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.graph.GraphView
 import org.vorpal.research.kthelper.graph.PredecessorGraph
@@ -84,7 +94,8 @@ private fun Predicate.reverseSwitchCond(
         val candidates = run {
             val currentRange = branches.keys.map { (it as IntConstant).value }.toMutableSet()
             for (candidate in visitedCandidates) {
-                currentRange.removeAll(equivalencePaths[candidate]!!)
+                val visited: Set<Int> = equivalencePaths[candidate] ?: emptySet()
+                currentRange.removeAll(visited)
             }
             currentRange
         }
@@ -139,14 +150,14 @@ class PathVertex(
     val pathType: PathClauseType,
     instruction: Instruction
 ) : Vertex(pathType.name, instruction) {
-    val states = concurrentMapOf<PersistentPathCondition, MutableSet<PersistentSymbolicState>>()
-    private val visitedPrefixes = Collections.newSetFromMap(concurrentMapOf<PersistentPathCondition, Boolean>())
+    val states = concurrentMapOf<PersistentClauseList, MutableSet<PersistentSymbolicState>>()
+    private val visitedPrefixes = Collections.newSetFromMap(concurrentMapOf<PersistentClauseList, Boolean>())
 
     fun addStateAndProduceCandidates(
         ctx: ExecutionContext,
         state: PersistentSymbolicState
     ): List<PersistentSymbolicState> {
-        val prefix = state.path.dropLast(1)
+        val prefix = state.clauses.dropLast(1)
         val condition = state.path.last()
         val prefixStates = states.getOrPut(prefix, ::mutableSetOf).also {
             it += state
@@ -189,7 +200,14 @@ class PathVertex(
                         try {
                             val lhv = condition.predicate.operands[0] as InstanceOfTerm
                             val termType = lhv.operand.type.getKfgType(ctx.types)
-                            instantiationManager.getAll(termType, ctx.accessLevel, excludeClasses).map {
+                            val allCandidates = instantiationManager.getAll(termType, ctx.accessLevel, excludeClasses)
+                                .filterNot { it.isKexRt }
+                            // TODO: add proper prioritization
+                            val prioritizedCandidates = allCandidates.shuffled(ctx.random).take(5)
+                            prioritizedCandidates.map {
+                                if (it is ArrayType) {
+                                    val a = 10
+                                }
                                 condition.copy(predicate = path(instruction.location) {
                                     (lhv.operand `is` it.kexType) equality true
                                 })
@@ -201,8 +219,8 @@ class PathVertex(
                 }
                 reversedConditions.map {
                     persistentSymbolicState(
-                        state.clauses.dropLast(1),
-                        prefix + it,
+                        prefix,
+                        state.path.dropLast(1) + it,
                         state.concreteTypes,
                         state.concreteValues,
                         state.termMap
@@ -213,14 +231,137 @@ class PathVertex(
     }
 }
 
+private fun PersistentSymbolicState.findExceptionHandlerInst(type: Type): Instruction? {
+    val currentClause = path.last()
+    val stackTrace = listOf(currentClause.instruction) + stackTrace.mapNotNull { it.first }
+    var result: Instruction? = null
+    stackTrace@ for (inst in stackTrace) {
+        for (handler in inst.parent.handlers) {
+            if (type.isSubtypeOfCached(handler.exception)) {
+                result = handler.first()
+                break@stackTrace
+            }
+        }
+    }
+    return result
+}
 
-class ExecutionGraph(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewable {
+class CandidateState(
+    val method: Method,
+    val state: PersistentSymbolicState
+) {
+    val nextInstruction: Instruction?
+
+    init {
+        val cm = method.cm
+        val currentClause = state.path.last()
+        nextInstruction = when (currentClause.type) {
+            PathClauseType.NULL_CHECK -> when (currentClause.predicate.operands[1].boolValue) {
+                true -> state.findExceptionHandlerInst(cm.nullptrClass.asType)
+                false -> currentClause.instruction.next
+            }
+
+            PathClauseType.TYPE_CHECK -> when (currentClause.predicate.operands[1].boolValue) {
+                true -> currentClause.instruction.next
+                false -> state.findExceptionHandlerInst(cm.classCastClass.asType)
+            }
+
+            PathClauseType.BOUNDS_CHECK -> when (currentClause.predicate.operands[1].boolValue) {
+                true -> currentClause.instruction.next
+                false -> state.findExceptionHandlerInst(cm.arrayIndexOOBClass.asType)
+            }
+
+            PathClauseType.OVERLOAD_CHECK -> {
+                val checkedType =
+                    (currentClause.predicate.operands[0] as InstanceOfTerm).checkedType.getKfgType(cm.type)
+                val callInst = currentClause.instruction as CallInst
+                when (checkedType) {
+                    is ClassType -> {
+                        val calledMethod = checkedType.klass.getMethod(
+                            callInst.method.name,
+                            callInst.method.returnType,
+                            *callInst.method.argTypes.toTypedArray()
+                        )
+                        when {
+                            calledMethod.hasBody -> calledMethod.body.entry.first()
+                            else -> callInst.next
+                        }
+                    }
+
+                    else -> callInst.next
+                }
+            }
+
+            PathClauseType.CONDITION_CHECK -> when (val inst = currentClause.instruction) {
+                is BranchInst -> when (currentClause.predicate.operands[1].boolValue) {
+                    true -> inst.trueSuccessor.first()
+                    false -> inst.falseSuccessor.first()
+                }
+
+                is SwitchInst -> {
+                    val numericValue = currentClause.predicate.operands[1].numericValue
+                    var result: Instruction? = null
+                    for ((key, branch) in inst.branches) {
+                        if (numericValue == (key as IntConstant).value) {
+                            result = branch.first()
+                        }
+                    }
+                    if (result == null) {
+                        result = inst.default.first()
+                    }
+                    result
+                }
+
+                is TableSwitchInst -> {
+                    val numericValue = currentClause.predicate.operands[1].numericValue
+                    var result: Instruction? = null
+                    for (key in inst.range) {
+                        if (numericValue == key) {
+                            result = inst.branches[key - inst.range.first].first()
+                        }
+                    }
+                    if (result == null) {
+                        result = inst.default.first()
+                    }
+                    result
+                }
+
+                else -> unreachable { log.error("Unexpected instruction in condition check: $inst") }
+            }
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as CandidateState
+
+        return state == other.state
+    }
+
+    override fun hashCode(): Int {
+        return state.hashCode()
+    }
+}
+
+
+class ExecutionGraph(
+    val ctx: ExecutionContext,
+    val targets: Set<Method>,
+    val isCovered: (Instruction) -> Boolean
+) : PredecessorGraph<Vertex>, Viewable {
+
+    companion object {
+        const val DEFAULT_SCORE = 10_000L
+    }
+
     private val root: Vertex = StateVertex(ctx.cm.instruction.getUnreachable(EmptyUsageContext))
     private val innerNodes = concurrentMapOf<Pair<String, Instruction>, Vertex>().also {
         it["STATE" to root.instruction] = root
     }
 
-    val candidates = concurrentMapOf<PersistentSymbolicState, Method>()
+    val candidates = CandidateSet(ctx)
 
     override val entry: Vertex
         get() = root
@@ -228,12 +369,84 @@ class ExecutionGraph(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, View
     override val nodes: Set<Vertex>
         get() = innerNodes.values.toSet()
 
+    inner class CandidateSet(val ctx: ExecutionContext) : Iterable<CandidateState> {
+        private var isValid = true
+        private var totalScore: Long = 0L
+        private val candidates = Collections.newSetFromMap(concurrentMapOf<CandidateState, Boolean>())
+//        private val queue = PriorityQueue<CandidateState>(compareBy { -it.score() })
+
+        override fun iterator(): Iterator<CandidateState> = candidates.iterator()
+
+        fun isEmpty() = candidates.isEmpty()
+
+        fun addAll(newCandidates: Collection<CandidateState>) {
+            candidates.addAll(newCandidates)
+            newCandidates.forEach { totalScore += it.score() }
+//            queue.addAll(newCandidates)
+        }
+
+        private fun remove(candidateState: CandidateState) {
+            if (candidates.remove(candidateState)) {
+                totalScore -= candidateState.score()
+            }
+        }
+
+        fun invalidate() {
+            isValid = false
+        }
+
+        private fun recomputeScores() {
+            totalScore = 0L
+            candidates.forEach { totalScore += it.score() }
+//            queue.clear()
+//            queue.addAll(candidates)
+            isValid = true
+        }
+
+        fun nextCandidate(): CandidateState {
+            if (!isValid) recomputeScores()
+
+//            return queue.poll()!!.also { remove(it) }
+//
+            val random = ctx.random.nextLong(totalScore)
+            var current = 0L
+            for (state in candidates) {
+                current += state.score()
+                if (random < current) {
+                    remove(state)
+                    return state
+                }
+            }
+            return unreachable { log.error("Unexpected error") }
+        }
+    }
+
+    private fun CandidateState.score(): Long {
+        var score = 1L
+        val stackTrace = this.state.stackTrace
+        if (nextInstruction != null) {
+            score += DEFAULT_SCORE
+            if (nextInstruction.parent.method in targets) {
+                score += DEFAULT_SCORE
+            }
+            if (!isCovered(nextInstruction)) {
+                score += DEFAULT_SCORE
+            }
+//            val distanceToTarget = stackTrace.size - ((stackTrace.withIndex().firstOrNull { it.value.second in targets }?.index ?: 0) + 1)
+//            val distanceToTargetScore = (DEFAULT_SCORE.toDouble() / 2.0.pow(distanceToTarget)).toLong()
+//            score += distanceToTargetScore
+//            if (!isCovered(nextInstruction)) {
+//                score += distanceToTargetScore
+//            }
+        }
+        return score
+    }
+
     fun addTrace(method: Method, executionResult: ExecutionCompletedResult) = synchronized(this) {
         var prevVertex = root
         var clauseIndex = 0
         var pathIndex = 0
         val symbolicState = executionResult.symbolicState.toPersistentState()
-        var totalNewCandidates = 0
         for (clause in symbolicState.clauses) {
             ++clauseIndex
             if (clause is PathClause) ++pathIndex
@@ -243,6 +456,7 @@ class ExecutionGraph(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, View
                 else -> Vertex.STATE
             }
             val currentVertex = innerNodes.getOrPut(type to clause.instruction) {
+                candidates.invalidate()
                 when (clause) {
                     is PathClause -> PathVertex(clause.type, clause.instruction)
                     else -> StateVertex(clause.instruction)
@@ -251,24 +465,21 @@ class ExecutionGraph(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, View
 
             if (clause is PathClause) {
                 currentVertex as PathVertex
-                val newCands = currentVertex.addStateAndProduceCandidates(
-                    ctx, persistentSymbolicState(
-                        symbolicState.clauses.subState(0, clauseIndex),
-                        symbolicState.path.subPath(0, pathIndex),
-                        symbolicState.concreteTypes,
-                        symbolicState.concreteValues,
-                        symbolicState.termMap
-                    )
+                candidates.addAll(
+                    currentVertex.addStateAndProduceCandidates(
+                        ctx, persistentSymbolicState(
+                            symbolicState.clauses.subState(0, clauseIndex),
+                            symbolicState.path.subPath(0, pathIndex),
+                            symbolicState.concreteTypes,
+                            symbolicState.concreteValues,
+                            symbolicState.termMap
+                        )
+                    ).mapTo(mutableSetOf()) { CandidateState(method, it) }
                 )
-                totalNewCandidates += newCands.size
-                candidates += newCands.map { it to method }
             }
 
             prevVertex.linkDown(currentVertex)
             prevVertex = currentVertex
-        }
-        if (totalNewCandidates == 0) {
-            val a= 10
         }
     }
 

@@ -52,6 +52,7 @@ class AsyncChecker(
 ) {
     private val isSlicingEnabled = kexConfig.getBooleanValue("smt", "slicing", false)
     private val logQuery = kexConfig.getBooleanValue("smt", "logQuery", false)
+    private val useADSolver = kexConfig.getBooleanValue("smt", "useADSolver", false)
     private val psa = PredicateStateAnalysis(ctx.cm)
 
     lateinit var state: PredicateState
@@ -158,9 +159,11 @@ class AsyncChecker(
             log.debug("Query size: {}", query.size)
         }
 
-        tryAbstractDomainSolve(ctx, state, query)?.let {
-            log.debug("Constant solver acquired {}", it)
-            return it
+        if (useADSolver) {
+            tryAbstractDomainSolve(ctx, state, query)?.let {
+                log.debug("Constant solver acquired {}", it)
+                return it
+            }
         }
 
         val result = AsyncSMTProxySolver(ctx).use {
