@@ -13,7 +13,7 @@ class CoverageGuidedSelectorManager(
     override val ctx: ExecutionContext,
     override val targets: Set<Method>
 ) : ConcolicPathSelectorManager {
-    val executionGraph = ExecutionGraph(ctx)
+    val executionGraph = ExecutionGraph(ctx, targets) { isCovered(it) }
 
     override fun createPathSelectorFor(target: Method): ConcolicPathSelector =
         CoverageGuidedSelector(this)
@@ -26,6 +26,7 @@ class CoverageGuidedSelectorManager(
     }
 
     fun isCovered(): Boolean = coveredInstructions.containsAll(targetInstructions)
+    fun isCovered(instruction: Instruction): Boolean = instruction in coveredInstructions
 }
 
 class CoverageGuidedSelector(
@@ -40,10 +41,8 @@ class CoverageGuidedSelector(
     override suspend fun hasNext(): Boolean = !isEmpty()
 
     override suspend fun next(): Pair<Method, PersistentSymbolicState> {
-        val candidate = executionGraph.candidates.keys.randomOrNull(ctx.random)!!
-        val method = executionGraph.candidates[candidate]!!
-        executionGraph.candidates.remove(candidate)
-        return method to candidate
+        val candidate = executionGraph.candidates.nextCandidate()
+        return candidate.method to candidate.state
     }
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {

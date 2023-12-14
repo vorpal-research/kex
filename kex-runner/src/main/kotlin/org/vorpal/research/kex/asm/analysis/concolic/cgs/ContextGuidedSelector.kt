@@ -4,7 +4,6 @@ import kotlinx.coroutines.yield
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelector
 import org.vorpal.research.kex.asm.analysis.concolic.ConcolicPathSelectorManager
-import org.vorpal.research.kex.asm.analysis.concolic.coverage.ExecutionGraph
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.ktype.kexType
@@ -44,16 +43,13 @@ class ContextGuidedSelectorManager(
     override val ctx: ExecutionContext,
     override val targets: Set<Method>
 ) : ConcolicPathSelectorManager {
-    val graph = ExecutionGraph(ctx)
-
     override fun createPathSelectorFor(target: Method): ConcolicPathSelector =
-        ContextGuidedSelector(ctx, target, graph)
+        ContextGuidedSelector(ctx, target)
 }
 
 class ContextGuidedSelector(
     override val ctx: ExecutionContext,
-    val method: Method,
-    val graph: ExecutionGraph
+    val method: Method
 ) : ConcolicPathSelector {
     private val executionTree = ExecutionTree(ctx)
     private var currentDepth = 0
@@ -132,7 +128,6 @@ class ContextGuidedSelector(
 
     override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
         executionTree.addTrace(result.symbolicState.toPersistentState())
-        graph.addTrace(method, result)
     }
 
     override fun reverse(pathClause: PathClause): PathClause? = pathClause.reversed()
