@@ -284,7 +284,7 @@ class JavaBuilder(val pkg: String = "") {
     ) : ControlStatement {
 
         override fun print(level: Int) = buildString {
-            appendLine("${level.asOffset} try {")
+            appendLine("${level.asOffset}try {")
             subStatements.forEach {
                 appendLine(it.print(level + 1))
             }

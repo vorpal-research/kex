@@ -115,12 +115,16 @@ class InstructionConcolicChecker(
 
         compilerHelper.compileFile(testFile)
         val result = collectTrace(generator.testKlassName)
+        log.debug(result)
         try {
             if (result is ExecutionCompletedResult) {
                 val executionFinalInfoGenerator = ExecutionFinalInfoGenerator(ctx, method)
                 val testWithAssertionsGenerator =
                     UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
                 val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
+                log.debug("Comparing input parameters and final descriptors:")
+                log.debug(parameters)
+                log.debug(finalInfoDescriptors)
                 testWithAssertionsGenerator.generate(
                     parameters,
                     executionFinalInfoGenerator.generateFinalInfoActionSequences(finalInfoDescriptors)
@@ -132,6 +136,7 @@ class InstructionConcolicChecker(
             }
             result
         } catch (e: Exception) {
+            log.debug(e.stackTrace)
             result
         }
     }

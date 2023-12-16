@@ -16,7 +16,6 @@ import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
@@ -263,22 +262,33 @@ class ExecutorAS2JavaPrinter(
                 executionFinalInfo.instance?.let { instanceInfo ->
                     val instanceName = if (method.isConstructor) "instance" else actionSequences.instance?.stackName
                     if (!instanceInfo.isConstantValue && instanceName != null) {
-                        +"assertTrue($instanceName.equals(${instanceInfo.stackName}))"
+                        if (!isEqualsOverridden(instanceInfo.javaClass)) {
+                            +"assertTrue($instanceName.equals(${instanceInfo.stackName}))"
+                        }
                         +"assertTrue(${equalityUtils.customEquals.name}(${instanceName}, ${instanceInfo.stackName}))"
                     }
                 }
                 for ((i, arg) in actionSequences.arguments.withIndex()) {
                     if (!arg.isConstantValue) {
-                        +"assertTrue(${arg.stackName}.equals(${executionFinalInfo.args[i].stackName}))"
+                        if (!isEqualsOverridden(arg.javaClass)) {
+                            +"assertTrue(${arg.stackName}.equals(${executionFinalInfo.args[i].stackName}))"
+                        }
                         +"assertTrue(${equalityUtils.customEquals.name}(${arg.stackName}, ${executionFinalInfo.args[i].stackName}))"
                     }
                 }
                 (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue?.let { retValueInfo ->
-                    +"assertTrue(retValue.equals(${retValueInfo.stackName}))"
+                    if (!isEqualsOverridden(retValueInfo.javaClass)) {
+                        +"assertTrue(retValue.equals(${retValueInfo.stackName}))"
+                    }
                     +"assertTrue(${equalityUtils.customEquals.name}(retValue, ${retValueInfo.stackName}))"
                 }
             }
         }
+
+    private fun isEqualsOverridden(klass: Class<*>): Boolean {
+        val method = klass.getMethod("equals", Object::class.java)
+        return method.declaringClass == Object::class.java
+    }
 
     override fun printConstructorCall(owner: ActionSequence, call: ConstructorCall): List<String> {
         call.args.forEach { it.printAsJava() }

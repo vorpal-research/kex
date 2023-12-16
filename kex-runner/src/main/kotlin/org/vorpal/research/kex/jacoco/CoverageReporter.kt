@@ -395,6 +395,7 @@ class CoverageReporter(
             if (logProgress) log.debug("Running test $testClassName")
             val jcClass = classLoader.loadClass("org.junit.runner.JUnitCore")
             val jc = jcClass.newInstance()
+            // TODO: addListener via reflection
 //            if (kexConfig.getBooleanValue("testGen", "logJUnit", false)) {
 //                jcClass.getMethod("addListener", classLoader.loadClass("org.junit.runner.notification.RunListener"))
 //                    .invoke(jc, classLoader.loadClass("org.vorpal.research.kex."))

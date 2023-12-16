@@ -209,7 +209,7 @@ public class EqualityUtils {
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
             field.setAccessible(true);
-             try {
+            try {
                 result.put(field.getName(), field.get(obj));
             }
             catch (IllegalAccessException e) {
