@@ -103,7 +103,7 @@ class ExecutorAS2JavaPrinter(
             import("java.lang.reflect.Array")
             exception?.let {
                 import(it.javaClass)
-                importStatic("org.junit.Assert.assertThrows")
+//                importStatic("org.junit.Assert.assertThrows")
             }
             importStatic("org.junit.Assert.assertTrue")
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
@@ -202,7 +202,8 @@ class ExecutorAS2JavaPrinter(
         }
 
         with(current) {
-            exceptions += if (exception != null) "ClassNotFoundException" else "Throwable"
+//            exceptions += if (exception != null) "ClassNotFoundException" else "Throwable"
+            exceptions += "Throwable"
             printTestCall(method, actionSequences, executionFinalInfo, this)
         }
     }
@@ -248,12 +249,17 @@ class ExecutorAS2JavaPrinter(
                 else -> "${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
             }
             if (exceptionClassName != null) {
-                anAssertThrows(
-                    exceptionClassName,
-                    aLambda {
-                        +methodInvocation
-                    }
-                )
+//                anAssertThrows(
+//                    exceptionClassName,
+//                    aLambda {
+//                        +methodInvocation
+//                    }
+//                )
+                aTry {
+                    +methodInvocation
+                }.catch {
+                    exceptions += JavaBuilder.StringType(exceptionClassName)
+                }
             }
             else {
                 +methodInvocation
@@ -276,12 +282,12 @@ class ExecutorAS2JavaPrinter(
                         +"assertTrue(${equalityUtils.customEquals.name}(${arg.stackName}, ${executionFinalInfo.args[i].stackName}))"
                     }
                 }
-                (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue?.let { retValueInfo ->
-                    if (!isEqualsOverridden(retValueInfo.javaClass)) {
-                        +"assertTrue(retValue.equals(${retValueInfo.stackName}))"
-                    }
-                    +"assertTrue(${equalityUtils.customEquals.name}(retValue, ${retValueInfo.stackName}))"
-                }
+//                (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue?.let { retValueInfo ->
+//                    if (!isEqualsOverridden(retValueInfo.javaClass)) {
+//                        +"assertTrue(retValue.equals(${retValueInfo.stackName}))"
+//                    }
+//                    +"assertTrue(${equalityUtils.customEquals.name}(retValue, ${retValueInfo.stackName}))"
+//                }
             }
         }
 

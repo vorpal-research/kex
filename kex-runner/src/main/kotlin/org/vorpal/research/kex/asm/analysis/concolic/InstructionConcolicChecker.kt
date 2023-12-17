@@ -118,13 +118,18 @@ class InstructionConcolicChecker(
         log.debug(result)
         try {
             if (result is ExecutionCompletedResult) {
+//                log.debug("Start printing term map for test ${testFile.fileName}")
+//                result.trace.concreteValues.entries.forEach {
+//                    log.debug("term: ${it.key}")
+//                    log.debug("value: ${it.value}")
+//                }
                 val executionFinalInfoGenerator = ExecutionFinalInfoGenerator(ctx, method)
                 val testWithAssertionsGenerator =
                     UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
                 val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
-                log.debug("Comparing input parameters and final descriptors:")
-                log.debug(parameters)
-                log.debug(finalInfoDescriptors)
+//                log.debug("Comparing input parameters and final descriptors:")
+//                log.debug(parameters)
+//                log.debug(finalInfoDescriptors)
                 testWithAssertionsGenerator.generate(
                     parameters,
                     executionFinalInfoGenerator.generateFinalInfoActionSequences(finalInfoDescriptors)
