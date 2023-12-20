@@ -193,6 +193,8 @@ class SymbolicTraceBuilder(
     private class FrameStack : Iterable<Frame> {
         private val frames = stackOf<Frame>()
 
+        val size: Int get() = frames.size
+
         fun push(element: Frame) = frames.push(element)
         fun pop(): Frame = frames.pop()
         fun peek(): Frame = frames.peek()
@@ -389,7 +391,7 @@ class SymbolicTraceBuilder(
         else -> this
     }
 
-    private fun Value.wrapped(): WrappedValue = WrappedValue(currentMethod, this)
+    private fun Value.wrapped(): WrappedValue = WrappedValue(currentMethod, frames.size - 1, this)
 
     private fun Term.updateInfo(value: Value, concreteType: KexType) {
         terms.getOrPut(this) { value.wrapped() }
