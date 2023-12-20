@@ -22,19 +22,7 @@ class KfgClassLoader(
 
     companion object {
         private val INCLUDES = setOf(
-            "class org.vorpal.research.kex.test.concolic.kaf.Lesson2",
-            "class org.vorpal.research.kex.test.concolic.kaf.Lesson6",
-            "class org.vorpal.research.kex.test.concolic.EnumConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.AssertAndExceptionsTests1",
-            "class org.vorpal.research.kex.test.concolic.AssertAndExceptionsTests2",
-            "class org.vorpal.research.kex.test.concolic.AssertAndExceptionsTests3",
-            "class org.vorpal.research.kex.test.concolic.ListConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.Point",
-            "class org.vorpal.research.kex.test.concolic.PrimitiveConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.SetConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.StringConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.TestEnum",
-            "class org.vorpal.research.kex.test.debug.ObjectGenerationTests",
+            "package org.vorpal.research.kex.test.*",
         ).mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
         private val EXCLUDES = setOf(
             "package java.*",
