@@ -85,6 +85,7 @@ internal class WrappedValueSerializer(
     override val descriptor: SerialDescriptor
         get() = buildClassSerialDescriptor("WrappedValue") {
             element("method", methodSerializer.descriptor)
+            element<Int>("depth")
             element<String>("name")
         }
 
@@ -106,23 +107,26 @@ internal class WrappedValueSerializer(
 
             else -> "${value.value.name}"
         }
-        output.encodeStringElement(descriptor, 1, encodedString)
+        output.encodeIntElement(descriptor, 1, value.depth)
+        output.encodeStringElement(descriptor, 2, encodedString)
         output.endStructure(descriptor)
     }
 
     override fun deserialize(decoder: Decoder): WrappedValue {
         val input = decoder.beginStructure(descriptor)
         lateinit var method: Method
+        var depth = 0
         lateinit var name: String
         loop@ while (true) {
             when (val i = input.decodeElementIndex(descriptor)) {
                 CompositeDecoder.DECODE_DONE -> break@loop
                 0 -> method = input.decodeSerializableElement(descriptor, i, methodSerializer)
-                1 -> name = input.decodeStringElement(descriptor, i)
+                1 -> depth = input.decodeIntElement(descriptor, i)
+                2 -> name = input.decodeStringElement(descriptor, i)
                 else -> throw SerializationException("Unknown index $i")
             }
         }
         input.endStructure(descriptor)
-        return WrappedValue(method, ctx.getMapper(method).parseValue(name))
+        return WrappedValue(method, depth, ctx.getMapper(method).parseValue(name))
     }
 }
