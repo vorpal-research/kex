@@ -130,8 +130,6 @@ class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewa
     fun getBranches(depth: Int): Set<PathVertex> = getBranchDepths().filter { it.value == depth }.keys
 
     fun addTrace(symbolicState: PersistentSymbolicState) {
-        // mark_6: this method runs through clauses and for each clause (instruction + predicate) puts in tree vertex
-        // if it does not exist
         var prevVertex = root
         var pathClauses = 1
         for (current in symbolicState.clauses) {
@@ -145,8 +143,6 @@ class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewa
                 }
             }
             if (currentVertex is PathVertex) {
-                // all paths predicates in subPath have defined value -> if we encounter the same subPath we will get
-                // the same state
                 currentVertex[symbolicState.path.subPath(0, pathClauses++)] = symbolicState
             }
 

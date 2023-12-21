@@ -339,8 +339,6 @@ open class ActionSequence2KotlinPrinter(
             is StringValue -> listOf<String>().also {
                 asConstant
             }
-
-            is AssertActionSequence -> listOf(this.print())
         }
         with(current) {
             for (statement in statements)

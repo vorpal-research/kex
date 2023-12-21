@@ -2,6 +2,7 @@ package org.vorpal.research.kex.equtils
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
+import org.junit.AfterClass
 import org.junit.Test
 import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.compile.CompilerHelper
@@ -12,11 +13,24 @@ import org.vorpal.research.kex.util.compiledCodeDirectory
 import java.lang.reflect.Method
 import java.net.URLClassLoader
 import kotlin.io.path.Path
+import kotlin.io.path.deleteIfExists
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
 class EqualityUtilsTest: KexRunnerTest("equality-utils") {
+
+    companion object {
+        @AfterClass
+        @JvmStatic fun cleanup() {
+            val generatedFilePath = Path(
+                System.getProperty("user.dir"),
+                "src/test/kotlin/org/vorpal/research/kex/equtils/EqualityUtils.java"
+            )
+            generatedFilePath.deleteIfExists()
+        }
+    }
 
     @BeforeTest
     fun setup() {

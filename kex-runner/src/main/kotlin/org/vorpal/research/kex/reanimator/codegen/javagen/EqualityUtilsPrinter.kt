@@ -3,7 +3,6 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.asmString
-import org.vorpal.research.kex.util.getJvmVersion
 import org.vorpal.research.kex.util.kapitalize
 import org.vorpal.research.kex.util.testcaseDirectory
 import java.nio.file.Path
@@ -18,7 +17,7 @@ class EqualityUtilsPrinter(
     val equalsObject: JavaBuilder.JavaFunction
     val equalsAll: JavaBuilder.JavaFunction
     val getAllFields: JavaBuilder.JavaFunction
-    val customEquals: JavaBuilder.JavaFunction
+    val recursiveEquals: JavaBuilder.JavaFunction
 
     companion object {
         const val EQUALITY_UTILS_CLASS = "EqualityUtils"
@@ -154,7 +153,7 @@ class EqualityUtilsPrinter(
                     +"return result"
                 }
 
-                customEquals = method("customEquals") {
+                recursiveEquals = method("recursiveEquals") {
                     arguments += arg("t1", type("Object"))
                     arguments += arg("t2", type("Object"))
                     returnType = type("boolean")

@@ -370,8 +370,6 @@ open class ActionSequence2JavaPrinter(
             is StringValue -> listOf<String>().also {
                 asConstant
             }
-
-            is AssertActionSequence -> listOf(this.print())
         }
         with(current) {
             for (statement in statements)

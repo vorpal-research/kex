@@ -107,7 +107,6 @@ class JavaBuilder(val pkg: String = "") {
         fun aLambda(body: LambdaStatement.() -> Unit): LambdaStatement {
             val lambdaStatement = LambdaStatement()
             lambdaStatement.body()
-            // TODO: think about adding in subStatements
             return lambdaStatement
         }
 

@@ -18,19 +18,6 @@ import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.wheels.mapToArray
 
-class AssertActionSequence(val descriptor1: Descriptor, val descriptor2: Descriptor) : ActionSequence("assert") {
-    override fun print(): String = "assert(${descriptor1.term.name} == ${descriptor2.term.name})"
-
-    override fun print(builder: StringBuilder, visited: MutableSet<ActionSequence>) {
-        if (this in visited) return
-        visited += this
-        builder.appendLine(print())
-    }
-
-    override fun clone(): ActionSequence = this
-
-}
-
 sealed class ActionSequence(val name: String) {
     open val isConstantValue: Boolean get() = false
 
@@ -491,7 +478,6 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
     private val cache = mutableMapOf<ActionSequence, ActionSequence>()
 
     fun map(ct: ActionSequence): ActionSequence = when (ct) {
-        is AssertActionSequence -> ct
         is PrimaryValue<*> -> ct
         is StringValue -> ct
         is UnknownSequence -> {

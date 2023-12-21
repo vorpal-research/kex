@@ -58,7 +58,6 @@ suspend fun Method.checkAsync(
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
-    // mark_8: the result is the SAT model that finds the solution for the list of clauses (clauses + query)
     val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
     if (result !is Result.SatResult) {
         return null

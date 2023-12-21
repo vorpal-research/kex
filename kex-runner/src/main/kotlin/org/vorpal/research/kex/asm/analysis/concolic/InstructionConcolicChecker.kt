@@ -85,8 +85,6 @@ class InstructionConcolicChecker(
     }
 
     private suspend fun getDefaultTrace(method: Method): ExecutionResult? = try {
-        // mark_4: instead of random generation, it uses some predefined values - false for booleans, 0 for numerical
-        // values, etc.
         val params = generateDefaultParameters(ctx.loader, method)
         params?.let { collectTraceFromAny(method, it) }
     } catch (e: Throwable) {
@@ -96,7 +94,6 @@ class InstructionConcolicChecker(
 
     private suspend fun getRandomTrace(method: Method): ExecutionResult? = try {
         val params = ctx.random.generateParameters(ctx.loader, method)
-        // mark_2: generation of random parameters for method
         params?.let { collectTraceFromAny(method, it) }
     } catch (e: Throwable) {
         log.warn("Error while collecting random trace:", e)
@@ -107,29 +104,18 @@ class InstructionConcolicChecker(
         collectTrace(method, parameters.asDescriptors)
 
     private suspend fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
-        // mark_3: (?) as far as I understood generator transform parameters and method to code that can be
-        // executed using symbolic execution and runs it, collecting trace
         val generator = UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
         generator.generate(parameters)
         val testFile = generator.emit()
 
         compilerHelper.compileFile(testFile)
         val result = collectTrace(generator.testKlassName)
-        log.debug(result)
         try {
             if (result is ExecutionCompletedResult) {
-//                log.debug("Start printing term map for test ${testFile.fileName}")
-//                result.trace.concreteValues.entries.forEach {
-//                    log.debug("term: ${it.key}")
-//                    log.debug("value: ${it.value}")
-//                }
                 val executionFinalInfoGenerator = ExecutionFinalInfoGenerator(ctx, method)
                 val testWithAssertionsGenerator =
                     UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
                 val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
-//                log.debug("Comparing input parameters and final descriptors:")
-//                log.debug(parameters)
-//                log.debug(finalInfoDescriptors)
                 testWithAssertionsGenerator.generate(
                     parameters,
                     executionFinalInfoGenerator.generateFinalInfoActionSequences(finalInfoDescriptors)
@@ -141,13 +127,13 @@ class InstructionConcolicChecker(
             }
             result
         } catch (e: Exception) {
+            log.debug("Tests with assertion generation failed with exception:")
             log.debug(e.stackTrace)
             result
         }
     }
 
     private suspend fun collectTrace(klassName: String): ExecutionResult {
-        // mark_9: this method is executing test, but it only sends it to someone else. Who really executes it?
         val runner = SymbolicExternalTracingRunner(ctx)
         return runner.run(klassName, ExecutorTestCasePrinter.SETUP_METHOD, ExecutorTestCasePrinter.TEST_METHOD)
     }
@@ -184,9 +170,7 @@ class InstructionConcolicChecker(
         }
     }
 
-    // mark_1: start of the process
     private suspend fun processMethod(method: Method) {
-        //testIndex = AtomicInteger(0)
         val pathIterator = buildPathSelector()
 
         handleStartingTrace(method, pathIterator, getRandomTrace(method))
@@ -195,8 +179,6 @@ class InstructionConcolicChecker(
         }
         yield()
 
-        // mark_5: in getTrace methods addExecutionTrace was called. This method runs through a log of execution and
-        // adds vertex for each state predicate and edges for each path predicate. See the next mark for more info
         while (pathIterator.hasNext()) {
             val state = pathIterator.next()
             log.debug { "Checking state: $state" }

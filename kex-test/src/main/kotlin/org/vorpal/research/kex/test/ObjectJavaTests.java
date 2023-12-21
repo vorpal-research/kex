@@ -16,6 +16,19 @@ public class ObjectJavaTests {
             this.y = y;
             this.z = z;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj.getClass() != PointJava.class) {
+                return false;
+            }
+            return ((PointJava) obj).x == x;
+        }
+
+        @Override
+        public int hashCode() {
+            return x;
+        }
     }
     public static class LineJava {
         PointJava start;
