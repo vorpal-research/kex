@@ -46,11 +46,11 @@ class EqualityUtilsTest: KexRunnerTest("equality-utils") {
         // TODO: null value not restored
     }
 
-    private fun customEquals(t1: Any?, t2: Any?): Boolean {
+    private fun recursiveEquals(t1: Any?, t2: Any?): Boolean {
         val urlClassLoader = URLClassLoader(arrayOf(kexConfig.compiledCodeDirectory.toUri().toURL()))
         val klass = urlClassLoader.loadClass("org.vorpal.research.kex.equtils.EqualityUtils")
         val argTypes = Array(2) { Class.forName("java.lang.Object") }
-        val method: Method = klass.getDeclaredMethod("customEquals", *argTypes)
+        val method: Method = klass.getDeclaredMethod("recursiveEquals", *argTypes)
         method.isAccessible = true
         val args = arrayOf(t1, t2)
         return method.invoke(null, *args) as Boolean
@@ -58,18 +58,18 @@ class EqualityUtilsTest: KexRunnerTest("equality-utils") {
 
     @Test
     fun constCompare() {
-        assert(customEquals(17, 17))
-        assert(!customEquals(17, 13))
+        assert(recursiveEquals(17, 17))
+        assert(!recursiveEquals(17, 13))
         val i1 = 10
         val i2 = 10
         val i3 = 13
-        assert(customEquals(i1, i2))
-        assert(!customEquals(i1, i3))
+        assert(recursiveEquals(i1, i2))
+        assert(!recursiveEquals(i1, i3))
         val s1 = "I am string!"
         val s2 = "I am string!"
         val s3 = "I am also string!"
-        assert(customEquals(s1, s2))
-        assert(!customEquals(s1, s3))
+        assert(recursiveEquals(s1, s2))
+        assert(!recursiveEquals(s1, s3))
     }
 
 
@@ -93,9 +93,9 @@ class EqualityUtilsTest: KexRunnerTest("equality-utils") {
 
     @Test
     fun testDifferentClasses() {
-        assert(!customEquals(SimpleClassWithData(), SimpleSimilarClassWithData()))
-        assert(!customEquals(SimpleClassWithData(), SimpleClassWithDataAccessor()))
-        assert(customEquals(SimpleClassSecondAccessor(), SimpleClassSecondAccessor()))
+        assert(!recursiveEquals(SimpleClassWithData(), SimpleSimilarClassWithData()))
+        assert(!recursiveEquals(SimpleClassWithData(), SimpleClassWithDataAccessor()))
+        assert(recursiveEquals(SimpleClassSecondAccessor(), SimpleClassSecondAccessor()))
     }
 
 
@@ -130,10 +130,10 @@ class EqualityUtilsTest: KexRunnerTest("equality-utils") {
     @Test
     fun nullTest() {
         val t1 = ClassWithRefToThemselves()
-        assert(customEquals(null, null))
-        assert(!customEquals(null, t1))
+        assert(recursiveEquals(null, null))
+        assert(!recursiveEquals(null, t1))
         val t2 = ClassWithRefToThemselves(t1)
-        assert(!customEquals(t1, t2))
+        assert(!recursiveEquals(t1, t2))
     }
 
     @Test
@@ -143,10 +143,10 @@ class EqualityUtilsTest: KexRunnerTest("equality-utils") {
         val t21 = ClassWithRefToThemselves()
         val t22 = ClassWithRefToThemselves(t21)
         t21.ref1 = t22
-        assert(!customEquals(t11, t21))
+        assert(!recursiveEquals(t11, t21))
         val t12 = ClassWithRefToThemselves(t11)
         t11.ref1 = t12
-        assert(customEquals(t11, t21))
+        assert(recursiveEquals(t11, t21))
     }
 
     @Test
@@ -154,7 +154,7 @@ class EqualityUtilsTest: KexRunnerTest("equality-utils") {
         val t1 = ClassWithRefToThemselves()
         val t2 = ClassWithRefToThemselves(t1)
         t1.ref1 = t2
-        assert(customEquals(t1, t2))
+        assert(recursiveEquals(t1, t2))
         val t3 = ClassWithRefToThemselves()
         t1.ref1 = t2
         t1.ref2 = t3
@@ -162,15 +162,15 @@ class EqualityUtilsTest: KexRunnerTest("equality-utils") {
         t2.ref2 = t1
         t3.ref1 = t1
         t3.ref2 = t2
-        assert(customEquals(t1, t2))
+        assert(recursiveEquals(t1, t2))
         t2.ref1 = t1
         t2.ref2 = t3
         t3.ref1 = t3
         t3.ref2 = t3
-        assert(customEquals(t1, t2))
+        assert(recursiveEquals(t1, t2))
         t3.ref1 = t2
         t3.ref2 = t2
-        assert(!customEquals(t1, t2))
+        assert(!recursiveEquals(t1, t2))
     }
 
     @Test
@@ -180,6 +180,6 @@ class EqualityUtilsTest: KexRunnerTest("equality-utils") {
         val t3 = ClassWithRefToThemselves()
         val a1 = ClassWithRefToThemselves(t1, t1)
         val a2 = ClassWithRefToThemselves(t2, t3)
-        assert(customEquals(a1, a2))
+        assert(recursiveEquals(a1, a2))
     }
 }
