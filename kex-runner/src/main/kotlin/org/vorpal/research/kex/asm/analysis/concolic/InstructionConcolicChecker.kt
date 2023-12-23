@@ -186,9 +186,6 @@ class InstructionConcolicChecker(
             yield()
 
             val newState = check(method, state) ?: continue
-            if (newState is SuccessResult) {
-                log.debug(newState)
-            }
             when (newState) {
                 is ExecutionCompletedResult -> when {
                     newState.trace.isEmpty() -> log.warn { "Collected empty state from $state" }

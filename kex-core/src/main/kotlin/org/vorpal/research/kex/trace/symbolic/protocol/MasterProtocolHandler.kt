@@ -141,11 +141,9 @@ class MasterProtocolSocketHandler(
         Master2ClientSocketConnection(socket)
     }
 
-    override suspend fun receiveWorkerConnection(): Master2WorkerConnection? = runBlocking {
-        withTimeoutOrNull(connectionTimeout) {
-            val socket = workerListener.accept()
-            Master2WorkerSocketConnection(socket)
-        }
+    override suspend fun receiveWorkerConnection(): Master2WorkerConnection? = withTimeoutOrNull(connectionTimeout) {
+        val socket = workerListener.accept()
+        Master2WorkerSocketConnection(socket)
     }
 
     override fun close() {
