@@ -15,6 +15,7 @@ import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelector
 import org.vorpal.research.kex.asm.analysis.concolic.gui.GUIProxySelector
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
+import org.vorpal.research.kex.asserter.extractFinalInfo
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -30,7 +31,6 @@ import org.vorpal.research.kex.trace.runner.generateParameters
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
-import org.vorpal.research.kex.trace.symbolic.protocol.SuccessResult
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
@@ -112,21 +112,17 @@ class InstructionConcolicChecker(
         val result = collectTrace(generator.testKlassName)
         try {
             if (result is ExecutionCompletedResult) {
-                val executionFinalInfoGenerator = ExecutionFinalInfoGenerator(ctx, method)
                 val testWithAssertionsGenerator =
                     UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
-                val finalInfoDescriptors = executionFinalInfoGenerator.extractFinalInfo(result)
-                testWithAssertionsGenerator.generate(
-                    parameters,
-                    executionFinalInfoGenerator.generateFinalInfoActionSequences(finalInfoDescriptors)
-                )
-                val testFile2 = testWithAssertionsGenerator.emit()
+                val finalInfoDescriptors = extractFinalInfo(result, method)
+                testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
+                val testFileWithAssertions = testWithAssertionsGenerator.emit()
 
-                compilerHelper.compileFile(testFile2)
+                compilerHelper.compileFile(testFileWithAssertions)
                 testFile.deleteIfExists()
             }
             result
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             log.debug("Tests with assertion generation failed with exception:")
             log.debug(e.stackTrace)
             result

@@ -83,14 +83,14 @@ class ExecutorAS2JavaPrinter(
         testName: String,
         method: org.vorpal.research.kfg.ir.Method,
         actionSequences: Parameters<ActionSequence>,
-        executionFinalInfo: ExecutionFinalInfo<ActionSequence>?
+        finalInfoSequences: ExecutionFinalInfo<ActionSequence>?
     ) {
         cleanup()
 
         for (cs in actionSequences.asList)
             resolveTypes(cs)
 
-        val exception = (executionFinalInfo as? ExecutionExceptionFinalInfo)
+        val exception = (finalInfoSequences as? ExecutionExceptionFinalInfo)
         val exceptionClassName = exception?.javaClass?.split('.')?.last()
 
         with(builder) {
@@ -118,10 +118,10 @@ class ExecutorAS2JavaPrinter(
                         }
                     }
                     val terms =
-                        if (executionFinalInfo as? ExecutionSuccessFinalInfo != null) actionSequences.arguments
-                            .plus(executionFinalInfo.args)
-                            .plus(listOfNotNull(executionFinalInfo.instance))
-                            .plus(listOfNotNull(executionFinalInfo.retValue))
+                        if (finalInfoSequences as? ExecutionSuccessFinalInfo != null) actionSequences.arguments
+                            .plus(finalInfoSequences.args)
+                            .plus(listOfNotNull(finalInfoSequences.instance))
+                            .plus(listOfNotNull(finalInfoSequences.retValue))
                         else actionSequences.arguments
 
                     terms.forEach { descriptor ->
@@ -167,7 +167,7 @@ class ExecutorAS2JavaPrinter(
                 } else method(testName) {
                     returnType = void
                     annotations += "Test"
-                    if (executionFinalInfo == null) exceptions += "Throwable"
+                    if (finalInfoSequences == null) exceptions += "Throwable"
                 }
             }
         }
@@ -180,10 +180,10 @@ class ExecutorAS2JavaPrinter(
             for (cs in actionSequences.asList)
                 cs.printAsJava()
 
-            if (executionFinalInfo as? ExecutionSuccessFinalInfo != null) {
-                executionFinalInfo.args.forEach { it.printAsJava() }
-                executionFinalInfo.instance?.printAsJava()
-                executionFinalInfo.retValue?.printAsJava()
+            if (finalInfoSequences as? ExecutionSuccessFinalInfo != null) {
+                finalInfoSequences.args.forEach { it.printAsJava() }
+                finalInfoSequences.instance?.printAsJava()
+                finalInfoSequences.retValue?.printAsJava()
             }
 
             if (surroundInTryCatch) statement("} catch (${exceptionClassName ?: "Throwable"} e) {}")
@@ -204,7 +204,7 @@ class ExecutorAS2JavaPrinter(
         with(current) {
 //            exceptions += if (exception != null) "ClassNotFoundException" else "Throwable"
             exceptions += "Throwable"
-            printTestCall(method, actionSequences, executionFinalInfo, this)
+            printTestCall(method, actionSequences, finalInfoSequences, this)
         }
     }
 
@@ -225,11 +225,11 @@ class ExecutorAS2JavaPrinter(
     private fun printTestCall(
         method: org.vorpal.research.kfg.ir.Method,
         actionSequences: Parameters<ActionSequence>,
-        executionFinalInfo: ExecutionFinalInfo<ActionSequence>?,
+        finalInfoSequences: ExecutionFinalInfo<ActionSequence>?,
         methodBuilder: JavaBuilder.ControlStatement
     ) =
         with(methodBuilder) {
-            val exception = (executionFinalInfo as? ExecutionExceptionFinalInfo)
+            val exception = (finalInfoSequences as? ExecutionExceptionFinalInfo)
             val exceptionClassName = exception?.javaClass?.split('.')?.last()
 
             +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
@@ -244,7 +244,7 @@ class ExecutorAS2JavaPrinter(
 
             val methodInvocation = when {
                 method.isConstructor -> "Object instance = ${reflectionUtils.callConstructor.name}(klass, argTypes, args)"
-                (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue != null ->
+                (finalInfoSequences as? ExecutionSuccessFinalInfo)?.retValue != null ->
                     "Object retValue = ${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
                 else -> "${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
             }
@@ -264,8 +264,8 @@ class ExecutorAS2JavaPrinter(
             else {
                 +methodInvocation
             }
-            if (executionFinalInfo?.isException() == false) {
-                executionFinalInfo.instance?.let { instanceInfo ->
+            if (finalInfoSequences?.isException() == false) {
+                finalInfoSequences.instance?.let { instanceInfo ->
                     val instanceName = if (method.isConstructor) "instance" else actionSequences.instance?.stackName
                     if (!instanceInfo.isConstantValue && instanceName != null) {
                         if (!isEqualsOverridden(instanceInfo.javaClass)) {
@@ -277,12 +277,12 @@ class ExecutorAS2JavaPrinter(
                 for ((i, arg) in actionSequences.arguments.withIndex()) {
                     if (!arg.isConstantValue) {
                         if (!isEqualsOverridden(arg.javaClass)) {
-                            +"assertTrue(${arg.stackName}.equals(${executionFinalInfo.args[i].stackName}))"
+                            +"assertTrue(${arg.stackName}.equals(${finalInfoSequences.args[i].stackName}))"
                         }
-                        +"assertTrue(${equalityUtils.recursiveEquals.name}(${arg.stackName}, ${executionFinalInfo.args[i].stackName}))"
+                        +"assertTrue(${equalityUtils.recursiveEquals.name}(${arg.stackName}, ${finalInfoSequences.args[i].stackName}))"
                     }
                 }
-                (executionFinalInfo as? ExecutionSuccessFinalInfo)?.retValue?.let { retValueInfo ->
+                (finalInfoSequences as? ExecutionSuccessFinalInfo)?.retValue?.let { retValueInfo ->
                     if (!isEqualsOverridden(retValueInfo.javaClass)) {
                         +"assertTrue(retValue.equals(${retValueInfo.stackName}))"
                     }
@@ -293,7 +293,7 @@ class ExecutorAS2JavaPrinter(
 
     private fun isEqualsOverridden(klass: Class<*>): Boolean {
         val method = klass.getMethod("equals", Object::class.java)
-        return method.declaringClass == Object::class.java
+        return method.declaringClass != Object::class.java
     }
 
     override fun printConstructorCall(owner: ActionSequence, call: ConstructorCall): List<String> {

@@ -5,7 +5,6 @@ import org.vorpal.research.kex.asserter.ExecutionFinalInfo
 import org.vorpal.research.kex.compile.JavaCompilerDriver
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.codegen.javagen.ActionSequence2JavaPrinter
 import org.vorpal.research.kex.reanimator.codegen.javagen.ExecutorAS2JavaPrinter
@@ -46,7 +45,7 @@ abstract class TestCasePrinter(
     protected fun validateString(string: String) = string.replace(Regex("[^a-zA-Z0-9]"), "")
 
     abstract fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>,
-                       executionFinalInfo: ExecutionFinalInfo<ActionSequence>? = null)
+                       finalInfoSequences: ExecutionFinalInfo<ActionSequence>? = null)
 
     open fun emit() {
         if (useReanimator && generateTestCases) {
@@ -99,7 +98,7 @@ class JUnitTestCasePrinter(
 
     private var isEmpty = true
 
-    override fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>, executionFinalInfo: ExecutionFinalInfo<ActionSequence>?) {
+    override fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>, finalInfoSequences: ExecutionFinalInfo<ActionSequence>?) {
         isEmpty = false
         printer.printActionSequence(validateString(testName), method, actionSequences)
     }
@@ -125,12 +124,12 @@ class ExecutorTestCasePrinter(
         const val TEST_METHOD = "test"
     }
 
-    override fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>, executionFinalInfo: ExecutionFinalInfo<ActionSequence>?) {
-        printer.printActionSequence(validateString(testName), method, actionSequences, executionFinalInfo)
+    override fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>, finalInfoSequences: ExecutionFinalInfo<ActionSequence>?) {
+        printer.printActionSequence(validateString(testName), method, actionSequences, finalInfoSequences)
     }
 
-    fun print(method: Method, actionSequences: Parameters<ActionSequence>, executionFinalInfo: ExecutionFinalInfo<ActionSequence>?) {
-        print(TEST_METHOD, method, actionSequences, executionFinalInfo)
+    fun print(method: Method, actionSequences: Parameters<ActionSequence>, finalInfoSequences: ExecutionFinalInfo<ActionSequence>?) {
+        print(TEST_METHOD, method, actionSequences, finalInfoSequences)
     }
 
     override fun emit() {

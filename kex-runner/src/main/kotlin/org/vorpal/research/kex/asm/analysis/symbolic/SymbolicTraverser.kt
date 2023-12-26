@@ -1287,8 +1287,7 @@ abstract class SymbolicTraverser(
             rootMethod,
             rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
         )
-        val finalInfoGenerator = ExecutionFinalInfoGenerator(ctx, rootMethod)
-        generator.generate(parameters, finalInfoGenerator.generateFinalInfoActionSequences(executionFinalInfo))
+        generator.generate(parameters, executionFinalInfo)
         val testFile = generator.emit()
         return try {
             compilerHelper.compileFile(testFile)

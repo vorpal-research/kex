@@ -2,7 +2,6 @@ package org.vorpal.research.kex.reanimator.codegen
 
 import org.vorpal.research.kex.asserter.ExecutionFinalInfo
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kfg.ir.Method
 
@@ -11,10 +10,10 @@ interface ActionSequencePrinter {
     val klassName: String
 
     fun printActionSequence(
-            testName: String,
-            method: Method,
-            actionSequences: Parameters<ActionSequence>,
-            executionFinalInfo: ExecutionFinalInfo<ActionSequence>? = null
+        testName: String,
+        method: Method,
+        actionSequences: Parameters<ActionSequence>,
+        finalInfoSequences: ExecutionFinalInfo<ActionSequence>? = null
     )
 
     fun emit(): String

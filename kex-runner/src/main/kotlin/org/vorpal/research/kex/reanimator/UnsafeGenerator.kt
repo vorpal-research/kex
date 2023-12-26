@@ -2,7 +2,9 @@ package org.vorpal.research.kex.reanimator
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
+import org.vorpal.research.kex.asserter.ExecutionExceptionFinalInfo
 import org.vorpal.research.kex.asserter.ExecutionFinalInfo
+import org.vorpal.research.kex.asserter.ExecutionSuccessFinalInfo
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
@@ -28,9 +30,10 @@ class UnsafeGenerator(
     private val printer = ExecutorTestCasePrinter(ctx, method.packageName, testName)
     val testKlassName = printer.fullKlassName
 
-    fun generate(descriptors: Parameters<Descriptor>, prevResultInfo: ExecutionFinalInfo<ActionSequence>? = null) = try {
+    fun generate(descriptors: Parameters<Descriptor>, finalInfoDescriptors: ExecutionFinalInfo<Descriptor>? = null) = try {
         val sequences = descriptors.actionSequences
-        printer.print(method, sequences.rtUnmapped, prevResultInfo)
+        val finalInfoSequences = finalInfoDescriptors?.actionSequences
+        printer.print(method, sequences.rtUnmapped, finalInfoSequences)
     } catch (e: GenerationException) {
         log.warn("Generation error when generating action sequences:", e)
         throw e
@@ -85,6 +88,18 @@ class UnsafeGenerator(
             val argSequences = arguments.map { it.actionSequence }
             val staticFields = statics.mapTo(mutableSetOf()) { it.actionSequence }
             return Parameters(thisSequence, argSequences, staticFields)
+        }
+
+    private val ExecutionFinalInfo<Descriptor>.actionSequences : ExecutionFinalInfo<ActionSequence>
+        get()  {
+            val instance = this.instance?.let { asGenerator.generate(it) }
+            val args = this.args.map { asGenerator.generate(it) }
+            return when(this) {
+                is ExecutionExceptionFinalInfo ->
+                    ExecutionExceptionFinalInfo(instance, args, this.javaClass)
+                is ExecutionSuccessFinalInfo ->
+                    ExecutionSuccessFinalInfo(instance, args, this.retValue?.let { asGenerator.generate(it) })
+            }
         }
 
 }

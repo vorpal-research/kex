@@ -107,7 +107,7 @@ open class ActionSequence2JavaPrinter(
         testName: String,
         method: org.vorpal.research.kfg.ir.Method,
         actionSequences: Parameters<ActionSequence>,
-        executionFinalInfo: ExecutionFinalInfo<ActionSequence>?
+        finalInfoSequences: ExecutionFinalInfo<ActionSequence>?
     ) {
         cleanup()
         val actionSequence = buildMethodCall(method, actionSequences)
