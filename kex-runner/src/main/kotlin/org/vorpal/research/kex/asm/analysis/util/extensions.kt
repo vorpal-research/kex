@@ -64,7 +64,6 @@ suspend fun Method.checkAsync(
     }
 
     val finalState = generateFinalDescriptors(this, ctx, result.model, checker.state)
-    log.debug(finalState)
 
     return try {
         generateInitialDescriptors(this, ctx, result.model, checker.state)
@@ -72,7 +71,7 @@ suspend fun Method.checkAsync(
                 log.debug { "Generated params:\n$it" }
             }
             .filterStaticFinals(ctx.cm)
-            .filterIgnoredStatic().also { log.debug(finalState) }
+            .filterIgnoredStatic()
     } catch (e: Throwable) {
         log.error("Error during descriptor generation: ", e)
         null

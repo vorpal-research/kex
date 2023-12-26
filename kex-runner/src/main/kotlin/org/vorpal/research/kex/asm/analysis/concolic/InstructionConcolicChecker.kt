@@ -21,7 +21,6 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.asDescriptors
-import org.vorpal.research.kex.reanimator.ExecutionFinalInfoGenerator
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName

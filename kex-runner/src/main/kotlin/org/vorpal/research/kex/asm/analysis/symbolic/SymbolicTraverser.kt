@@ -27,7 +27,6 @@ import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.ExecutionFinalInfoGenerator
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.inverse
