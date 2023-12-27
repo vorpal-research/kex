@@ -22,39 +22,7 @@ class KfgClassLoader(
 
     companion object {
         private val INCLUDES = setOf(
-            // TODO: Mock. Config file! Enough rebuilding all kex
-            "class org.vorpal.research.kex.test.concolic.kaf.Lesson2",
-            "class org.vorpal.research.kex.test.concolic.kaf.Lesson6",
-            "class org.vorpal.research.kex.test.concolic.EnumConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.ListConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.Point",
-            "class org.vorpal.research.kex.test.concolic.PrimitiveConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.SetConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.StringConcolicTests",
-            "class org.vorpal.research.kex.test.concolic.TestEnum",
-
-            "class org.vorpal.research.kex.test.concolic.mock.ToMock",
-            "class org.vorpal.research.kex.test.concolic.mock.NoMock",
-            "class org.vorpal.research.kex.test.concolic.mock.MockTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockReturnsMockTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockPrimitivesTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockEnumTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockWithFieldsTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockStaticsTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockListTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockListTests\$Container",
-            "class org.vorpal.research.kex.test.concolic.mock.MockSetTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockSetTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockGenericsTests",
-            "class org.vorpal.research.kex.test.concolic.mock.MockGenericsTests\$GenericMock",
-
-//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$Cont",
-//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$WithStaticInt",
-//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$StaticRecursion",
-//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$RecursionWithStaticField",
-//            "class org.vorpal.research.kex.test.concolic.mock.MockTests\$RecursionWithStaticField\$ContStatic",
-
-            "class org.vorpal.research.kex.test.debug.ObjectGenerationTests",
+            "package org.vorpal.research.kex.test.*",
         ).mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
         private val EXCLUDES = setOf(
             "package java.*",
