@@ -126,7 +126,11 @@ class ContextGuidedSelector(
         branchIterator = executionTree.getBranches(currentDepth).shuffled(ctx.random).iterator()
     }
 
-    override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
+    override suspend fun addExecutionTrace(
+        method: Method,
+        checkedState: PersistentSymbolicState,
+        result: ExecutionCompletedResult
+    ) {
         executionTree.addTrace(result.symbolicState.toPersistentState())
     }
 

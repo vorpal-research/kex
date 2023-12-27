@@ -39,7 +39,6 @@ import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
 import org.vorpal.research.kfg.nullptrClass
-import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kthelper.assert.unreachable
@@ -48,6 +47,8 @@ import org.vorpal.research.kthelper.graph.PredecessorGraph
 import org.vorpal.research.kthelper.graph.Viewable
 import org.vorpal.research.kthelper.logging.log
 import java.util.*
+import kotlin.math.exp
+import kotlin.math.pow
 
 private fun Predicate.reverseBoolCond() = when (this) {
     is EqualityPredicate -> predicate(this.type, this.location) {
@@ -72,7 +73,6 @@ private fun Predicate.reverseSwitchCond(
                 cond equality it
             }
         }
-
 
     is EqualityPredicate -> {
         val outgoingPaths = branches.toList()
@@ -132,11 +132,6 @@ sealed class Vertex(
         other._predecessors += this
     }
 
-    fun linkUp(other: Vertex) {
-        _predecessors += other
-        other._successors += this
-    }
-
     override fun toString(): String {
         return "Vertex($type, ${instruction.print()})"
     }
@@ -191,6 +186,7 @@ class PathVertex(
 
                     PathClauseType.OVERLOAD_CHECK -> {
                         val excludeClasses = prefixStates
+                            .asSequence()
                             .map { it.path.last().predicate }
                             .flatMap { TermCollector.getFullTermSet(it).filterIsInstance<InstanceOfTerm>() }
                             .map { it.checkedType.getKfgType(ctx.types) }
@@ -205,9 +201,6 @@ class PathVertex(
                             // TODO: add proper prioritization
                             val prioritizedCandidates = allCandidates.shuffled(ctx.random).take(5)
                             prioritizedCandidates.map {
-                                if (it is ArrayType) {
-                                    val a = 10
-                                }
                                 condition.copy(predicate = path(instruction.location) {
                                     (lhv.operand `is` it.kexType) equality true
                                 })
@@ -348,12 +341,12 @@ class CandidateState(
 
 class ExecutionGraph(
     val ctx: ExecutionContext,
-    val targets: Set<Method>,
-    val isCovered: (Instruction) -> Boolean
+    val targets: Set<Method>
 ) : PredecessorGraph<Vertex>, Viewable {
 
     companion object {
         const val DEFAULT_SCORE = 10_000L
+        const val SIGMA = 10.0
     }
 
     private val root: Vertex = StateVertex(ctx.cm.instruction.getUnreachable(EmptyUsageContext))
@@ -369,11 +362,12 @@ class ExecutionGraph(
     override val nodes: Set<Vertex>
         get() = innerNodes.values.toSet()
 
+    val instructionGraph = InstructionGraph()
+
     inner class CandidateSet(val ctx: ExecutionContext) : Iterable<CandidateState> {
         private var isValid = true
         private var totalScore: Long = 0L
         private val candidates = Collections.newSetFromMap(concurrentMapOf<CandidateState, Boolean>())
-//        private val queue = PriorityQueue<CandidateState>(compareBy { -it.score() })
 
         override fun iterator(): Iterator<CandidateState> = candidates.iterator()
 
@@ -382,7 +376,6 @@ class ExecutionGraph(
         fun addAll(newCandidates: Collection<CandidateState>) {
             candidates.addAll(newCandidates)
             newCandidates.forEach { totalScore += it.score() }
-//            queue.addAll(newCandidates)
         }
 
         private fun remove(candidateState: CandidateState) {
@@ -398,16 +391,12 @@ class ExecutionGraph(
         private fun recomputeScores() {
             totalScore = 0L
             candidates.forEach { totalScore += it.score() }
-//            queue.clear()
-//            queue.addAll(candidates)
             isValid = true
         }
 
         fun nextCandidate(): CandidateState {
             if (!isValid) recomputeScores()
 
-//            return queue.poll()!!.also { remove(it) }
-//
             val random = ctx.random.nextLong(totalScore)
             var current = 0L
             for (state in candidates) {
@@ -421,67 +410,115 @@ class ExecutionGraph(
         }
     }
 
+    val coverageAll = mutableSetOf<Instruction>()
+
+    private val distances = mutableMapOf<CandidateState, Int>()
+    private val scaledDistances = mutableMapOf<CandidateState, Long>()
+    private val scores = mutableMapOf<CandidateState, Long>()
+    private val coverage = mutableMapOf<CandidateState, Set<Instruction>>()
+
     private fun CandidateState.score(): Long {
-        var score = 1L
-        val stackTrace = this.state.stackTrace
+        var score = 0L
         if (nextInstruction != null) {
-            score += DEFAULT_SCORE
-            if (nextInstruction.parent.method in targets) {
-                score += DEFAULT_SCORE
-            }
-            if (!isCovered(nextInstruction)) {
-                score += DEFAULT_SCORE
-            }
-//            val distanceToTarget = stackTrace.size - ((stackTrace.withIndex().firstOrNull { it.value.second in targets }?.index ?: 0) + 1)
-//            val distanceToTargetScore = (DEFAULT_SCORE.toDouble() / 2.0.pow(distanceToTarget)).toLong()
-//            score += distanceToTargetScore
-//            if (!isCovered(nextInstruction)) {
-//                score += distanceToTargetScore
-//            }
+            score += 1L
+            val distance = instructionGraph.getVertex(nextInstruction).distanceToUncovered(targets, state.stackTrace)
+            val normalizedDistance = exp(-0.5 * (distance.toDouble() / SIGMA).pow(2))
+            val scaledDistance = (normalizedDistance * DEFAULT_SCORE).toLong()
+            score += scaledDistance
+
+            distances[this] = distance
+            scaledDistances[this] = scaledDistance
+            scores[this] = score
+            coverage[this] = coverageAll.toSet()
         }
         return score
     }
 
-    fun addTrace(method: Method, executionResult: ExecutionCompletedResult) = synchronized(this) {
-        var prevVertex = root
-        var clauseIndex = 0
-        var pathIndex = 0
-        val symbolicState = executionResult.symbolicState.toPersistentState()
-        for (clause in symbolicState.clauses) {
-            ++clauseIndex
-            if (clause is PathClause) ++pathIndex
+    fun evaluatePerformance(method: Method, candidate: CandidateState?, executionResult: ExecutionCompletedResult) = synchronized(instructionGraph) {
+        val overallCoverageIncrease = executionResult.trace.count { !instructionGraph.getVertex(it).covered }
+        val targetCoverageIncrease = executionResult.trace.filter { it.parent.method in targets }
+            .count { !instructionGraph.getVertex(it).covered }
 
-            val type = when (clause) {
-                is PathClause -> clause.type.toString()
-                else -> Vertex.STATE
-            }
-            val currentVertex = innerNodes.getOrPut(type to clause.instruction) {
-                candidates.invalidate()
-                when (clause) {
-                    is PathClause -> PathVertex(clause.type, clause.instruction)
-                    else -> StateVertex(clause.instruction)
-                }
-            }
+        val oldCoverage = coverage[candidate] ?: emptySet()
+        val oldCoverageIncrease = executionResult.trace.count { it !in oldCoverage }
+        val nextInstWasCovered = candidate?.nextInstruction?.let { it in oldCoverage } ?: false
+        val nextInstNowCovered = candidate?.nextInstruction?.let { it in executionResult.trace } ?: false
 
-            if (clause is PathClause) {
-                currentVertex as PathVertex
-                candidates.addAll(
-                    currentVertex.addStateAndProduceCandidates(
-                        ctx, persistentSymbolicState(
-                            symbolicState.clauses.subState(0, clauseIndex),
-                            symbolicState.path.subPath(0, pathIndex),
-                            symbolicState.concreteTypes,
-                            symbolicState.concreteValues,
-                            symbolicState.termMap
-                        )
-                    ).mapTo(mutableSetOf()) { CandidateState(method, it) }
-                )
-            }
 
-            prevVertex.linkDown(currentVertex)
-            prevVertex = currentVertex
-        }
+        val relativeOverallCoverageIncrease = overallCoverageIncrease.toDouble() / instructionGraph.covered
+        val relativeTargetCoverageIncrease =
+            targetCoverageIncrease.toDouble() / targets.flatMap { it.body.bodyBlocks.flatMap { it.instructions } }
+                .count { instructionGraph.getVertex(it).covered }
+
+        val inLoop = candidate?.nextInstruction?.let { inst ->
+            val loopInfo = inst.parent.method.getLoopInfo()
+            loopInfo.count { inst.parent in it.body }
+        } ?: 0
+
+        log.debug(
+            "COVERAGE STATS *" +
+            "${method}\t" +
+                    "${candidate?.state?.path?.lastOrNull()}\t" +
+                    "${distances[candidate] ?: Int.MAX_VALUE}\t" +
+                    "${scaledDistances[candidate] ?: DEFAULT_SCORE}\t" +
+                    "${scores[candidate] ?: 0.0}\t" +
+                    "${candidate?.state?.path?.last()?.type}\t" +
+                    "${candidate?.nextInstruction?.javaClass}\t" +
+                    "${inLoop}\t" +
+                    "${overallCoverageIncrease}\t" +
+                    "${targetCoverageIncrease}\t" +
+                    "${relativeOverallCoverageIncrease}\t" +
+                    "${relativeTargetCoverageIncrease}\t" +
+                    "${oldCoverageIncrease}\t" +
+                    "${nextInstWasCovered}\t" +
+                    "${nextInstNowCovered}\t"
+        )
     }
+
+    fun addTrace(method: Method, candidate: CandidateState?, executionResult: ExecutionCompletedResult) =
+        synchronized(instructionGraph) {
+//            evaluatePerformance(method, candidate, executionResult)
+            coverageAll += executionResult.trace
+            instructionGraph.addTrace(executionResult.trace)
+            var prevVertex = root
+            var clauseIndex = 0
+            var pathIndex = 0
+            val symbolicState = executionResult.symbolicState.toPersistentState()
+            for (clause in symbolicState.clauses) {
+                ++clauseIndex
+                if (clause is PathClause) ++pathIndex
+
+                val type = when (clause) {
+                    is PathClause -> clause.type.toString()
+                    else -> Vertex.STATE
+                }
+                val currentVertex = innerNodes.getOrPut(type to clause.instruction) {
+                    candidates.invalidate()
+                    when (clause) {
+                        is PathClause -> PathVertex(clause.type, clause.instruction)
+                        else -> StateVertex(clause.instruction)
+                    }
+                }
+
+                if (clause is PathClause) {
+                    currentVertex as PathVertex
+                    candidates.addAll(
+                        currentVertex.addStateAndProduceCandidates(
+                            ctx, persistentSymbolicState(
+                                symbolicState.clauses.subState(0, clauseIndex),
+                                symbolicState.path.subPath(0, pathIndex),
+                                symbolicState.concreteTypes,
+                                symbolicState.concreteValues,
+                                symbolicState.termMap
+                            )
+                        ).mapTo(mutableSetOf()) { CandidateState(method, it) }
+                    )
+                }
+
+                prevVertex.linkDown(currentVertex)
+                prevVertex = currentVertex
+            }
+        }
 
     override val graphView: List<GraphView>
         get() {

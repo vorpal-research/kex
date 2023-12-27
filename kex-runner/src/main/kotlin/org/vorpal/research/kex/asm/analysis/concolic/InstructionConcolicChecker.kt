@@ -28,9 +28,11 @@ import org.vorpal.research.kex.trace.runner.SymbolicExternalTracingRunner
 import org.vorpal.research.kex.trace.runner.generateDefaultParameters
 import org.vorpal.research.kex.trace.runner.generateParameters
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
+import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
+import org.vorpal.research.kex.util.view
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
@@ -59,8 +61,8 @@ class TestNameGeneratorImpl : TestNameGenerator {
 @InternalSerializationApi
 class InstructionConcolicChecker(
     val ctx: ExecutionContext,
-    val pathSelector: ConcolicPathSelector,
-    val testNameGenerator: TestNameGenerator,
+    private val pathSelector: ConcolicPathSelector,
+    private val testNameGenerator: TestNameGenerator,
 ) {
     val cm: ClassManager
         get() = ctx.cm
@@ -101,15 +103,16 @@ class InstructionConcolicChecker(
                                 context,
                                 selectorManager.createPathSelectorFor(it),
                                 testNameGenerator
-                            ).visit(it)
+                            ).start(it)
                         }
                     }.awaitAll()
                 }
             }
+            (selectorManager as CoverageGuidedSelectorManager).executionGraph.instructionGraph.view()
         }
     }
 
-    suspend fun visit(method: Method) {
+    suspend fun start(method: Method) {
         method.analyzeOrTimeout(ctx.accessLevel) {
             processMethod(it)
         }
@@ -174,24 +177,27 @@ class InstructionConcolicChecker(
         null
     }
 
-    private suspend fun handleStartingTrace(
+    private suspend fun initializeExecutionGraph(
         method: Method,
-        pathIterator: ConcolicPathSelector,
-        executionResult: ExecutionResult?
+        pathIterator: ConcolicPathSelector
     ) {
-        executionResult?.let {
-            when (it) {
-                is ExecutionCompletedResult -> pathIterator.addExecutionTrace(method, it)
-                else -> log.warn("Failed to generate random trace: $it")
+        val initialExecution = when (val randomTrace = getRandomTrace(method)) {
+            is ExecutionCompletedResult -> randomTrace
+            else -> getDefaultTrace(method)
+        }
+        when (initialExecution) {
+            is ExecutionCompletedResult -> {
+                pathIterator.addExecutionTrace(method, persistentSymbolicState(), initialExecution)
+            }
+
+            else -> {
+                log.warn("Failed to generate random trace for method $method: $initialExecution")
             }
         }
     }
 
-    private suspend fun processMethod(method: Method) {
-        handleStartingTrace(method, pathSelector, getRandomTrace(method))
-        if (pathSelector.isEmpty()) {
-            handleStartingTrace(method, pathSelector, getDefaultTrace(method))
-        }
+    private suspend fun processMethod(startingMethod: Method) {
+        initializeExecutionGraph(startingMethod, pathSelector)
         yield()
 
         while (pathSelector.hasNext()) {
@@ -204,7 +210,7 @@ class InstructionConcolicChecker(
             when (newState) {
                 is ExecutionCompletedResult -> when {
                     newState.trace.isEmpty() -> log.warn { "Collected empty state from $state" }
-                    else -> pathSelector.addExecutionTrace(method, newState)
+                    else -> pathSelector.addExecutionTrace(method, state, newState)
                 }
 
                 else -> log.warn("Failure during execution: $newState")
