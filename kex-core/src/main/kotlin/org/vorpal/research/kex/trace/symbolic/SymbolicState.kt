@@ -379,7 +379,7 @@ class PersistentSymbolicState(
     override val termMap: @Contextual PersistentMap<Term, @Contextual WrappedValue>,
 ) : SymbolicState() {
 
-    val stackTrace: List<Pair<Instruction?, Method>> by lazy {
+    val stackTrace: PersistentList<Pair<Instruction?, Method>> by lazy {
         buildList<Pair<Instruction?, Method>> {
             var previousInstruction: Instruction? = null
             for (clause in clauses) {
@@ -408,7 +408,7 @@ class PersistentSymbolicState(
                     }
                 }
             }
-        }.reversed()
+        }.reversed().toPersistentList()
     }
 
     override fun toString() = clauses.joinToString("\n") { it.predicate.toString() }

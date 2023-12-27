@@ -13,7 +13,7 @@ class CoverageGuidedSelectorManager(
     override val ctx: ExecutionContext,
     override val targets: Set<Method>
 ) : ConcolicPathSelectorManager {
-    val executionGraph = ExecutionGraph(ctx, targets) { isCovered(it) }
+    val executionGraph = ExecutionGraph(ctx, targets)
 
     override fun createPathSelectorFor(target: Method): ConcolicPathSelector =
         CoverageGuidedSelector(this)
@@ -35,6 +35,7 @@ class CoverageGuidedSelector(
     override val ctx: ExecutionContext
         get() = manager.ctx
     private val executionGraph get() = manager.executionGraph
+    private val candidates = mutableMapOf<PersistentSymbolicState, CandidateState>()
 
     override suspend fun isEmpty(): Boolean = manager.isCovered() || executionGraph.candidates.isEmpty()
 
@@ -42,12 +43,17 @@ class CoverageGuidedSelector(
 
     override suspend fun next(): Pair<Method, PersistentSymbolicState> {
         val candidate = executionGraph.candidates.nextCandidate()
+        candidates[candidate.state] = candidate
         return candidate.method to candidate.state
     }
 
-    override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
+    override suspend fun addExecutionTrace(
+        method: Method,
+        checkedState: PersistentSymbolicState,
+        result: ExecutionCompletedResult
+    ) {
         manager.addCoverage(result.trace)
-        executionGraph.addTrace(method, result)
+        executionGraph.addTrace(method, candidates[checkedState], result)
     }
 
     override fun reverse(pathClause: PathClause): PathClause = TODO() //pathClause.reversed()

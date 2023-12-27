@@ -45,7 +45,11 @@ class BfsPathSelectorImpl(
     override suspend fun isEmpty(): Boolean = deque.isEmpty()
     override suspend fun hasNext(): Boolean = deque.isNotEmpty()
 
-    override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
+    override suspend fun addExecutionTrace(
+        method: Method,
+        checkedState: PersistentSymbolicState,
+        result: ExecutionCompletedResult
+    ) {
         val persistentResult = result.symbolicState.toPersistentState()
         if (persistentResult.path in coveredPaths) return
         coveredPaths += persistentResult.path
@@ -94,6 +98,7 @@ class BfsPathSelectorImpl(
             if (coveredPaths.any { reversed in it }) null
             else reversed
         }
+
         is SwitchInst -> when (predicate) {
             is DefaultSwitchPredicate -> {
                 val defaultSwitch = predicate as DefaultSwitchPredicate
@@ -109,6 +114,7 @@ class BfsPathSelectorImpl(
                 }
                 result
             }
+
             is EqualityPredicate -> {
                 val equalityPredicate = predicate as EqualityPredicate
                 val switchInst = instruction as SwitchInst
@@ -129,8 +135,10 @@ class BfsPathSelectorImpl(
                     if (coveredPaths.any { mutated in it }) mutated else null
                 }
             }
+
             else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
         }
+
         is TableSwitchInst -> when (predicate) {
             is DefaultSwitchPredicate -> {
                 val defaultSwitch = predicate as DefaultSwitchPredicate
@@ -146,6 +154,7 @@ class BfsPathSelectorImpl(
                 }
                 result
             }
+
             is EqualityPredicate -> {
                 val equalityPredicate = predicate as EqualityPredicate
                 val switchInst = instruction as TableSwitchInst
@@ -166,8 +175,10 @@ class BfsPathSelectorImpl(
                     if (coveredPaths.any { mutated in it }) null else mutated
                 }
             }
+
             else -> unreachable { log.error("Unexpected predicate in switch clause: $predicate") }
         }
+
         else -> when (val pred = predicate) {
             is EqualityPredicate -> {
                 val (lhv, rhv) = pred.lhv to pred.rhv
@@ -175,21 +186,26 @@ class BfsPathSelectorImpl(
                     is NullTerm -> copy(predicate = path(instruction.location) {
                         lhv inequality null
                     })
+
                     is ConstBoolTerm -> copy(predicate = path(instruction.location) {
                         lhv equality !rhv.value
                     })
+
                     else -> log.warn("Unknown clause $this").let { null }
                 }
             }
+
             is InequalityPredicate -> {
                 val (lhv, rhv) = pred.lhv to pred.rhv
                 when (rhv) {
                     is NullTerm -> copy(predicate = path(instruction.location) {
                         lhv equality null
                     })
+
                     else -> log.warn("Unknown clause $this").let { null }
                 }
             }
+
             else -> null
         }
     }
