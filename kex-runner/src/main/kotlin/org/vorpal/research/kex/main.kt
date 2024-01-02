@@ -67,7 +67,6 @@ fun main(args: Array<String>) {
                     log.error("Option 'target' is required for the $mode mode")
                     cmd.printHelp()
                 }
-                val minimizationFlag = cmd.getCmdValue("minimization", "false").toBoolean()
 
                 when (mode) {
                     LaunchMode.LibChecker -> {
@@ -81,10 +80,10 @@ fun main(args: Array<String>) {
                     }
 
                     LaunchMode.Symbolic -> {
-                        SymbolicLauncher(classPaths, targetName, minimizationFlag)
+                        SymbolicLauncher(classPaths, targetName)
                     }
                     LaunchMode.Concolic -> {
-                        ConcolicLauncher(classPaths, targetName, minimizationFlag)
+                        ConcolicLauncher(classPaths, targetName)
                     }
                     LaunchMode.DefectChecker -> {
                         DefectCheckerLauncher(classPaths, targetName)
