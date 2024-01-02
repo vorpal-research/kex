@@ -4,13 +4,13 @@ import java.nio.file.Path
 
 interface TestReduction
 
-class Test(
+private class Test(
     val reqs: List<Int>
 ) {
     var power: Int = reqs.size
 }
 
-class Requirement {
+private class Requirement {
     private val satisfyTests: MutableList<Path> =mutableListOf<Path>()
     private var visited = false
 
@@ -25,7 +25,7 @@ class Requirement {
     }
 }
 
-class GreedyAlgorithm(
+class GreedyTestReductionImpl   (
     testCoverage: TestwiseCoverageInfo
 ) :TestReduction{
     private var tests: MutableMap<Path, Test> = mutableMapOf()

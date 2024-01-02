@@ -5,8 +5,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
-import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
-import org.vorpal.research.kex.asm.util.ClassWriter
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.minimization.Minimizer
 import org.vorpal.research.kex.jacoco.reportCoverage
@@ -19,8 +17,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class ConcolicLauncher(classPaths: List<String>, targetName: String, minimizationFlag: Boolean)
-    : KexAnalysisLauncher(classPaths, targetName) {
+class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalysisLauncher(classPaths, targetName) {
     override fun prepareClassPath(ctx: ExecutionContext): Pipeline.() -> Unit = {
 //        +SymbolicTraceInstrumenter(ctx.cm)
 //        +ClassWriter(ctx, kexConfig.instrumentedCodeDirectory)
@@ -33,8 +30,6 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String, minimizatio
             is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).mapTo(mutableSetOf()) { it.allMethods }
         }
 
-    private val minimization = minimizationFlag
-
     override fun launch() {
         ExecutorMasterController.use {
             it.start(context)
@@ -44,10 +39,10 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String, minimizatio
             }
         }
 
-        if (minimization) {
-            Minimizer(containers, context.cm, analysisLevel).execute()
+        if (kexConfig.getBooleanValue("kex", "minimization", false)) {
+            Minimizer(containers, context.cm, analysisLevel).execute(true, "concolic")
+        } else {
+            reportCoverage(containers, context.cm, analysisLevel, "concolic")
         }
-
-        reportCoverage(containers, context.cm, analysisLevel, "concolic")
     }
 }

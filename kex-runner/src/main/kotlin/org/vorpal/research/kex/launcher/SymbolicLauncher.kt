@@ -5,7 +5,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.symbolic.InstructionSymbolicChecker
-import org.vorpal.research.kex.jacoco.CoverageReporter
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.minimization.Minimizer
 import org.vorpal.research.kex.jacoco.reportCoverage
 import org.vorpal.research.kfg.ir.Method
@@ -16,8 +16,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class SymbolicLauncher(classPaths: List<String>, targetName: String, minimizationFlag: Boolean)
-    : KexAnalysisLauncher(classPaths, targetName) {
+class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexAnalysisLauncher(classPaths, targetName) {
 
     override fun prepareClassPath(ctx: ExecutionContext): Pipeline.() -> Unit = {}
 
@@ -28,17 +27,15 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String, minimizatio
             is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).mapTo(mutableSetOf()) { it.allMethods }
         }
 
-    private val minimization = minimizationFlag
-
     override fun launch() {
         for (setOfTargets in batchedTargets) {
             InstructionSymbolicChecker.run(context, setOfTargets)
         }
 
-        if (minimization) {
-            Minimizer(containers, context.cm, analysisLevel).execute()
+        if (kexConfig.getBooleanValue("kex", "minimization", false)) {
+            Minimizer(containers, context.cm, analysisLevel).execute(true, "symbolic")
+        } else {
+            reportCoverage(containers, context.cm, analysisLevel, "symbolic")
         }
-
-        reportCoverage(containers, context.cm, analysisLevel, "symbolic")
     }
 }
