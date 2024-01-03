@@ -51,8 +51,9 @@ class InstructionGraph : Viewable {
         fun distanceToUncovered(
             targets: Set<Method>,
             initialStackTrace: PersistentList<Pair<Instruction?, Method>>
-        ): Int {
-            var minDistance = Int.MAX_VALUE
+        ): Pair<Int, Int> {
+            var minTargetDistance = Int.MAX_VALUE
+            var minUncoveredDistance = Int.MAX_VALUE
 
             val distances = mutableMapOf<Vertex, Int>()
             distances[this] = 0
@@ -61,9 +62,12 @@ class InstructionGraph : Viewable {
                 val (current, stackTrace) = queue.poll()
                 val currentDistance = distances[current]!!
 
-                if (!current.covered && current.instruction.parent.method in targets) {
-                    if (currentDistance < minDistance) {
-                        minDistance = currentDistance
+                if (!current.covered) {
+                    if (currentDistance < minUncoveredDistance) {
+                        minUncoveredDistance = currentDistance
+                    }
+                    if (current.instruction.parent.method in targets && currentDistance < minTargetDistance) {
+                        minTargetDistance = currentDistance
                     }
                     continue
                 }
@@ -136,7 +140,7 @@ class InstructionGraph : Viewable {
 //                        return graphNodes.values.toList()
 //                    }
 //            }.view()
-            return minDistance
+            return minTargetDistance to minUncoveredDistance
         }
     }
 
