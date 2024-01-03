@@ -26,6 +26,7 @@ import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.collection.dequeOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
@@ -196,6 +197,8 @@ class StaticFieldWDescriptorInliner(
         }
     }
 
+    private val Term.isEnum get() = (this.type.getKfgType(ctx.cm.type) as? ClassType)?.klass?.isEnum ?: false
+
     override fun apply(ps: PredicateState): PredicateState = `try` {
         val staticFields = TermCollector.getFullTermSet(ps)
             .asSequence()
@@ -203,7 +206,7 @@ class StaticFieldWDescriptorInliner(
             .mapNotNullTo(mutableSetOf()) {
                 val field = it.field as FieldTerm
                 tryOrNull { field.unmappedKfgField(ctx.cm) }?.let { kfgField ->
-                    if (kfgField.isStatic && kfgField.isFinal) {
+                    if (kfgField.isStatic && kfgField.isFinal && !field.isEnum) {
                         kfgField
                     } else {
                         null
