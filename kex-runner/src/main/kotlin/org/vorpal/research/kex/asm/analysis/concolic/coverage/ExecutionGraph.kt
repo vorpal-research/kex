@@ -253,6 +253,7 @@ class CandidateState(
     val stackTrace: PersistentList<Pair<Instruction?, Method>>
 ) {
     val nextInstruction: Instruction?
+    var score: Long = 0L
 
     init {
         val cm = method.cm
@@ -374,7 +375,7 @@ class ExecutionGraph(
     val instructionGraph = InstructionGraph()
 
     inner class CandidateSet(val ctx: ExecutionContext) : Iterable<CandidateState> {
-        private var isValid = true
+        private var isValid = false
         private var totalScore: Long = 0L
         private val candidates = Collections.newSetFromMap(concurrentMapOf<CandidateState, Boolean>())
 
@@ -384,12 +385,15 @@ class ExecutionGraph(
 
         fun addAll(newCandidates: Collection<CandidateState>) {
             candidates.addAll(newCandidates)
-            newCandidates.forEach { totalScore += it.score() }
+            newCandidates.forEach { totalScore += it.score }
         }
 
         private fun remove(candidateState: CandidateState) {
             if (candidates.remove(candidateState)) {
-                totalScore -= candidateState.score()
+                totalScore -= candidateState.score
+                if (totalScore < 0L) {
+                    val a = 10
+                }
             }
         }
 
@@ -399,7 +403,10 @@ class ExecutionGraph(
 
         private fun recomputeScores() {
             totalScore = 0L
-            candidates.forEach { totalScore += it.score() }
+            candidates.forEach {
+                it.recomputeScore()
+                totalScore += it.score
+            }
             isValid = true
         }
 
@@ -412,7 +419,7 @@ class ExecutionGraph(
             val random = ctx.random.nextLong(totalScore)
             var current = 0L
             for (state in candidates) {
-                current += state.score()
+                current += state.score
                 if (random < current) {
                     remove(state)
                     return state
@@ -432,10 +439,10 @@ class ExecutionGraph(
     private val scores = mutableMapOf<CandidateState, Long>()
     private val coverage = mutableMapOf<CandidateState, Set<Instruction>>()
 
-    private fun CandidateState.score(): Long {
-        var score = 0L
+    private fun CandidateState.recomputeScore() {
+        var newScore = 0L
         if (nextInstruction != null) {
-            score += 1L
+            newScore += 1L
 
             val scaleDistance = { distance: Int ->
                 val normalizedDistance = exp(-0.5 * (distance.toDouble() / SIGMA).pow(2))
@@ -444,8 +451,8 @@ class ExecutionGraph(
 
             val (targetDistance, uncoveredDistance) = instructionGraph.getVertex(nextInstruction)
                 .distanceToUncovered(targets, stackTrace)
-            score += scaleDistance(targetDistance)
-            score += scaleDistance(uncoveredDistance) / 10L
+            newScore += scaleDistance(targetDistance)
+            newScore += scaleDistance(uncoveredDistance) / 10L
 
 //            targetDistances[this] = targetDistance
 //            scaledTargetDistances[this] = scaleDistance(targetDistance)
@@ -454,7 +461,7 @@ class ExecutionGraph(
 //            scores[this] = score
 //            coverage[this] = coverageAll.toSet()
         }
-        return score
+        score = newScore
     }
 
     fun evaluatePerformance(method: Method, candidate: CandidateState?, executionResult: ExecutionCompletedResult) {
