@@ -31,6 +31,7 @@ import org.vorpal.research.kex.state.transformer.Optimizer
 import org.vorpal.research.kex.state.transformer.RecursiveInliner
 import org.vorpal.research.kex.state.transformer.ReflectionInfoAdapter
 import org.vorpal.research.kex.state.transformer.Slicer
+import org.vorpal.research.kex.state.transformer.StaticFieldWDescriptorInliner
 import org.vorpal.research.kex.state.transformer.StensgaardAA
 import org.vorpal.research.kex.state.transformer.StringMethodAdapter
 import org.vorpal.research.kex.state.transformer.TermCollector
@@ -101,6 +102,7 @@ class AsyncChecker(
         +BoolTypeAdapter(method.cm.type)
         +ClassMethodAdapter(method.cm)
         +ConstEnumAdapter(ctx)
+        +StaticFieldWDescriptorInliner(ctx)
         +ConstStringAdapter(method.cm.type)
         +StringMethodAdapter(ctx.cm)
         +ConcolicArrayLengthAdapter()
