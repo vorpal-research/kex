@@ -18,11 +18,7 @@ import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Value
-import org.vorpal.research.kfg.ir.value.instruction.CallInst
-import org.vorpal.research.kfg.ir.value.instruction.CatchInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
-import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
-import org.vorpal.research.kthelper.assert.ktassert
 
 enum class PathClauseType {
     NULL_CHECK,
@@ -382,38 +378,6 @@ class PersistentSymbolicState(
     override val concreteValues: @Contextual PersistentMap<Term, @Contextual Descriptor>,
     override val termMap: @Contextual PersistentMap<Term, @Contextual WrappedValue>,
 ) : SymbolicState() {
-
-    val stackTrace: PersistentList<Pair<Instruction?, Method>> by lazy {
-        buildList<Pair<Instruction?, Method>> {
-            var previousInstruction: Instruction? = null
-            for (clause in clauses) {
-                val currentInstruction = clause.instruction
-                val currentMethod = currentInstruction.parent.method
-                when (currentInstruction) {
-                    currentMethod.body.entry.first() -> {
-                        add(previousInstruction to currentMethod)
-                    }
-
-                    is CallInst -> {
-                        previousInstruction = currentInstruction
-                    }
-
-                    is ReturnInst -> {
-                        ktassert(last().second == currentMethod)
-                        removeLast()
-                    }
-
-                    is CatchInst -> {
-                        ktassert(isNotEmpty())
-                        while (last().second != currentMethod) {
-                            removeLast()
-                            ktassert(isNotEmpty())
-                        }
-                    }
-                }
-            }
-        }.reversed().toPersistentList()
-    }
 
     override fun toString() = clauses.joinToString("\n") { it.predicate.toString() }
 

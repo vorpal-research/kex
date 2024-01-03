@@ -32,7 +32,6 @@ import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
-import org.vorpal.research.kex.util.view
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
@@ -108,7 +107,6 @@ class InstructionConcolicChecker(
                     }.awaitAll()
                 }
             }
-            (selectorManager as CoverageGuidedSelectorManager).executionGraph.instructionGraph.view()
         }
     }
 

@@ -1,6 +1,8 @@
 package org.vorpal.research.kex.asm.analysis.concolic.coverage
 
 import com.jetbrains.rd.util.concurrentMapOf
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.toPersistentList
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
@@ -35,7 +37,9 @@ import org.vorpal.research.kfg.ir.value.IntConstant
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CatchInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
 import org.vorpal.research.kfg.nullptrClass
@@ -145,8 +149,9 @@ class PathVertex(
     val pathType: PathClauseType,
     instruction: Instruction
 ) : Vertex(pathType.name, instruction) {
-    val states = concurrentMapOf<PersistentClauseList, MutableSet<PersistentSymbolicState>>()
-    private val visitedPrefixes = Collections.newSetFromMap(concurrentMapOf<PersistentClauseList, Boolean>())
+    val states = hashMapOf<PersistentClauseList, MutableSet<PersistentSymbolicState>>()
+    private val visitedPrefixes =
+        hashSetOf<PersistentClauseList>()//Collections.newSetFromMap(concurrentMapOf<PersistentClauseList, Boolean>())
 
     fun addStateAndProduceCandidates(
         ctx: ExecutionContext,
@@ -154,7 +159,7 @@ class PathVertex(
     ): List<PersistentSymbolicState> {
         val prefix = state.clauses.dropLast(1)
         val condition = state.path.last()
-        val prefixStates = states.getOrPut(prefix, ::mutableSetOf).also {
+        val prefixStates = states.getOrPut(prefix, ::hashSetOf).also {
             it += state
         }
         return when (prefix) {
@@ -224,9 +229,12 @@ class PathVertex(
     }
 }
 
-private fun PersistentSymbolicState.findExceptionHandlerInst(type: Type): Instruction? {
+private fun PersistentSymbolicState.findExceptionHandlerInst(
+    type: Type,
+    stateStackTrace: PersistentList<Pair<Instruction?, Method>>
+): Instruction? {
     val currentClause = path.last()
-    val stackTrace = listOf(currentClause.instruction) + stackTrace.mapNotNull { it.first }
+    val stackTrace = listOf(currentClause.instruction) + stateStackTrace.mapNotNull { it.first }
     var result: Instruction? = null
     stackTrace@ for (inst in stackTrace) {
         for (handler in inst.parent.handlers) {
@@ -241,7 +249,8 @@ private fun PersistentSymbolicState.findExceptionHandlerInst(type: Type): Instru
 
 class CandidateState(
     val method: Method,
-    val state: PersistentSymbolicState
+    val state: PersistentSymbolicState,
+    val stackTrace: PersistentList<Pair<Instruction?, Method>>
 ) {
     val nextInstruction: Instruction?
 
@@ -250,18 +259,18 @@ class CandidateState(
         val currentClause = state.path.last()
         nextInstruction = when (currentClause.type) {
             PathClauseType.NULL_CHECK -> when (currentClause.predicate.operands[1].boolValue) {
-                true -> state.findExceptionHandlerInst(cm.nullptrClass.asType)
+                true -> state.findExceptionHandlerInst(cm.nullptrClass.asType, stackTrace)
                 false -> currentClause.instruction.next
             }
 
             PathClauseType.TYPE_CHECK -> when (currentClause.predicate.operands[1].boolValue) {
                 true -> currentClause.instruction.next
-                false -> state.findExceptionHandlerInst(cm.classCastClass.asType)
+                false -> state.findExceptionHandlerInst(cm.classCastClass.asType, stackTrace)
             }
 
             PathClauseType.BOUNDS_CHECK -> when (currentClause.predicate.operands[1].boolValue) {
                 true -> currentClause.instruction.next
-                false -> state.findExceptionHandlerInst(cm.arrayIndexOOBClass.asType)
+                false -> state.findExceptionHandlerInst(cm.arrayIndexOOBClass.asType, stackTrace)
             }
 
             PathClauseType.OVERLOAD_CHECK -> {
@@ -396,6 +405,9 @@ class ExecutionGraph(
 
         fun nextCandidate(): CandidateState {
             if (!isValid) recomputeScores()
+            if (totalScore == 0L) {
+                return candidates.first().also { remove(it) }
+            }
 
             val random = ctx.random.nextLong(totalScore)
             var current = 0L
@@ -412,8 +424,11 @@ class ExecutionGraph(
 
     val coverageAll = mutableSetOf<Instruction>()
 
-    private val distances = mutableMapOf<CandidateState, Int>()
-    private val scaledDistances = mutableMapOf<CandidateState, Long>()
+    private val targetDistances = mutableMapOf<CandidateState, Int>()
+    private val scaledTargetDistances = mutableMapOf<CandidateState, Long>()
+
+    private val uncoveredDistances = mutableMapOf<CandidateState, Int>()
+    private val scaledUncoveredDistances = mutableMapOf<CandidateState, Long>()
     private val scores = mutableMapOf<CandidateState, Long>()
     private val coverage = mutableMapOf<CandidateState, Set<Instruction>>()
 
@@ -421,20 +436,28 @@ class ExecutionGraph(
         var score = 0L
         if (nextInstruction != null) {
             score += 1L
-            val distance = instructionGraph.getVertex(nextInstruction).distanceToUncovered(targets, state.stackTrace)
-            val normalizedDistance = exp(-0.5 * (distance.toDouble() / SIGMA).pow(2))
-            val scaledDistance = (normalizedDistance * DEFAULT_SCORE).toLong()
-            score += scaledDistance
 
-            distances[this] = distance
-            scaledDistances[this] = scaledDistance
-            scores[this] = score
-            coverage[this] = coverageAll.toSet()
+            val scaleDistance = { distance: Int ->
+                val normalizedDistance = exp(-0.5 * (distance.toDouble() / SIGMA).pow(2))
+                (normalizedDistance * DEFAULT_SCORE).toLong()
+            }
+
+            val (targetDistance, uncoveredDistance) = instructionGraph.getVertex(nextInstruction)
+                .distanceToUncovered(targets, stackTrace)
+            score += scaleDistance(targetDistance)
+            score += scaleDistance(uncoveredDistance) / 10L
+
+//            targetDistances[this] = targetDistance
+//            scaledTargetDistances[this] = scaleDistance(targetDistance)
+//            uncoveredDistances[this] = uncoveredDistance
+//            scaledUncoveredDistances[this] = scaleDistance(uncoveredDistance) / 10L
+//            scores[this] = score
+//            coverage[this] = coverageAll.toSet()
         }
         return score
     }
 
-    fun evaluatePerformance(method: Method, candidate: CandidateState?, executionResult: ExecutionCompletedResult) = synchronized(instructionGraph) {
+    fun evaluatePerformance(method: Method, candidate: CandidateState?, executionResult: ExecutionCompletedResult) {
         val overallCoverageIncrease = executionResult.trace.count { !instructionGraph.getVertex(it).covered }
         val targetCoverageIncrease = executionResult.trace.filter { it.parent.method in targets }
             .count { !instructionGraph.getVertex(it).covered }
@@ -455,12 +478,19 @@ class ExecutionGraph(
             loopInfo.count { inst.parent in it.body }
         } ?: 0
 
+        if (candidate?.state?.path?.lastOrNull()?.type != null
+            && targetDistances[candidate] == 0 && overallCoverageIncrease == 0) {
+            val a = 10
+        }
+
         log.debug(
             "COVERAGE STATS *" +
-            "${method}\t" +
+                    "${method}\t" +
                     "${candidate?.state?.path?.lastOrNull()}\t" +
-                    "${distances[candidate] ?: Int.MAX_VALUE}\t" +
-                    "${scaledDistances[candidate] ?: DEFAULT_SCORE}\t" +
+                    "${targetDistances[candidate] ?: Int.MAX_VALUE}\t" +
+                    "${scaledTargetDistances[candidate] ?: DEFAULT_SCORE}\t" +
+                    "${uncoveredDistances[candidate] ?: Int.MAX_VALUE}\t" +
+                    "${scaledUncoveredDistances[candidate] ?: DEFAULT_SCORE}\t" +
                     "${scores[candidate] ?: 0.0}\t" +
                     "${candidate?.state?.path?.last()?.type}\t" +
                     "${candidate?.nextInstruction?.javaClass}\t" +
@@ -475,50 +505,76 @@ class ExecutionGraph(
         )
     }
 
-    fun addTrace(method: Method, candidate: CandidateState?, executionResult: ExecutionCompletedResult) =
-        synchronized(instructionGraph) {
-//            evaluatePerformance(method, candidate, executionResult)
-            coverageAll += executionResult.trace
-            instructionGraph.addTrace(executionResult.trace)
-            var prevVertex = root
-            var clauseIndex = 0
-            var pathIndex = 0
-            val symbolicState = executionResult.symbolicState.toPersistentState()
-            for (clause in symbolicState.clauses) {
-                ++clauseIndex
-                if (clause is PathClause) ++pathIndex
+    fun addTrace(method: Method, candidate: CandidateState?, executionResult: ExecutionCompletedResult) {
+//        evaluatePerformance(method, candidate, executionResult)
+//        coverageAll += executionResult.trace
+        instructionGraph.addTrace(executionResult.trace)
+        var prevVertex = root
+        var clauseIndex = 0
+        var pathIndex = 0
+        val symbolicState = executionResult.symbolicState.toPersistentState()
 
-                val type = when (clause) {
-                    is PathClause -> clause.type.toString()
-                    else -> Vertex.STATE
-                }
-                val currentVertex = innerNodes.getOrPut(type to clause.instruction) {
-                    candidates.invalidate()
-                    when (clause) {
-                        is PathClause -> PathVertex(clause.type, clause.instruction)
-                        else -> StateVertex(clause.instruction)
-                    }
+        var previousInstruction: Instruction? = null
+        val stackTrace = mutableListOf<Pair<Instruction?, Method>>()
+
+        for (clause in symbolicState.clauses) {
+            // stack trace building part
+            val currentInstruction = clause.instruction
+            val currentMethod = currentInstruction.parent.method
+            when (currentInstruction) {
+                currentMethod.body.entry.first() -> {
+                    stackTrace += previousInstruction to currentMethod
                 }
 
-                if (clause is PathClause) {
-                    currentVertex as PathVertex
-                    candidates.addAll(
-                        currentVertex.addStateAndProduceCandidates(
-                            ctx, persistentSymbolicState(
-                                symbolicState.clauses.subState(0, clauseIndex),
-                                symbolicState.path.subPath(0, pathIndex),
-                                symbolicState.concreteTypes,
-                                symbolicState.concreteValues,
-                                symbolicState.termMap
-                            )
-                        ).mapTo(mutableSetOf()) { CandidateState(method, it) }
-                    )
+                is CallInst -> {
+                    previousInstruction = currentInstruction
                 }
 
-                prevVertex.linkDown(currentVertex)
-                prevVertex = currentVertex
+                is ReturnInst -> stackTrace.removeLast()
+                is CatchInst -> while (stackTrace.last().second != currentMethod) {
+                    stackTrace.removeLast()
+                }
             }
+
+            // candidate states calculation part
+            ++clauseIndex
+            // TODO: limit number of states
+//                if (clauseIndex > 10_000) break
+            if (clause is PathClause) ++pathIndex
+
+            val type = when (clause) {
+                is PathClause -> clause.type.toString()
+                else -> Vertex.STATE
+            }
+            val currentVertex = innerNodes.getOrPut(type to clause.instruction) {
+                candidates.invalidate()
+                when (clause) {
+                    is PathClause -> PathVertex(clause.type, clause.instruction)
+                    else -> StateVertex(clause.instruction)
+                }
+            }
+
+            if (clause is PathClause) {
+                currentVertex as PathVertex
+                val currentStackTrace = stackTrace.reversed().toPersistentList()
+
+                candidates.addAll(
+                    currentVertex.addStateAndProduceCandidates(
+                        ctx, persistentSymbolicState(
+                            symbolicState.clauses.subState(0, clauseIndex),
+                            symbolicState.path.subPath(0, pathIndex),
+                            symbolicState.concreteTypes,
+                            symbolicState.concreteValues,
+                            symbolicState.termMap
+                        )
+                    ).mapTo(mutableSetOf()) { CandidateState(method, it, currentStackTrace) }
+                )
+            }
+
+            prevVertex.linkDown(currentVertex)
+            prevVertex = currentVertex
         }
+    }
 
     override val graphView: List<GraphView>
         get() {
