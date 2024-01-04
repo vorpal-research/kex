@@ -17,7 +17,8 @@ class InstructionSymbolicChecker(
     ctx: ExecutionContext,
     rootMethod: Method,
 ) : SymbolicTraverser(ctx, rootMethod) {
-    override val pathSelector: SymbolicPathSelector = DequePathSelector()
+    override val pathSelector: SymbolicPathSelector = NSubpathPathSelector(2)
+//    override val pathSelector: SymbolicPathSelector = DequePathSelector()
     override val callResolver: SymbolicCallResolver = DefaultCallResolver(ctx)
     override val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
 
