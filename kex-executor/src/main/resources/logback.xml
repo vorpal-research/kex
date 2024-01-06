@@ -3,7 +3,7 @@
 <configuration>
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>[%-5p][%method:%line] - %m%n</pattern>
+            <pattern>[%-5p] - %m%n</pattern>
         </encoder>
     </appender>
     <appender name="kexSiftingFileLogger" class="ch.qos.logback.classic.sift.SiftingAppender">
@@ -16,7 +16,7 @@
                 <file>${kex-run-id}</file>
                 <append>true</append>
                 <encoder>
-                    <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c][%method:%line] - %m%n</pattern>
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p][%c] - %m%n</pattern>
                 </encoder>
             </appender>
         </sift>
