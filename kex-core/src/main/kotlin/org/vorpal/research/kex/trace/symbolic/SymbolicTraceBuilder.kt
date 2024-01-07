@@ -177,7 +177,13 @@ class SymbolicTraceBuilder(
 
     override fun toString() = "$clauses"
 
-    private fun String.toType() = parseDescOrNull(cm.type, this)!!
+    private fun String.toType(): Type = parseDescOrNull(cm.type, this)!!.let {
+        if (it.name.contains(filteredSubstring)) {
+            it.name.removeMockitoMockSuffix().toType().also { log.debug { "Prevented mockito mock type: $it" } }
+        } else {
+            it
+        }
+    }
 
     private fun safeCall(body: () -> Unit) = `try` {
         body()
@@ -1248,7 +1254,7 @@ class SymbolicTraceBuilder(
         val kfgType = parseStringToType(cm.type, realType)
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
-            if (checkedType.isSubtypeOfCached(kfgType)) return@safeCall
+            if (checkedType.isSubtypeOfCached(kfgType) || checkedType.sameButMockito(kfgType)) return@safeCall
         }
         typeChecked[termValue] = kfgType
 //        log.debug { "WOW. concreteValue: $concreteValue\n descriptorValue: $descriptorValue\n kfgType: $kfgType\nrealType: $realType" }
@@ -1285,7 +1291,7 @@ class SymbolicTraceBuilder(
         if (kfgValue is NullConstant) return@safeCall
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
-            if (checkedType.isSubtypeOfCached(expectedKfgType)) return@safeCall
+            if (checkedType.isSubtypeOfCached(expectedKfgType) || checkedType.sameButMockito(expectedKfgType)) return@safeCall
         }
         typeChecked[termValue] = expectedKfgType
 
@@ -1296,15 +1302,6 @@ class SymbolicTraceBuilder(
         processPath(PathClauseType.TYPE_CHECK, instruction, predicate)
         stateBuilder += PathClause(PathClauseType.TYPE_CHECK, instruction, predicate)
     }
-
-    fun String.removeMockitoMockSuffix(): String = if (!contains("\$MockitoMock\$")) {
-        this
-    } else {
-        val suffixIndex = indexOf("\$MockitoMock\$")
-        removeRange(suffixIndex, length)
-    }
-
-    fun Type.sameButMockito(expectedKfgType: Type) = name.removeMockitoMockSuffix() == expectedKfgType.name
 
     override fun addArrayIndexConstraints(
         inst: String,

@@ -9,7 +9,6 @@ import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.runIf
 
 
@@ -265,7 +264,6 @@ class ExecutorAS2JavaPrinter(
             is ReflectionList -> printReflectionListDeclarations(owner, result)
             is MockSequence -> printMockSequenceDeclarations(owner, result)
             else -> {
-                log.warn { "Printing declarations for unsupported action sequence may break test. Unsupported AS: $owner" }
                 owner.printAsJava()
             }
         }
@@ -314,7 +312,6 @@ class ExecutorAS2JavaPrinter(
         is ReflectionList -> printReflectionListInsides(owner, result)
         is MockSequence -> printMockSequenceInsides(owner, result)
         else -> {
-            log.warn { "Printing insides for unsupported action sequence may break test. Unsupported AS: $owner" }
             owner.printAsJava()
         }
     }

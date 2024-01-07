@@ -126,11 +126,16 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
     }
 }
 
-fun String.removeMockitoMockSuffix(): CharSequence = if (!contains("\$MockitoMock\$")) {
-    this
-} else {
-    val suffixIndex = indexOf("\$MockitoMock\$")
-    removeRange(suffixIndex, length)
+const val filteredSubstring = "\$MockitoMock\$"
+
+fun String.removeMockitoMockSuffix(): String {
+    return if (!contains(filteredSubstring)) {
+        this
+    } else {
+        log.debug { "MOCKITO_MOCK FIX. value: $this" }
+        val suffixIndex = indexOf(filteredSubstring)
+        removeRange(suffixIndex, length)
+    }
 }
 
 fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
@@ -170,11 +175,14 @@ private object SubTypeInfoCache {
     private val subtypeCache = LRUCache<Pair<String, String>, Boolean>(100_000U)
     fun check(lhv: Type, rhv: Type): Boolean {
         val key = lhv.toString() to rhv.toString()
-        return subtypeCache[key] ?: lhv.isSubtypeOf(rhv, outerClassBehavior = false).also {
+        return subtypeCache[key] ?: (lhv.isSubtypeOf(rhv, outerClassBehavior = false) || lhv.sameButMockito(rhv)).also {
             subtypeCache[key] = it
         }
     }
 }
+
+fun Type.sameButMockito(expectedKfgType: Type) =
+    name.removeMockitoMockSuffix() == expectedKfgType.name.removeMockitoMockSuffix()
 
 fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, other)
 
