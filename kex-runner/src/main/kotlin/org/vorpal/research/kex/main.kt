@@ -79,9 +79,15 @@ fun main(args: Array<String>) {
                         LibraryCheckLauncher(classPaths, targetName, libraryTarget)
                     }
 
-                    LaunchMode.Symbolic -> SymbolicLauncher(classPaths, targetName)
-                    LaunchMode.Concolic -> ConcolicLauncher(classPaths, targetName)
-                    LaunchMode.DefectChecker -> DefectCheckerLauncher(classPaths, targetName)
+                    LaunchMode.Symbolic -> {
+                        SymbolicLauncher(classPaths, targetName)
+                    }
+                    LaunchMode.Concolic -> {
+                        ConcolicLauncher(classPaths, targetName)
+                    }
+                    LaunchMode.DefectChecker -> {
+                        DefectCheckerLauncher(classPaths, targetName)
+                    }
                     else -> unreachable("")
                 }
             }

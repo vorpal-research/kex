@@ -57,6 +57,7 @@ class RunnerCmdConfig(args: Array<String>) : AbstractCmdConfig("kex-runner", arg
     }")
     mode.isRequired = false
     options += mode
+
     options
 })
 
