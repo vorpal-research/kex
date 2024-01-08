@@ -15,6 +15,7 @@ import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
@@ -156,7 +157,7 @@ private fun Descriptor.replaceWithMock(
         } else {
             log.warn { "Strange descriptor to mock. Expected ObjectDescriptor. Got: $descriptor" }
             MockDescriptor(descriptor.term, descriptor.type as KexClass, klass.methods)
-        }
+        }.also { log.debug { "Created mock descriptor for ${it.term}" } }
         visited.add(descriptor)
         descriptorToMock[descriptor] = mock
         mock.insertMocks(types, descriptorToMock, visited)
@@ -205,6 +206,7 @@ fun setupMocks(
     for ((callPredicate, value) in methodCalls) {
         val call = callPredicate.call as CallTerm
         val mock = termToDescriptor[call.owner]?.let { descriptorToMock[it] ?: it }
+        mock ?: log.warn { "No mock for $call" }
         if (mock is MockDescriptor) {
             mock.addReturnValue(call.method, value)
         }
