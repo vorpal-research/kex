@@ -2,23 +2,35 @@ package org.vorpal.research.kex.asm.analysis.concolic.coverage
 
 import info.leadinglight.jdot.enums.Color
 import kotlinx.collections.immutable.PersistentList
+import org.vorpal.research.kex.asm.manager.instantiationManager
+import org.vorpal.research.kex.asm.util.AccessModifier
+import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
+import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
+import org.vorpal.research.kex.ktype.KexRtManager.rtUnmapped
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
 import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.BranchInst
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CallOpcode
 import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
 import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.ir.value.instruction.TerminateInst
 import org.vorpal.research.kthelper.assert.ktassert
+import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.graph.GraphView
 import org.vorpal.research.kthelper.graph.Viewable
+import org.vorpal.research.kthelper.tryOrNull
 
 
-class InstructionGraph : Viewable {
+@Suppress("MemberVisibilityCanBePrivate")
+class InstructionGraph(
+    val targets: Set<Method>
+) : Viewable {
     private val nodes = mutableMapOf<Instruction, Vertex>()
 
     var covered = 0
@@ -108,38 +120,6 @@ class InstructionGraph : Viewable {
                     }
                 }
             }
-//            object : Viewable {
-//                override val graphView: List<GraphView>
-//                    get() {
-//                        val graphNodes = mutableMapOf<Vertex, GraphView>()
-//
-//                        var i = 0
-//                        for (vertex in nodes.values) {
-//                            graphNodes[vertex] = GraphView("${i++}", "$vertex".replace("\"", "\\\"")) {
-//                                val color = when {
-//                                    vertex == this@Vertex -> Color.X11.blue
-//                                    vertex.instruction.parent.method in targets -> when {
-//                                        vertex.covered -> Color.X11.green
-//                                        else -> Color.X11.red
-//                                    }
-//                                    else -> Color.X11.black
-//                                }
-//                                it.setColor(color)
-//                            }
-//                        }
-//
-//                        for (vertex in nodes.values) {
-//                            val current = graphNodes.getValue(vertex)
-//                            for (child in vertex.downEdges) {
-//                                current.addSuccessor(graphNodes.getValue(child)) {
-//                                    it.setLabel(distances[child]?.toString() ?: "")
-//                                }
-//                            }
-//                        }
-//
-//                        return graphNodes.values.toList()
-//                    }
-//            }.view()
             return minTargetDistance to minUncoveredDistance
         }
     }
@@ -151,23 +131,76 @@ class InstructionGraph : Viewable {
             val method = instruction.parent.method
             ktassert(instruction == method.body.entry.first())
 
-            val queue = queueOf<Pair<Vertex?, BasicBlock>>()
-            queue += null to method.body.entry
-            queue.addAll(method.body.catchEntries.map { null to it })
-            val visited = mutableSetOf<Pair<Instruction?, BasicBlock>>()
+            val queue = queueOf<Triple<Vertex?, BasicBlock, Int>>()
+            queue += Triple(null, method.body.entry, 0)
+            queue.addAll(method.body.catchEntries.map { Triple(null, it, 0) })
+            val visited = mutableSetOf<Pair<Instruction?, Instruction>>()
+            val resolves = mutableMapOf<Instruction, List<Method>>()
+
             while (queue.isNotEmpty()) {
-                var (prev, block) = queue.poll()
-                if (prev?.instruction to block in visited) continue
-                visited += prev?.instruction to block
+                val (prev, block, index) = queue.poll()
+                val current = block.instructions[index]
+                if (prev?.instruction to current in visited) continue
+                visited += prev?.instruction to current
 
-                for (inst in block) {
-                    val vertex = nodes.getOrPut(inst) { Vertex(inst) }
-                    prev?.linkDown(vertex)
-                    prev = vertex
+                val vertex = nodes.getOrPut(current) { Vertex(current) }
+                prev?.linkDown(vertex)
+
+                when (current) {
+                    is CallInst -> {
+                        val resolvedMethods = resolves.getOrPut(current) {
+                            when (current.opcode) {
+                                CallOpcode.STATIC -> listOf(current.method)
+                                CallOpcode.SPECIAL -> listOf(current.method)
+                                CallOpcode.INTERFACE, CallOpcode.VIRTUAL -> {
+                                    val currentMethod = current.method
+
+                                    val targetPackages = targets.map { it.klass.pkg }.toSet()
+
+                                    val retTypeMapped = currentMethod.returnType.rtMapped
+                                    val argTypesMapped = currentMethod.argTypes.mapToArray { it.rtMapped }
+                                    val retTypeUnmapped = currentMethod.returnType.rtUnmapped
+                                    val argTypesUnmapped = currentMethod.argTypes.mapToArray { it.rtUnmapped }
+                                    instantiationManager.getAllConcreteSubtypes(
+                                        currentMethod.klass,
+                                        AccessModifier.Private
+                                    )
+                                        .filter { klass -> targetPackages.any { it.isParent(klass.pkg) } }
+                                        .mapNotNullTo(mutableSetOf()) {
+                                            tryOrNull {
+                                                if (it.isKexRt) {
+                                                    it.getMethod(currentMethod.name, retTypeMapped, *argTypesMapped)
+                                                } else {
+                                                    it.getMethod(currentMethod.name, retTypeUnmapped, *argTypesUnmapped)
+                                                }
+                                            }
+                                        }
+                                        .filter { it.hasBody }
+                                }
+                            }.filter { it.hasBody }
+                        }
+                        for (candidate in resolvedMethods) {
+                            queue += Triple(vertex, candidate.body.entry, 0)
+                            queue.addAll(candidate.body.catchEntries.map { Triple(null, it, 0) })
+
+                            candidate.body.flatten().filterIsInstance<ReturnInst>().forEach {
+                                val returnVertex = nodes.getOrPut(it) { Vertex(it) }
+                                queue += Triple(returnVertex, block, index + 1)
+                            }
+                        }
+                        if (resolvedMethods.isEmpty()) {
+                            queue += Triple(vertex, block, index + 1)
+                        }
+                    }
+
+                    is TerminateInst -> current.successors.forEach {
+                        queue += Triple(vertex, it, 0)
+                    }
+
+                    else -> queue += Triple(vertex, block, index + 1)
                 }
-
-                queue.addAll(block.successors.map { prev to it })
             }
+
             return nodes.getOrPut(instruction) { Vertex(instruction) }
         }
     }
