@@ -275,7 +275,11 @@ data class PersistentPathCondition(
 }
 
 @Serializable
-data class WrappedValue(val method: @Contextual Method, val value: @Contextual Value)
+data class WrappedValue(
+    val method: @Contextual Method,
+    val depth: Int,
+    val value: @Contextual Value
+)
 
 @Serializable
 abstract class SymbolicState {

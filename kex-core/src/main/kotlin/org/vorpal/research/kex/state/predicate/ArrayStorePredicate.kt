@@ -25,7 +25,7 @@ class ArrayStorePredicate(
     val componentType: KexType
         get() = (arrayRef.type as? KexReference)?.reference ?: unreachable { log.error("Non-array type of array ref") }
 
-    override fun print() = "*($arrayRef) = $value"
+    override fun print() = "*($arrayRef) := $value"
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Predicate {
         val ref = t.transform(arrayRef)
