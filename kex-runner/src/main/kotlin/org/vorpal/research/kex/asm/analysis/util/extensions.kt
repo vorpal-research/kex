@@ -99,8 +99,10 @@ suspend fun Method.checkAsync(
         )
 
         val (withMocks, descriptorToMock) = initialDescriptors.generateInitialMocks(ctx.types)
-        val methodCalls = methodCalls(state, termToDescriptor, descriptorToMock)
-        setupMocks(methodCalls, termToDescriptor, descriptorToMock)
+        if (descriptorToMock.isNotEmpty()) {
+            val methodCalls = methodCalls(state, termToDescriptor, descriptorToMock)
+            setupMocks(methodCalls, termToDescriptor, descriptorToMock)
+        }
 
 
         withMocks
