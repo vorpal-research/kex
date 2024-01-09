@@ -3,11 +3,12 @@ package org.vorpal.research.kex.jacoco.minimization
 import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.container.Container
+import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
 
 class TestCoverageInfo(
     val testName: Path,
-    val satisfize: List<Int>
+    val satisfies: List<Int>
 ) {
 }
 
@@ -22,8 +23,8 @@ class Minimizer(
     private val analysisLevel: AnalysisLevel
 ) {
     fun execute(report: Boolean = false, mode: String = "symbolic") {
-        val testWiseCoverage = TestwiseCoverage(jar)
-        val testCoverage = testWiseCoverage.execute(analysisLevel)
+        val testWiseCoverageReporter = TestwiseCoverageReporter(jar)
+        val testCoverage = testWiseCoverageReporter.execute(analysisLevel)
         val excessTests = GreedyTestReductionImpl(testCoverage).minimized()
 
         for (classPath in excessTests) {
@@ -31,10 +32,12 @@ class Minimizer(
             if (classFile.exists()) {
                 classFile.delete()
             } else {
-                org.vorpal.research.kthelper.logging.log.error("nonexistent class in Minimizer: $classFile")
+                log.error("nonexistent class in Minimizer: $classFile")
             }
         }
 
-        if (report) { testWiseCoverage.reportCoverage(cm, analysisLevel, mode) }
+        if (report) {
+            testWiseCoverageReporter.reportCoverage(cm, analysisLevel, mode)
+        }
     }
 }
