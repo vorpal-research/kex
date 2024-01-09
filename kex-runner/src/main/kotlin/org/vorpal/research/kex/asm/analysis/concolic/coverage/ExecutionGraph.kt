@@ -1,6 +1,5 @@
 package org.vorpal.research.kex.asm.analysis.concolic.coverage
 
-import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 import org.vorpal.research.kex.ExecutionContext
@@ -50,11 +49,10 @@ import org.vorpal.research.kthelper.graph.GraphView
 import org.vorpal.research.kthelper.graph.PredecessorGraph
 import org.vorpal.research.kthelper.graph.Viewable
 import org.vorpal.research.kthelper.logging.log
-import java.util.*
 import kotlin.math.exp
 import kotlin.math.pow
 
-private fun Predicate.reverseBoolCond() = when (this) {
+fun Predicate.reverseBoolCond() = when (this) {
     is EqualityPredicate -> predicate(this.type, this.location) {
         lhv equality !(rhv as ConstBoolTerm).value
     }
@@ -66,7 +64,7 @@ private fun Predicate.reverseBoolCond() = when (this) {
     else -> unreachable { log.error("Unexpected predicate in bool cond: $this") }
 }
 
-private fun Predicate.reverseSwitchCond(
+fun Predicate.reverseSwitchCond(
     predecessors: Set<PersistentSymbolicState>,
     branches: Map<Value, BasicBlock>
 ): List<Predicate> = when (this) {
@@ -146,12 +144,11 @@ class StateVertex(
 ) : Vertex(STATE, instruction)
 
 class PathVertex(
-    val pathType: PathClauseType,
+    pathType: PathClauseType,
     instruction: Instruction
 ) : Vertex(pathType.name, instruction) {
-    val states = hashMapOf<PersistentClauseList, MutableSet<PersistentSymbolicState>>()
-    private val visitedPrefixes =
-        hashSetOf<PersistentClauseList>()//Collections.newSetFromMap(concurrentMapOf<PersistentClauseList, Boolean>())
+    private val states = hashMapOf<PersistentClauseList, MutableSet<PersistentSymbolicState>>()
+    private val visitedPrefixes = hashSetOf<PersistentClauseList>()
 
     fun addStateAndProduceCandidates(
         ctx: ExecutionContext,
@@ -234,9 +231,10 @@ private fun PersistentSymbolicState.findExceptionHandlerInst(
     stateStackTrace: PersistentList<Pair<Instruction?, Method>>
 ): Instruction? {
     val currentClause = path.last()
-    val stackTrace = listOf(currentClause.instruction) + stateStackTrace.mapNotNull { it.first }
+    val stackTrace = stateStackTrace.mapNotNullTo(mutableListOf()) { it.first }
+    stackTrace.add(currentClause.instruction)
     var result: Instruction? = null
-    stackTrace@ for (inst in stackTrace) {
+    stackTrace@ for (inst in stackTrace.asReversed()) {
         for (handler in inst.parent.handlers) {
             if (type.isSubtypeOfCached(handler.exception)) {
                 result = handler.first()
@@ -349,9 +347,10 @@ class CandidateState(
 }
 
 
+// TODO: add concurrency support
 class ExecutionGraph(
     val ctx: ExecutionContext,
-    val targets: Set<Method>
+    private val targets: Set<Method>
 ) : PredecessorGraph<Vertex>, Viewable {
 
     companion object {
@@ -360,10 +359,10 @@ class ExecutionGraph(
     }
 
     private val root: Vertex = StateVertex(ctx.cm.instruction.getUnreachable(EmptyUsageContext))
-    private val innerNodes = concurrentMapOf<Pair<String, Instruction>, Vertex>().also {
+    private val innerNodes = hashMapOf<Pair<String, Instruction>, Vertex>().also {
         it["STATE" to root.instruction] = root
     }
-
+    private val instructionGraph = InstructionGraph(targets)
     val candidates = CandidateSet(ctx)
 
     override val entry: Vertex
@@ -372,12 +371,10 @@ class ExecutionGraph(
     override val nodes: Set<Vertex>
         get() = innerNodes.values.toSet()
 
-    val instructionGraph = InstructionGraph()
-
     inner class CandidateSet(val ctx: ExecutionContext) : Iterable<CandidateState> {
         private var isValid = false
         private var totalScore: Long = 0L
-        private val candidates = Collections.newSetFromMap(concurrentMapOf<CandidateState, Boolean>())
+        private val candidates = hashSetOf<CandidateState>()
 
         override fun iterator(): Iterator<CandidateState> = candidates.iterator()
 
@@ -391,9 +388,6 @@ class ExecutionGraph(
         private fun remove(candidateState: CandidateState) {
             if (candidates.remove(candidateState)) {
                 totalScore -= candidateState.score
-                if (totalScore < 0L) {
-                    val a = 10
-                }
             }
         }
 
@@ -429,16 +423,6 @@ class ExecutionGraph(
         }
     }
 
-    val coverageAll = mutableSetOf<Instruction>()
-
-    private val targetDistances = mutableMapOf<CandidateState, Int>()
-    private val scaledTargetDistances = mutableMapOf<CandidateState, Long>()
-
-    private val uncoveredDistances = mutableMapOf<CandidateState, Int>()
-    private val scaledUncoveredDistances = mutableMapOf<CandidateState, Long>()
-    private val scores = mutableMapOf<CandidateState, Long>()
-    private val coverage = mutableMapOf<CandidateState, Set<Instruction>>()
-
     private fun CandidateState.recomputeScore() {
         var newScore = 0L
         if (nextInstruction != null) {
@@ -449,72 +433,16 @@ class ExecutionGraph(
                 (normalizedDistance * DEFAULT_SCORE).toLong()
             }
 
-            val (targetDistance, uncoveredDistance) = instructionGraph.getVertex(nextInstruction)
+            val (targetDistance, _) = instructionGraph.getVertex(nextInstruction)
                 .distanceToUncovered(targets, stackTrace)
             newScore += scaleDistance(targetDistance)
-            newScore += scaleDistance(uncoveredDistance) / 10L
-
-//            targetDistances[this] = targetDistance
-//            scaledTargetDistances[this] = scaleDistance(targetDistance)
-//            uncoveredDistances[this] = uncoveredDistance
-//            scaledUncoveredDistances[this] = scaleDistance(uncoveredDistance) / 10L
-//            scores[this] = score
-//            coverage[this] = coverageAll.toSet()
+//            newScore += scaleDistance(uncoveredDistance) / 10L
         }
         score = newScore
     }
 
-    fun evaluatePerformance(method: Method, candidate: CandidateState?, executionResult: ExecutionCompletedResult) {
-        val overallCoverageIncrease = executionResult.trace.count { !instructionGraph.getVertex(it).covered }
-        val targetCoverageIncrease = executionResult.trace.filter { it.parent.method in targets }
-            .count { !instructionGraph.getVertex(it).covered }
-
-        val oldCoverage = coverage[candidate] ?: emptySet()
-        val oldCoverageIncrease = executionResult.trace.count { it !in oldCoverage }
-        val nextInstWasCovered = candidate?.nextInstruction?.let { it in oldCoverage } ?: false
-        val nextInstNowCovered = candidate?.nextInstruction?.let { it in executionResult.trace } ?: false
-
-
-        val relativeOverallCoverageIncrease = overallCoverageIncrease.toDouble() / instructionGraph.covered
-        val relativeTargetCoverageIncrease =
-            targetCoverageIncrease.toDouble() / targets.flatMap { it.body.bodyBlocks.flatMap { it.instructions } }
-                .count { instructionGraph.getVertex(it).covered }
-
-        val inLoop = candidate?.nextInstruction?.let { inst ->
-            val loopInfo = inst.parent.method.getLoopInfo()
-            loopInfo.count { inst.parent in it.body }
-        } ?: 0
-
-        if (candidate?.state?.path?.lastOrNull()?.type != null
-            && targetDistances[candidate] == 0 && overallCoverageIncrease == 0) {
-            val a = 10
-        }
-
-        log.debug(
-            "COVERAGE STATS *" +
-                    "${method}\t" +
-                    "${candidate?.state?.path?.lastOrNull()}\t" +
-                    "${targetDistances[candidate] ?: Int.MAX_VALUE}\t" +
-                    "${scaledTargetDistances[candidate] ?: DEFAULT_SCORE}\t" +
-                    "${uncoveredDistances[candidate] ?: Int.MAX_VALUE}\t" +
-                    "${scaledUncoveredDistances[candidate] ?: DEFAULT_SCORE}\t" +
-                    "${scores[candidate] ?: 0.0}\t" +
-                    "${candidate?.state?.path?.last()?.type}\t" +
-                    "${candidate?.nextInstruction?.javaClass}\t" +
-                    "${inLoop}\t" +
-                    "${overallCoverageIncrease}\t" +
-                    "${targetCoverageIncrease}\t" +
-                    "${relativeOverallCoverageIncrease}\t" +
-                    "${relativeTargetCoverageIncrease}\t" +
-                    "${oldCoverageIncrease}\t" +
-                    "${nextInstWasCovered}\t" +
-                    "${nextInstNowCovered}\t"
-        )
-    }
-
+    @Suppress("UNUSED_PARAMETER")
     fun addTrace(method: Method, candidate: CandidateState?, executionResult: ExecutionCompletedResult) {
-//        evaluatePerformance(method, candidate, executionResult)
-//        coverageAll += executionResult.trace
         instructionGraph.addTrace(executionResult.trace)
         var prevVertex = root
         var clauseIndex = 0
@@ -563,7 +491,7 @@ class ExecutionGraph(
 
             if (clause is PathClause) {
                 currentVertex as PathVertex
-                val currentStackTrace = stackTrace.reversed().toPersistentList()
+                val currentStackTrace = stackTrace.toPersistentList()
 
                 candidates.addAll(
                     currentVertex.addStateAndProduceCandidates(
