@@ -11,7 +11,7 @@ private class Test(
 }
 
 private class Requirement {
-    private val satisfyTests: MutableList<Path> =mutableListOf<Path>()
+    private val satisfyTests = mutableListOf<Path>()
     private var visited = false
 
     fun addTest(testName: Path) {
@@ -20,22 +20,22 @@ private class Requirement {
 
     fun visit(tests: MutableMap<Path, Test>) {
         if (visited) return
-        satisfyTests.forEach{ tests[it]!!.power-- }
+        satisfyTests.forEach { tests[it]!!.power-- }
         visited = true
     }
 }
 
-class GreedyTestReductionImpl   (
+class GreedyTestReductionImpl(
     testCoverage: TestwiseCoverageInfo
-) :TestReduction{
-    private var tests: MutableMap<Path, Test> = mutableMapOf()
-    private var requirements: MutableMap<Int, Requirement> = mutableMapOf()
+) : TestReduction {
+    private var tests = mutableMapOf<Path, Test>()
+    private var requirements = mutableMapOf<Int, Requirement>()
 
     init {
-        testCoverage.req.forEach{ requirements[it] = Requirement() }
+        testCoverage.req.forEach { requirements[it] = Requirement() }
         for (test in testCoverage.tests) {
-            tests[test.testName] = Test(test.satisfize)
-            for (requirement in test.satisfize)
+            tests[test.testName] = Test(test.satisfies)
+            for (requirement in test.satisfies)
                 requirements[requirement]!!.addTest(test.testName)
         }
     }
