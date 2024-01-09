@@ -54,6 +54,7 @@ sealed class Descriptor(term: Term, type: KexType) {
         }
 
     val query: PredicateState get() = collectQuery(mutableSetOf())
+    val initializerState: PredicateState get() = collectInitializerState(mutableSetOf())
     val depth: Int get() = countDepth(setOf(), mutableMapOf())
 
     val typeInfo: PredicateState get() = generateTypeInfo(mutableSetOf())
@@ -67,6 +68,7 @@ sealed class Descriptor(term: Term, type: KexType) {
     abstract fun print(map: MutableMap<Descriptor, String>): String
     abstract fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean
     abstract fun collectQuery(set: MutableSet<Descriptor>): PredicateState
+    abstract fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState
 
     abstract fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int
     abstract fun concretize(
@@ -105,6 +107,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality null }
         }
 
+        override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState = basic {
+            state { term equality null }
+        }
+
         override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>) =
             other is Null
     }
@@ -114,6 +120,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
             require { term equality value }
+        }
+
+        override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState = basic {
+            state { term equality value }
         }
 
         override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
@@ -129,6 +139,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
+        override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState = basic {
+            state { term equality value }
+        }
+
         override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
             if (other !is Byte) return false
             return this.value == other.value
@@ -140,6 +154,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
             require { term equality value }
+        }
+
+        override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState = basic {
+            state { term equality value }
         }
 
         override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
@@ -155,6 +173,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
+        override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState = basic {
+            state { term equality value }
+        }
+
         override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
             if (other !is Short) return false
             return this.value == other.value
@@ -166,6 +188,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
             require { term equality value }
+        }
+
+        override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState = basic {
+            state { term equality value }
         }
 
         override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
@@ -181,6 +207,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
+        override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState = basic {
+            state { term equality value }
+        }
+
         override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
             if (other !is Long) return false
             return this.value == other.value
@@ -194,6 +224,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             require { term equality value }
         }
 
+        override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState = basic {
+            state { term equality value }
+        }
+
         override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
             if (other !is Float) return false
             return this.value == other.value
@@ -205,6 +239,10 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
 
         override fun collectQuery(set: MutableSet<Descriptor>): PredicateState = basic {
             require { term equality value }
+        }
+
+        override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState = basic {
+            state { term equality value }
         }
 
         override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
@@ -279,6 +317,19 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
                 val fieldTerm = term.field(field.second, field.first)
                 append(value.collectQuery(set))
                 require { fieldTerm.load() equality value.term }
+            }
+        }
+    }
+
+    override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState {
+        if (this in set) return emptyState()
+        set += this
+        return basic {
+            state { term.initializeNew() }
+            for ((field, value) in fields) {
+                val fieldTerm = term.field(field.second, field.first)
+                append(value.collectInitializerState(set))
+                state { fieldTerm.initialize(value.term) }
             }
         }
     }
@@ -480,6 +531,16 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
                 require { term[index].load() equality element.term }
             }
             require { term.length() equality const(length) }
+        }
+    }
+
+    override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState {
+        if (this in set) return emptyState()
+        set += this
+        return basic {
+            val fullElements = (0 until length).map { elements[it] ?: descriptor { default(elementType) } }
+            fullElements.forEach { append(it.collectInitializerState(set)) }
+            state { term.initializeNew(length, fullElements.map { it.term }) }
         }
     }
 

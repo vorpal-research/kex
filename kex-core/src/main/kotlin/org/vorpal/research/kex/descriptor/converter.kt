@@ -64,7 +64,7 @@ class Object2DescriptorConverter : DescriptorBuilder() {
                 is LongArray -> KexLong.asArray()
                 is FloatArray -> KexFloat.asArray()
                 is DoubleArray -> KexDouble.asArray()
-                is Array<*> -> any.javaClass.componentType.kex
+                is Array<*> -> any.javaClass.componentType.kex.asArray()
                 is String -> KexString()
                 else -> any.javaClass.kex
             }

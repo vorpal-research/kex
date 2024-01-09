@@ -24,6 +24,7 @@ import org.vorpal.research.kex.state.transformer.KexRtAdapter
 import org.vorpal.research.kex.state.transformer.NewFieldInitializer
 import org.vorpal.research.kex.state.transformer.Optimizer
 import org.vorpal.research.kex.state.transformer.RecursiveInliner
+import org.vorpal.research.kex.state.transformer.StaticFieldWDescriptorInliner
 import org.vorpal.research.kex.state.transformer.StringMethodAdapter
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
@@ -84,6 +85,7 @@ class AsyncIncrementalChecker(
         +BoolTypeAdapter(method.cm.type)
         +ClassMethodAdapter(method.cm)
         +ConstEnumAdapter(ctx)
+        +StaticFieldWDescriptorInliner(ctx)
         +ConstStringAdapter(method.cm.type)
         +StringMethodAdapter(ctx.cm)
         +ConcolicArrayLengthAdapter()
