@@ -179,16 +179,18 @@ class InstructionGraph(
                                 }
                             }.filter { it.hasBody }
                         }
+                        var connectedExits = false
                         for (candidate in resolvedMethods) {
                             queue += Triple(vertex, candidate.body.entry, 0)
                             queue.addAll(candidate.body.catchEntries.map { Triple(null, it, 0) })
 
                             candidate.body.flatten().filterIsInstance<ReturnInst>().forEach {
+                                connectedExits = true
                                 val returnVertex = nodes.getOrPut(it) { Vertex(it) }
                                 queue += Triple(returnVertex, block, index + 1)
                             }
                         }
-                        if (resolvedMethods.isEmpty()) {
+                        if (!connectedExits) {
                             queue += Triple(vertex, block, index + 1)
                         }
                     }
