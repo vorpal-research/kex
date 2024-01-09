@@ -431,6 +431,7 @@ class KSMTSolver(
         }
 
         val indices = hashSetOf<Term>()
+        val coveredArrays = hashSetOf<Term>()
         for (ptr in ptrs) {
             val memspace = ptr.memspace
 
@@ -550,10 +551,13 @@ class KSMTSolver(
                         val maxLen = maxOf(initialLength, finalLength)
                         properties[memspace]!!["length"]!!.first[modelPtr] = term { const(initialLength) }
                         properties[memspace]!!["length"]!!.second[modelPtr] = term { const(finalLength) }
-                        for (i in 0 until maxLen) {
-                            val indexTerm = term { ptr[i] }
-                            if (indexTerm !in ptrs)
-                                indices += indexTerm
+                        if (modelPtr !in coveredArrays) {
+                            coveredArrays += modelPtr
+                            for (i in 0 until maxLen) {
+                                val indexTerm = term { ptr[i] }
+                                if (indexTerm !in ptrs)
+                                    indices += indexTerm
+                            }
                         }
                     } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
                         properties.recoverBitvectorProperty(

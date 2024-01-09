@@ -7,10 +7,16 @@ import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kfg.ir.Method
 
-interface ConcolicPathSelector : SuspendableIterator<PersistentSymbolicState> {
+interface ConcolicPathSelectorManager {
+    val ctx: ExecutionContext
+    val targets: Set<Method>
+    fun createPathSelectorFor(target: Method): ConcolicPathSelector
+}
+
+interface ConcolicPathSelector : SuspendableIterator<Pair<Method, PersistentSymbolicState>> {
     val ctx: ExecutionContext
 
     suspend fun isEmpty(): Boolean
-    suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult)
+    suspend fun addExecutionTrace(method: Method, checkedState: PersistentSymbolicState, result: ExecutionCompletedResult)
     fun reverse(pathClause: PathClause): PathClause?
 }

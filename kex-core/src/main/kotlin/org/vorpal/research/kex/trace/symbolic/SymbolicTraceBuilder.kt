@@ -6,18 +6,72 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.asTermExpr
 import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
-import org.vorpal.research.kex.descriptor.*
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexInteger
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexReal
+import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.ConstStringTerm
+import org.vorpal.research.kex.state.term.NullTerm
+import org.vorpal.research.kex.state.term.StaticClassRefTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.TermRenamer
 import org.vorpal.research.kex.util.*
-import org.vorpal.research.kfg.ir.*
-import org.vorpal.research.kfg.ir.value.*
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kfg.ir.BasicBlock
+import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.ConcreteClass
+import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.ir.MethodDescriptor
+import org.vorpal.research.kfg.ir.value.Argument
+import org.vorpal.research.kfg.ir.value.Constant
+import org.vorpal.research.kfg.ir.value.NameMapperContext
+import org.vorpal.research.kfg.ir.value.NullConstant
+import org.vorpal.research.kfg.ir.value.ThisRef
+import org.vorpal.research.kfg.ir.value.Value
+import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
+import org.vorpal.research.kfg.ir.value.instruction.BranchInst
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CastInst
+import org.vorpal.research.kfg.ir.value.instruction.CatchInst
+import org.vorpal.research.kfg.ir.value.instruction.CmpInst
+import org.vorpal.research.kfg.ir.value.instruction.EnterMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.ExitMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.Handle
+import org.vorpal.research.kfg.ir.value.instruction.InstanceOfInst
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
+import org.vorpal.research.kfg.ir.value.instruction.JumpInst
+import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
+import org.vorpal.research.kfg.ir.value.instruction.NewInst
+import org.vorpal.research.kfg.ir.value.instruction.PhiInst
+import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
+import org.vorpal.research.kfg.ir.value.instruction.UnaryInst
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.parseDescOrNull
@@ -337,7 +391,6 @@ class SymbolicTraceBuilder(
             is KexClass -> type
             else -> this
         }
-
         else -> this
     }
 
@@ -399,6 +452,7 @@ class SymbolicTraceBuilder(
             for ((value, term) in method.parameterValues.asList.zip(call.params.asList)) {
                 valueMap[value] = term
             }
+            stateBuilder += StateClause(call.call, state { true equality true })
             lastCall = null
         } else {
             if (!traceCollectingEnabled) return@safeCall
@@ -665,9 +719,10 @@ class SymbolicTraceBuilder(
             predicate
         )
 
-        /**
-         * we do not use 'postProcess' here, because actual call predicate may not end up in the final state
-         */
+//        postProcess(instruction, state { true equality true })
+//        /**
+//         * we do not use 'postProcess' here, because actual call predicate may not end up in the final state
+//         */
         traceBuilder += instruction
         updateCatches(instruction)
     }
@@ -965,8 +1020,10 @@ class SymbolicTraceBuilder(
          * we do not use 'postProcess' here because jump instruction is not converted into any predicate
          */
         previousBlock = instruction.parent
-        traceBuilder += instruction
-        updateCatches(instruction)
+
+        postProcess(instruction, state { true equality true })
+//        traceBuilder += instruction
+//        updateCatches(instruction)
     }
 
     override fun newArray(
@@ -1075,14 +1132,10 @@ class SymbolicTraceBuilder(
             terms[termReceiver] = kfgReceiver.wrapped()
             concreteTypeMap[termReceiver] = concreteValue.getConcreteType(termReceiver.type)
 
-            stateBuilder += StateClause(instruction, predicate)
+            postProcess(instruction, predicate)
+        } else {
+            postProcess(instruction, state { true equality true })
         }
-
-        /**
-         * we do not use 'postProcess' here because return inst is not always converted into predicate
-         */
-        traceBuilder += instruction
-        updateCatches(instruction)
     }
 
     private fun numericValue(value: Any?): Number = when (value) {
@@ -1247,21 +1300,16 @@ class SymbolicTraceBuilder(
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
-        log.warn { "\nkfgValue: $kfgValue\ntermValue: $termValue" }
-        val descriptorValue = concreteValue.getAsDescriptor()
-        val realType = descriptorValue.type.name.removeMockitoMockSuffix()
-        log.debug { "decriptorValue type: ${descriptorValue.type.name}, realType: $realType" }
-        val kfgType = parseStringToType(cm.type, realType)
+        val concreteType = concreteValue.getConcreteType(termValue.type)
+        val kfgType = concreteType.getKfgType(ctx.types)
         if (termValue in typeChecked) {
             val checkedType = typeChecked.getValue(termValue)
             if (checkedType.isSubtypeOfCached(kfgType) || checkedType.sameButMockito(kfgType)) return@safeCall
         }
         typeChecked[termValue] = kfgType
-//        log.debug { "WOW. concreteValue: $concreteValue\n descriptorValue: $descriptorValue\n kfgType: $kfgType\nrealType: $realType" }
-//        log.debug { "CHECK: kfgType.kexType: ${kfgType.kexType}" }
 
         val predicate = path {
-            (termValue `is` kfgType.kexType) equality true
+            (termValue `is` concreteType) equality true
         }
 
         processPath(PathClauseType.OVERLOAD_CHECK, instruction, predicate)
@@ -1282,8 +1330,7 @@ class SymbolicTraceBuilder(
         val comparisonResult = when (concreteValue) {
             null -> false
             else -> {
-                val descriptorValue = concreteValue.getAsDescriptor()
-                val actualKfgType = descriptorValue.type.getKfgType(ctx.types)
+                val actualKfgType = concreteValue.getConcreteType(termValue.type).getKfgType(ctx.types)
                 // TODO: fix "...$MockitoMock$..." classes on the terms/descriptors generation
                 actualKfgType.isSubtypeOfCached(expectedKfgType) || actualKfgType.sameButMockito(expectedKfgType)
             }

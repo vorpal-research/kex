@@ -15,30 +15,43 @@ import org.jacoco.core.runtime.RuntimeData
 import org.junit.runner.Result
 import org.junit.runner.notification.RunListener
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.jacoco.*
+import org.vorpal.research.kex.jacoco.ClassCoverageInfo
+import org.vorpal.research.kex.jacoco.CommonCoverageInfo
+import org.vorpal.research.kex.jacoco.CoverageInfo
+import org.vorpal.research.kex.jacoco.CoverageUnit
+import org.vorpal.research.kex.jacoco.GenericCoverageInfo
+import org.vorpal.research.kex.jacoco.MethodCoverageInfo
+import org.vorpal.research.kex.jacoco.PackageCoverageInfo
 import org.vorpal.research.kex.launcher.AnalysisLevel
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.launcher.MethodLevel
 import org.vorpal.research.kex.launcher.PackageLevel
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.util.PermanentCoverageInfo
+import org.vorpal.research.kex.util.asArray
+import org.vorpal.research.kex.util.asmString
+import org.vorpal.research.kex.util.compiledCodeDirectory
+import org.vorpal.research.kex.util.deleteOnExit
+import org.vorpal.research.kex.util.javaString
+import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
 import java.util.stream.Collectors
-import kotlin.io.path.*
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.name
+import kotlin.io.path.readBytes
+import kotlin.io.path.relativeTo
+import kotlin.io.path.writeBytes
 
-class TestwiseCoverage(
+class TestwiseCoverageReporter(
     containers: List<Container> = listOf()
 ) {
     private val jacocoInstrumentedDir = kexConfig.outputDirectory.resolve(
@@ -92,35 +105,10 @@ class TestwiseCoverage(
         return result
     }
 
-    private fun List<Path>.batchByTime(step: Duration = 1.seconds): SortedMap<Duration, List<Path>> {
-        if (this.isEmpty()) return sortedMapOf()
-        val ordered = this.map {
-            val attr = Files.readAttributes(it, BasicFileAttributes::class.java)
-            it to attr.creationTime().toMillis().milliseconds
-        }.sortedBy { it.second }
-        val startTime = ordered.first().second
-        val endTime = ordered.last().second + 1.seconds
-        val batches = mutableMapOf(
-            0.seconds to emptyList<Path>()
-        )
-        var nextTime = startTime + step
-        for ((index, file) in ordered.withIndex()) {
-            if (file.second > nextTime) {
-                batches[nextTime - startTime] = ordered.subList(0, index).map { it.first }
-                nextTime += step
-            }
-        }
-        while (nextTime <= endTime) {
-            batches[nextTime - startTime] = ordered.map { it.first }
-            nextTime += step
-        }
-        return batches.toSortedMap()
-    }
-
     @Suppress("unused")
     class TestLogger : RunListener() {
         override fun testRunFinished(result: Result) {
-            org.vorpal.research.kthelper.logging.log.info(buildString {
+            log.info(buildString {
                 appendLine("Result:")
                 appendLine("run count ${result.runCount}")
                 appendLine("ignore count ${result.ignoreCount}")
@@ -143,7 +131,7 @@ class TestwiseCoverage(
         for (testPath in testClasses) {
             if (testPath.toString().endsWith("ReflectionUtils.class", ignoreCase = true)) continue
             val runtime = LoggerRuntime()
-            originalClasses = mutableMapOf<Path, ByteArray>()
+            originalClasses = mutableMapOf()
             for (classPath in classes) {
                 originalClasses[classPath] = classPath.readBytes()
                 val instrumented = classPath.inputStream().use {
@@ -157,25 +145,18 @@ class TestwiseCoverage(
             val data = RuntimeData()
             runtime.startup(data)
 
-            if (logProgress) org.vorpal.research.kthelper.logging.log.debug("Running tests...")
+            if (logProgress) log.debug("Running tests...")
             val classLoader = PathClassLoader(listOf(jacocoInstrumentedDir, compileDir))
             val testClassName = testPath.fullyQualifiedName(compileDir)
             val testClass = classLoader.loadClass(testClassName)
-            if (logProgress) org.vorpal.research.kthelper.logging.log.debug("Running test $testClassName")
+            if (logProgress) log.debug("Running test $testClassName")
             val jcClass = classLoader.loadClass("org.junit.runner.JUnitCore")
             val jc = jcClass.newInstance()
-//            if (kexConfig.getBooleanValue("testGen", "logJUnit", false)) {
-//                jcClass.getMethod("addListener", classLoader.loadClass("org.junit.runner.notification.RunListener"))
-//                    .invoke(jc, classLoader.loadClass("org.vorpal.research.kex."))
-//
-//                jc.addListener(TestLogger())
-//            }
             val computerClass = classLoader.loadClass("org.junit.runner.Computer")
             jcClass.getMethod("run", computerClass, Class::class.java.asArray())
                 .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
-//            jc.run(Computer(), testClass)
 
-            if (logProgress) org.vorpal.research.kthelper.logging.log.debug("Analyzing Coverage...")
+            if (logProgress) log.debug("Analyzing Coverage...")
             val executionData = ExecutionDataStore()
             val sessionInfos = SessionInfoStore()
             data.collect(executionData, sessionInfos, false)
@@ -241,7 +222,7 @@ class TestwiseCoverage(
             MethodCoverageInfo::class.java -> MethodCoverageInfo(name, insts, brs, lines, complexities)
             ClassCoverageInfo::class.java -> ClassCoverageInfo(name, insts, brs, lines, complexities)
             PackageCoverageInfo::class.java -> PackageCoverageInfo(name, insts, brs, lines, complexities)
-            else -> unreachable { org.vorpal.research.kthelper.logging.log.error("Unknown common coverage info class ${T::class.java}") }
+            else -> unreachable { log.error("Unknown common coverage info class ${T::class.java}") }
         } as T
     }
 
@@ -297,56 +278,6 @@ class TestwiseCoverage(
             }
             return parent?.loadClass(name) ?: throw ClassNotFoundException()
         }
-    }
-
-    private fun computeSaturationCoverage(
-        cm: ClassManager,
-        analysisLevel: AnalysisLevel,
-    ): SortedMap<Duration, CommonCoverageInfo> {
-        val testClasses = Files.walk(compileDir).filter { it.isClass }.collect(Collectors.toList())
-        val batchedTestClasses = testClasses.batchByTime()
-        val maxTime = batchedTestClasses.lastKey()
-        return when (analysisLevel) {
-            is PackageLevel -> {
-                val classes = Files.walk(jacocoInstrumentedDir)
-                    .filter { it.isClass }
-                    .filter {
-                        analysisLevel.pkg.isParent(
-                            it.fullyQualifiedName(jacocoInstrumentedDir)
-                                .asmString
-                        )
-                    }
-                    .collect(Collectors.toList())
-                batchedTestClasses.mapValues { (duration, _) ->
-                    org.vorpal.research.kthelper.logging.log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
-                    val coverageBuilder = getCoverageBuilder(classes)
-                    getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
-                }
-            }
-
-            is ClassLevel -> {
-                val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                batchedTestClasses.mapValues { (duration, _) ->
-                    org.vorpal.research.kthelper.logging.log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
-                    val coverageBuilder = getCoverageBuilder(
-                        listOf(jacocoInstrumentedDir.resolve("$klass.class"))
-                    )
-                    getClassCoverage(cm, coverageBuilder).first()
-                }
-            }
-
-            is MethodLevel -> {
-                val method = analysisLevel.method
-                val klass = method.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                batchedTestClasses.mapValues { (duration, _) ->
-                    org.vorpal.research.kthelper.logging.log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
-                    val coverageBuilder = getCoverageBuilder(
-                        listOf(jacocoInstrumentedDir.resolve("$klass.class"))
-                    )
-                    getMethodCoverage(coverageBuilder, method)!!
-                }
-            }
-        }.toSortedMap()
     }
 
     private val String.fullyQualifiedName: String
@@ -429,22 +360,9 @@ class TestwiseCoverage(
         mode: String
     ) {
         if (kexConfig.getBooleanValue("kex", "computeCoverage", true)) {
-            val coverageInfo = when {
-                kexConfig.getBooleanValue("kex", "computeSaturationCoverage", true) -> {
-                    val saturationCoverage = computeSaturationCoverage(cm, analysisLevel)
-                    PermanentSaturationCoverageInfo.putNewInfo(
-                        "concolic",
-                        analysisLevel.toString(),
-                        saturationCoverage.toList()
-                    )
-                    PermanentSaturationCoverageInfo.emit()
-                    saturationCoverage[saturationCoverage.lastKey()]!!
-                }
+            val coverageInfo = getCommonCoverage(cm, analysisLevel)
 
-                else -> getCommonCoverage(cm, analysisLevel)
-            }
-
-            org.vorpal.research.kthelper.logging.log.info(
+            log.info(
                 coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
             )
 
