@@ -117,7 +117,7 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
             "L${
                 valueName.removeSuffix(".class").removeMockitoMockSuffix()
             };"
-        ).also{log.debug{"MOCKITO_MOCK FIX. value: $it"}}
+        )
 
         valueName == "null" -> values.nullConstant
         valueName == "true" -> values.trueConstant
@@ -126,14 +126,15 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
     }
 }
 
-const val filteredSubstring = "\$MockitoMock\$"
 
+const val SUBSTRING_TO_FILTER_FROM_TYPE = "\$MockitoMock\$"
 fun String.removeMockitoMockSuffix(): String {
-    return if (!contains(filteredSubstring)) {
+    val suffixIndex = lastIndexOf(SUBSTRING_TO_FILTER_FROM_TYPE)
+    return if (suffixIndex == -1) {
         this
     } else {
-        log.debug { "MOCKITO_MOCK FIX. value: $this" }
-        val suffixIndex = indexOf(filteredSubstring)
+        log.debug { "MOCKITO_MOCK FIX. value: $this. Stack trace:" }
+//        log.debug(Thread.currentThread().stackTrace.joinToString("\n"))
         removeRange(suffixIndex, length)
     }
 }
@@ -146,7 +147,7 @@ fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
 
 
 fun parseAsConcreteType(typeFactory: TypeFactory, name: String): KexType? {
-    val type = parseStringToType(typeFactory, name)
+    val type = parseStringToType(typeFactory, name.removeMockitoMockSuffix())
     return when {
         type.isConcrete -> type.kexType
         else -> null
@@ -181,7 +182,7 @@ private object SubTypeInfoCache {
     }
 }
 
-fun Type.sameButMockito(expectedKfgType: Type) =
+private fun Type.sameButMockito(expectedKfgType: Type) =
     name.removeMockitoMockSuffix() == expectedKfgType.name.removeMockitoMockSuffix()
 
 fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, other)
