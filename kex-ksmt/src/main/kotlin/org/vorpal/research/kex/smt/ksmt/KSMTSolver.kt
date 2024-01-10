@@ -239,20 +239,21 @@ class KSMTSolver(
         else -> state
     }
 
-    private fun stringify(state: Bool_, query: Bool_, softConstraints: List<Bool_> = emptyList()): String = KZ3Solver(ef.ctx).use {
-        it.assert(state.asAxiom() as KExpr<KBoolSort>)
-        it.assert(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
-        it.assert(query.axiom as KExpr<KBoolSort>)
-        it.assert(query.expr as KExpr<KBoolSort>)
-        for (softConstraint in softConstraints) {
-            it.assert(softConstraint.asAxiom() as KExpr<KBoolSort>)
-        }
+    private fun stringify(state: Bool_, query: Bool_, softConstraints: List<Bool_> = emptyList()): String =
+        KZ3Solver(ef.ctx).use {
+            it.assert(state.asAxiom() as KExpr<KBoolSort>)
+            it.assert(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
+            it.assert(query.axiom as KExpr<KBoolSort>)
+            it.assert(query.expr as KExpr<KBoolSort>)
+            for (softConstraint in softConstraints) {
+                it.assert(softConstraint.asAxiom() as KExpr<KBoolSort>)
+            }
 
-        val solverProp = KZ3Solver::class.declaredMemberProperties.first { prop -> prop.name == "solver" }
-        solverProp.isAccessible = true
-        val z3SolverInternal = solverProp.get(it) as com.microsoft.z3.Solver
-        z3SolverInternal.toString()
-    }
+            val solverProp = KZ3Solver::class.declaredMemberProperties.first { prop -> prop.name == "solver" }
+            solverProp.isAccessible = true
+            val z3SolverInternal = solverProp.get(it) as com.microsoft.z3.Solver
+            z3SolverInternal.toString()
+        }
 
     private suspend fun check(state: Bool_, query: Bool_): Pair<KSolverStatus, Any> = runSolver { solver ->
         if (logFormulae) {
