@@ -7,7 +7,7 @@ import sys
 import os.path
 
 KEX_VERSION = "0.0.1"
-HEAP_MEMORY_SIZE = "8g"
+HEAP_MEMORY_SIZE = "12g"
 STACK_MEMORY_SIZE = "1g"
 
 MODULES_FILE = os.path.join("runtime-deps", "modules.info")
