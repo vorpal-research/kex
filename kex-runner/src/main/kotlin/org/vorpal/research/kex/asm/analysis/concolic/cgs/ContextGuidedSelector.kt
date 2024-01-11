@@ -94,7 +94,7 @@ class ContextGuidedSelector(
 
         val currentStateState = currentState.context.symbolicState
         val stateSize = currentStateState.clauses.indexOf(currentState.activeClause)
-        val state = currentStateState.clauses.subState(0, stateSize)
+        val state = currentStateState.clauses.subState(stateSize)
 
         return method to persistentSymbolicState(
             state,

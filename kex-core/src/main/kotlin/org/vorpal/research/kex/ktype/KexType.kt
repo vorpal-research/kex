@@ -307,12 +307,6 @@ object KexVoid : KexType() {
         get() = throw IllegalAccessError("Trying to get bit size of void")
 
     override fun getKfgType(types: TypeFactory): Type = types.voidType
-
-    override fun hashCode() = name.hashCode()
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return other is KexVoid
-    }
 }
 
 fun KexType.unMemspaced() = when (this) {
