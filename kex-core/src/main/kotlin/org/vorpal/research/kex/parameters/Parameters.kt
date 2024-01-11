@@ -134,7 +134,7 @@ private fun Descriptor.insertMocks(
     }
 }
 
-private fun Descriptor.isMockable(types: TypeFactory): Boolean {
+fun Descriptor.isMockable(types: TypeFactory): Boolean {
     val klass = (type.getKfgType(types) as? ClassType)?.klass
     return klass != null && !instantiationManager.isInstantiable(klass) && !type.isKexRt && this is ObjectDescriptor
 }

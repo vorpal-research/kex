@@ -6,7 +6,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExceptionPrecondition
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.util.AccessModifier
-import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
@@ -23,6 +23,7 @@ import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
@@ -72,6 +73,23 @@ fun methodCalls(
         .toList()
 }
 
+
+fun Descriptor.requireMocks(visited: MutableSet<Descriptor>, types: TypeFactory): Boolean {
+    if (this in visited) return false
+    if (isMockable(types)) return true
+    visited += this
+
+    fun Descriptor.requireMocks(): Boolean = this.requireMocks(visited, types)
+    return when (this) {
+        is ConstantDescriptor -> false
+
+        is MockDescriptor -> fields.values.any { it.requireMocks() } || allReturns.any { it.requireMocks() }
+        is ClassDescriptor -> fields.values.any { it.requireMocks() }
+        is ObjectDescriptor -> fields.values.any { it.requireMocks() }
+        is ArrayDescriptor -> elements.values.any { it.requireMocks() }
+    }
+}
+
 suspend fun Method.checkAsync(
     ctx: ExecutionContext,
     state: SymbolicState,
@@ -98,14 +116,19 @@ suspend fun Method.checkAsync(
             checker.state
         )
 
-        val (withMocks, descriptorToMock) = initialDescriptors.generateInitialMocks(ctx.types)
-        if (descriptorToMock.isNotEmpty()) {
-            val methodCalls = methodCalls(state, termToDescriptor, descriptorToMock)
-            setupMocks(methodCalls, termToDescriptor, descriptorToMock)
+        val visited = mutableSetOf<Descriptor>()
+        val finalDescriptors = if (initialDescriptors.asList.any { it.requireMocks(visited, ctx.types) }) {
+            val (withMocks, descriptorToMock) = initialDescriptors.generateInitialMocks(ctx.types)
+            if (descriptorToMock.isNotEmpty()) {
+                val methodCalls = methodCalls(state, termToDescriptor, descriptorToMock)
+                setupMocks(methodCalls, termToDescriptor, descriptorToMock)
+            }
+            withMocks
+        } else {
+            initialDescriptors
         }
 
-
-        withMocks
+        finalDescriptors
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                 log.debug { "Generated params:\n$it" }
             }
