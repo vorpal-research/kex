@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.toPersistentList
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.NoConcreteInstanceException
 import org.vorpal.research.kex.asm.manager.instantiationManager
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.predicate.DefaultSwitchPredicate
@@ -253,6 +254,8 @@ class CandidateState(
     val nextInstruction: Instruction?
     var score: Long = 0L
 
+    private val hashCode = state.hashCode()
+
     init {
         val cm = method.cm
         val currentClause = state.path.last()
@@ -342,7 +345,7 @@ class CandidateState(
     }
 
     override fun hashCode(): Int {
-        return state.hashCode()
+        return hashCode
     }
 }
 
@@ -363,6 +366,8 @@ class ExecutionGraph(
         it["STATE" to root.instruction] = root
     }
     private val instructionGraph = InstructionGraph(targets)
+    private val maximalCandidateCapacity = kexConfig.getLongValue("concolic", "maximalCandidateCapacity", 50_000L)
+
     val candidates = CandidateSet(ctx)
 
     override val entry: Vertex
@@ -375,6 +380,8 @@ class ExecutionGraph(
         private var isValid = false
         private var totalScore: Long = 0L
         private val candidates = hashSetOf<CandidateState>()
+
+        val size get() = candidates.size
 
         override fun iterator(): Iterator<CandidateState> = candidates.iterator()
 
@@ -420,6 +427,13 @@ class ExecutionGraph(
                 }
             }
             return unreachable { log.error("Unexpected error") }
+        }
+
+        fun cleanUnreachables(): Boolean {
+            if (!isValid) recomputeScores()
+            return candidates.removeAll { it.score <= 1 }.also {
+                totalScore = candidates.sumOf { it.score }
+            }
         }
     }
 
@@ -473,8 +487,13 @@ class ExecutionGraph(
 
             // candidate states calculation part
             ++clauseIndex
-            // TODO: limit number of states
-//                if (clauseIndex > 10_000) break
+
+            // limit maximum number of states in candidate set
+            if (candidates.size > maximalCandidateCapacity) {
+                val cleanupSuccessful = candidates.cleanUnreachables()
+                if (!cleanupSuccessful) break
+            }
+
             if (clause is PathClause) ++pathIndex
 
             val type = when (clause) {
@@ -496,8 +515,8 @@ class ExecutionGraph(
                 candidates.addAll(
                     currentVertex.addStateAndProduceCandidates(
                         ctx, persistentSymbolicState(
-                            symbolicState.clauses.subState(0, clauseIndex),
-                            symbolicState.path.subPath(0, pathIndex),
+                            symbolicState.clauses.subState(clauseIndex),
+                            symbolicState.path.subPath(pathIndex),
                             symbolicState.concreteTypes,
                             symbolicState.concreteValues,
                             symbolicState.termMap

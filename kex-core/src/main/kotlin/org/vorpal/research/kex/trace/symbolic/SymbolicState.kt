@@ -100,6 +100,8 @@ sealed class ClauseList : Iterable<Clause> {
 
     abstract fun subState(startInclusive: Int, endExclusive: Int): ClauseList
 
+    open fun subState(endExclusive: Int): ClauseList = subState(0, endExclusive)
+
     abstract operator fun plus(other: ClauseList): ClauseList
     abstract operator fun plus(other: Clause): ClauseList
     override fun toString(): String {
@@ -171,8 +173,19 @@ data class PersistentClauseList(
 
     override fun lastIndexOf(element: Clause): Int = state.lastIndexOf(element)
 
-    override fun subState(startInclusive: Int, endExclusive: Int): PersistentClauseList =
-        PersistentClauseList(state.subList(startInclusive, endExclusive).toPersistentList())
+    override fun subState(startInclusive: Int, endExclusive: Int): PersistentClauseList = when (startInclusive) {
+        0 -> subState(endExclusive)
+        else -> PersistentClauseList(state.subList(startInclusive, endExclusive).toPersistentList())
+    }
+
+    override fun subState(endExclusive: Int): PersistentClauseList {
+        var newClauses = state
+        var index = size - 1
+        repeat(size - endExclusive) {
+            newClauses = newClauses.removeAt(index--)
+        }
+        return PersistentClauseList(newClauses)
+    }
 
     override fun subList(fromIndex: Int, toIndex: Int): PersistentList<Clause> =
         state.subList(fromIndex, toIndex).toPersistentList()
@@ -180,7 +193,7 @@ data class PersistentClauseList(
     override fun plus(other: ClauseList): PersistentClauseList = PersistentClauseList(state.addAll(other.state))
     override fun plus(other: Clause): PersistentClauseList = PersistentClauseList(state.add(other))
 
-    fun dropLast(n: Int): PersistentClauseList = subState(0, maxOf(0, size - n))
+    fun dropLast(n: Int): PersistentClauseList = subState(maxOf(0, size - n))
 }
 
 @Serializable
@@ -188,6 +201,7 @@ sealed class PathCondition : Iterable<PathClause> {
     abstract val path: List<PathClause>
     override fun iterator(): Iterator<PathClause> = path.iterator()
     abstract fun subPath(startInclusive: Int, endExclusive: Int): PathCondition
+    open fun subPath(endExclusive: Int): PathCondition = subPath(0, endExclusive)
     fun asState() = BasicState(path.map { it.predicate })
 
     abstract operator fun plus(other: PathCondition): PathCondition
@@ -265,13 +279,22 @@ data class PersistentPathCondition(
         subList(startInclusive, endExclusive).toPersistentList()
     )
 
+    override fun subPath(endExclusive: Int): PersistentPathCondition {
+        var newPath = path
+        var index = size - 1
+        repeat(size - endExclusive) {
+            newPath = newPath.removeAt(index--)
+        }
+        return PersistentPathCondition(newPath)
+    }
+
     override fun subList(fromIndex: Int, toIndex: Int): PersistentList<PathClause> =
         path.subList(fromIndex, toIndex).toPersistentList()
 
     override fun plus(other: PathCondition): PersistentPathCondition = PersistentPathCondition(path.addAll(other.path))
     override fun plus(other: PathClause): PersistentPathCondition = PersistentPathCondition(path.add(other))
 
-    fun dropLast(n: Int): PersistentPathCondition = subPath(0, maxOf(0, size - n))
+    fun dropLast(n: Int): PersistentPathCondition = subPath(maxOf(0, size - n))
 }
 
 @Serializable
