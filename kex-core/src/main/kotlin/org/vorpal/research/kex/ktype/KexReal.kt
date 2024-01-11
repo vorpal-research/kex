@@ -19,12 +19,6 @@ object KexFloat : KexReal() {
         get() = WORD
 
     override fun getKfgType(types: TypeFactory): Type = types.floatType
-
-    override fun hashCode() = name.hashCode()
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return other is KexFloat
-    }
 }
 
 @InheritorOf("KexType")
@@ -37,10 +31,4 @@ object KexDouble : KexReal() {
         get() = DWORD
 
     override fun getKfgType(types: TypeFactory): Type = types.doubleType
-
-    override fun hashCode() = name.hashCode()
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return other is KexDouble
-    }
 }
