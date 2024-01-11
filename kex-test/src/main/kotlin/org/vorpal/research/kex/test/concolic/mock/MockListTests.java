@@ -40,6 +40,7 @@ public class MockListTests {
         }
     }
 
+    // coverage may be below 100%
     public void testMockList3(ArrayList<ToMock> list) {
         if (list.get(0).foo() == 42) {
             if (list.get(0).foo() == 33) {
