@@ -14,6 +14,7 @@ class EqualityUtilsPrinter(
     val klass = builder.run { klass(packageName, EQUALITY_UTILS_CLASS) }
     val equalsPrimitiveMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
     val equalsPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
+    val containsKey: JavaBuilder.JavaFunction
     val equalsObject: JavaBuilder.JavaFunction
     val equalsAll: JavaBuilder.JavaFunction
     val getAllFields: JavaBuilder.JavaFunction
@@ -78,6 +79,21 @@ class EqualityUtilsPrinter(
                     }
                 }
 
+
+                containsKey = method("containsKey") {
+                    arguments += arg("map", type("Map<Object, Object>"))
+                    arguments += arg("key", type("Object"))
+                    returnType = type("boolean")
+                    visibility = Visibility.PUBLIC
+                    modifiers += "static"
+                    aFor("Object key_i : map.keySet()") {
+                        anIf("key_i == key") {
+                            +"return true"
+                        }
+                    }
+                    +"return false"
+                }
+
                 equalsObject = method("equalsObject") {
                     arguments += arg("t1", type("Object"))
                     arguments += arg("t2", type("Object"))
@@ -86,7 +102,7 @@ class EqualityUtilsPrinter(
                     returnType = type("boolean")
                     visibility = Visibility.PUBLIC
                     modifiers += "static"
-                    anIf("visitedFirstToSecond.containsKey(t1) || visitedSecondToFirst.containsKey(t2)") {
+                    anIf("containsKey(visitedFirstToSecond, t1) || containsKey(visitedSecondToFirst, t2)") {
                         +"return visitedFirstToSecond.get(t1) == t2 && visitedSecondToFirst.get(t2) == t1"
                     }
                     +"visitedFirstToSecond.put(t1, t2)"

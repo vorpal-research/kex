@@ -1,5 +1,8 @@
 package org.vorpal.research.kex.test.concolic;
 
+import java.util.Collections;
+import java.util.Set;
+
 @SuppressWarnings("ALL")
 public class AssertAndExceptionsTests1 {
 
@@ -25,6 +28,10 @@ public class AssertAndExceptionsTests1 {
         Point c = new Point(a.x / b.x, a.y / b.y);
         if (c.x + c.y == a.x) throw new IllegalStateException();
         return c;
+    }
+
+    public static <T> Set<T> emptyIfNull(final Set<T> set) {
+        return set == null ? Collections.<T>emptySet() : set;
     }
 
 }

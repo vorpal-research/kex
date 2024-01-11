@@ -2,6 +2,7 @@
 
 package org.vorpal.research.kex.jacoco
 
+import com.jetbrains.rd.util.string.printToString
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.ICounter
@@ -403,8 +404,12 @@ class CoverageReporter(
 //                jc.addListener(TestLogger())
 //            }
             val computerClass = classLoader.loadClass("org.junit.runner.Computer")
-            jcClass.getMethod("run", computerClass, Class::class.java.asArray())
+            val returnValue = jcClass.getMethod("run", computerClass, Class::class.java.asArray())
                 .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
+            log.debug("Failures:")
+            (returnValue as Result).failures.forEach {
+                log.debug(it.trace)
+            }
 //            jc.run(Computer(), testClass)
         }
 

@@ -268,7 +268,7 @@ class ExecutorAS2JavaPrinter(
                 finalInfoSequences.instance?.let { instanceInfo ->
                     val instanceName = if (method.isConstructor) "instance" else actionSequences.instance?.stackName
                     if (!instanceInfo.isConstantValue && instanceName != null) {
-                        if (!isEqualsOverridden(instanceInfo.javaClass)) {
+                        if (isEqualsOverridden(instanceInfo.javaClass)) {
                             +"assertTrue($instanceName.equals(${instanceInfo.stackName}))"
                         }
                         +"assertTrue(${equalityUtils.recursiveEquals.name}(${instanceName}, ${instanceInfo.stackName}))"
@@ -276,14 +276,14 @@ class ExecutorAS2JavaPrinter(
                 }
                 for ((i, arg) in actionSequences.arguments.withIndex()) {
                     if (!arg.isConstantValue) {
-                        if (!isEqualsOverridden(arg.javaClass)) {
+                        if (isEqualsOverridden(arg.javaClass)) {
                             +"assertTrue(${arg.stackName}.equals(${finalInfoSequences.args[i].stackName}))"
                         }
                         +"assertTrue(${equalityUtils.recursiveEquals.name}(${arg.stackName}, ${finalInfoSequences.args[i].stackName}))"
                     }
                 }
                 (finalInfoSequences as? ExecutionSuccessFinalInfo)?.retValue?.let { retValueInfo ->
-                    if (!isEqualsOverridden(retValueInfo.javaClass)) {
+                    if (isEqualsOverridden(retValueInfo.javaClass)) {
                         +"assertTrue(retValue.equals(${retValueInfo.stackName}))"
                     }
                     +"assertTrue(${equalityUtils.recursiveEquals.name}(retValue, ${retValueInfo.stackName}))"
