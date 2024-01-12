@@ -17,7 +17,6 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.predicate.CallPredicate
-import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
@@ -46,9 +45,6 @@ suspend fun Method.analyzeOrTimeout(
     }
 }
 
-fun CallTerm.replaceOwner(owner: Term): CallTerm {
-    return CallTerm(type, owner, method, arguments)
-}
 
 fun methodCalls(
     state: SymbolicState,
@@ -109,20 +105,19 @@ suspend fun Method.checkAsync(
 
 
     return try {
-        val (initialDescriptors, termToDescriptor) = generateInitialDescriptors(
+        val (initialDescriptors, generator) = generateInitialDescriptors(
             this,
             ctx,
             result.model,
             checker.state
         )
 
-        val visited = mutableSetOf<Descriptor>()
-        val finalDescriptors = if (initialDescriptors.asList.any { it.requireMocks(visited, ctx.types) }) {
-            val (withMocks, descriptorToMock) = initialDescriptors.generateInitialMocks(ctx.types)
-            if (descriptorToMock.isNotEmpty()) {
-                val methodCalls = methodCalls(state, termToDescriptor, descriptorToMock)
-                setupMocks(methodCalls, termToDescriptor, descriptorToMock)
-            }
+        val finalDescriptors = if (initialDescriptors.asList.any { it.isMockable(ctx.types) }) {
+            generator.generateAll()
+            val descriptors = with(initialDescriptors) { Parameters(instance, arguments, statics, generator.allValues) }
+            val (withMocks, descriptorToMock) = descriptors.generateInitialMocks(ctx.types)
+            val methodCalls = methodCalls(state, generator.memory, descriptorToMock)
+            setupMocks(methodCalls, generator.memory, descriptorToMock)
             withMocks
         } else {
             initialDescriptors

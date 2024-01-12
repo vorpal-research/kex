@@ -125,10 +125,10 @@ fun generateInitialDescriptors(
     ctx: ExecutionContext,
     model: SMTModel,
     state: PredicateState
-): Pair<Parameters<Descriptor>, Map<Term, Descriptor>> {
+): Pair<Parameters<Descriptor>, DescriptorGenerator> {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
-    generator.generateAll()
+//    generator.generateAll()
     return Parameters(
         generator.instance,
         generator.args.mapIndexed { index, arg ->
@@ -136,7 +136,7 @@ fun generateInitialDescriptors(
         },
         generator.staticFields,
         generator.allValues
-    ) to generator.memory
+    ) to generator
 }
 
 
