@@ -407,7 +407,7 @@ class CoverageReporter(
             val returnValue = jcClass.getMethod("run", computerClass, Class::class.java.asArray())
                 .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
             log.debug("Failures:")
-            (returnValue as Result).failures.forEach {
+            (returnValue as? Result)?.failures?.forEach {
                 log.debug(it.trace)
             }
 //            jc.run(Computer(), testClass)

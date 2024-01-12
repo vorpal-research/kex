@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.asserter
 
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorBuilder
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
@@ -13,7 +14,9 @@ import org.vorpal.research.kex.trace.symbolic.protocol.SuccessResult
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.Constant
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.type.BoolType
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.toBoolean
 
 sealed class ExecutionFinalInfo<T>() {
     abstract val instance: T?
@@ -85,7 +88,12 @@ fun extractFinalInfo(executionResult: ExecutionResult, method: Method): Executio
                     val retTerm = executionResult.symbolicState.termMap.entries.firstOrNull {
                         it.value.value == retValue && it.value.depth == 0
                     }?.key
-                    executionResult.symbolicState.concreteValues[retTerm]
+                    val descriptor = executionResult.symbolicState.concreteValues[retTerm]
+                    if (method.returnType == BoolType) {
+                        (descriptor as? ConstantDescriptor.Int)?.toBool()
+                    } else {
+                        descriptor
+                    }
                 }
 
                 log.debug("Return value:")

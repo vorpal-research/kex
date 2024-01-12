@@ -32,6 +32,7 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.value.*
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.toBoolean
 import kotlin.random.Random
 
 sealed class Descriptor(term: Term, type: KexType) {
@@ -173,6 +174,8 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             if (other !is Int) return false
             return this.value == other.value
         }
+
+        fun toBool() = Bool(value.toBoolean())
     }
 
     class Long(val value: kotlin.Long) : ConstantDescriptor(term { generate(KexLong) }, KexLong) {
