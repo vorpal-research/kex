@@ -9,6 +9,7 @@ import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.JarContainer
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.readLines
 
@@ -62,7 +63,7 @@ fun getIntrinsics(): Container? {
     return JarContainer(libPath.resolve("kex-intrinsics-${intrinsicsVersion}.jar"), Package.defaultPackage)
 }
 
-fun getPathSeparator(): String = System.getProperty("path.separator")
+fun getPathSeparator(): String = File.pathSeparator
 
 fun getJunit(): Container? {
     val libPath = kexConfig.libPath ?: return null
