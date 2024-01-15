@@ -57,7 +57,7 @@ abstract class Predicate : InheritanceTypeInfo {
         val predicates = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("Predicate.json")
-                    ?: fail { log.error("Could not load predicate inheritance info") }
+                ?: fail { log.error("Could not load predicate inheritance info") }
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
@@ -109,6 +109,7 @@ fun Predicate.inverse(random: Random): Predicate = when (this) {
         term { const(false) } -> predicate(type, location) { lhv equality true }
         else -> predicate(type, location) { lhv inequality rhv }
     }
+
     is DefaultSwitchPredicate -> predicate(type, location) { cond equality cases.random(random) }
     is InequalityPredicate -> predicate(type, location) { lhv equality rhv }
     else -> this

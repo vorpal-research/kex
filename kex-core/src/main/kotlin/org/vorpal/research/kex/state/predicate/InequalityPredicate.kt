@@ -11,10 +11,11 @@ import org.vorpal.research.kfg.ir.Location
 @InheritorOf("Predicate")
 @Serializable
 class InequalityPredicate(
-        val lhv: Term,
-        val rhv: Term,
-        @Required override val type: PredicateType = PredicateType.State(),
-        @Required @Contextual override val location: Location = Location()) : Predicate() {
+    val lhv: Term,
+    val rhv: Term,
+    @Required override val type: PredicateType = PredicateType.State(),
+    @Required @Contextual override val location: Location = Location()
+) : Predicate() {
     override val operands by lazy { listOf(lhv, rhv) }
 
     override fun print() = "$lhv != $rhv"

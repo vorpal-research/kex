@@ -34,7 +34,7 @@ class PrimaryValue<T>(val value: T) : ActionSequence(value.toString()) {
     override fun clone(): ActionSequence = this
 }
 
-class StringValue(val value: String = "") : ActionSequence(value)  {
+class StringValue(val value: String = "") : ActionSequence(value) {
     override val isConstantValue: Boolean get() = true
 
     override fun print() = value
@@ -97,6 +97,7 @@ class ActionList(
                     is ActionList -> top.flatMap { it.parameters }.forEach {
                         queue += it
                     }
+
                     else -> {}
                 }
             }
@@ -360,7 +361,15 @@ data class NewArrayWithInitializer(
     override fun toString() = elements.joinToString(", ", prefix = "{", postfix = "}") { it.name }
     override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
         elements.forEach { it.print(builder, visited) }
-        builder.appendLine("${asArray.component} ${owner.name} = ${elements.joinToString(", ", prefix = "{", postfix = "}") { it.name }}")
+        builder.appendLine(
+            "${asArray.component} ${owner.name} = ${
+                elements.joinToString(
+                    ", ",
+                    prefix = "{",
+                    postfix = "}"
+                ) { it.name }
+            }"
+        )
     }
 }
 
@@ -483,6 +492,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             val newTarget = mapper.map(ct.target)
             UnknownSequence(newTarget.term.toString(), ct.type.mapped, newTarget)
         }
+
         is TestCall -> TestCall(ct.name, ct.test, ct.instance?.let { map(it) }, ct.args.map { map(it) })
         is ReflectionList -> when (ct) {
             in cache -> cache[ct]!!
@@ -495,6 +505,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
                 res
             }
         }
+
         is ActionList -> when (ct) {
             in cache -> cache[ct]!!
             else -> {
@@ -535,6 +546,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
             ReflectionSetField(unmappedField, map(api.value))
         }
+
         is ReflectionSetStaticField -> {
             val unmappedKlass = api.field.klass.mapped
             val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
@@ -553,10 +565,12 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             )
             ConstructorCall(unmappedMethod, api.args.map { map(it) })
         }
+
         is DefaultConstructorCall -> {
             val unmappedKlass = api.klass.mapped
             DefaultConstructorCall(unmappedKlass)
         }
+
         is EnumValueCreation -> EnumValueCreation(api.klass.mapped, api.name)
         is ExternalConstructorCall -> {
             val unmappedKlass = api.constructor.klass.mapped
@@ -567,6 +581,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             )
             ExternalConstructorCall(unmappedMethod, api.args.map { map(it) })
         }
+
         is ExternalMethodCall -> {
             val unmappedKlass = api.method.klass.mapped
             val unmappedMethod = unmappedKlass.getMethod(
@@ -576,11 +591,13 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             )
             ExternalMethodCall(unmappedMethod, map(api.instance), api.args.map { map(it) })
         }
+
         is FieldSetter -> {
             val unmappedKlass = api.field.klass.mapped
             val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
             FieldSetter(unmappedField, map(api.value))
         }
+
         is InnerClassConstructorCall -> {
             val unmappedKlass = api.constructor.klass.mapped
             val unmappedMethod = unmappedKlass.getMethod(
@@ -591,6 +608,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             InnerClassConstructorCall(unmappedMethod,
                 map(api.outerObject), api.args.map { map(it) })
         }
+
         is MethodCall -> {
             val unmappedKlass = api.method.klass.mapped
             val unmappedMethod = unmappedKlass.getMethod(
@@ -600,6 +618,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             )
             MethodCall(unmappedMethod, api.args.map { map(it) })
         }
+
         is NewArray -> NewArray(api.klass.mapped, map(api.length))
         is NewArrayWithInitializer -> NewArrayWithInitializer(api.klass.mapped, api.elements.map { map(it) })
         is StaticFieldGetter -> {
@@ -607,11 +626,13 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
             StaticFieldGetter(unmappedField)
         }
+
         is StaticFieldSetter -> {
             val unmappedKlass = api.field.klass.mapped
             val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
             StaticFieldSetter(unmappedField, map(api.value))
         }
+
         is StaticMethodCall -> {
             val unmappedKlass = api.method.klass.mapped
             val unmappedMethod = unmappedKlass.getMethod(
@@ -621,6 +642,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             )
             StaticMethodCall(unmappedMethod, api.args.map { map(it) })
         }
+
         is ClassConstantGetter -> ClassConstantGetter(api.type.mapped)
         is ArrayClassConstantGetter -> ArrayClassConstantGetter(map(api.elementType))
     }

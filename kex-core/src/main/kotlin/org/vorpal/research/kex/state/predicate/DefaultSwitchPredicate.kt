@@ -11,10 +11,11 @@ import org.vorpal.research.kfg.ir.Location
 @InheritorOf("Predicate")
 @Serializable
 class DefaultSwitchPredicate(
-        val cond: Term,
-        val cases: List<Term>,
-        @Required override val type: PredicateType = PredicateType.State(),
-        @Required @Contextual override val location: Location = Location()) : Predicate() {
+    val cond: Term,
+    val cases: List<Term>,
+    @Required override val type: PredicateType = PredicateType.State(),
+    @Required @Contextual override val location: Location = Location()
+) : Predicate() {
     override val operands by lazy { listOf(cond) + cases }
 
     override fun print() = "$cond !in (${cases.joinToString(", ")})"

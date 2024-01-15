@@ -50,6 +50,7 @@ class DescriptorGenerator(
                 is ConstantDescriptor.Float -> this.value
                 is ConstantDescriptor.Double -> this.value
             }
+
             else -> this
         }
 
@@ -63,6 +64,7 @@ class DescriptorGenerator(
             val condValues = conditions.map { (it as ConstIntTerm).value }
             lhvValue !in condValues
         }
+
         else -> unreachable { log.error("Unexpected predicate in path: $path") }
     }
 }

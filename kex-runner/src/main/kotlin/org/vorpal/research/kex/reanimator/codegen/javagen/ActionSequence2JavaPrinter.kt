@@ -871,7 +871,10 @@ open class ActionSequence2JavaPrinter(
         )
     }
 
-    protected open fun printArrayClassConstantGetter(owner: ActionSequence, call: ArrayClassConstantGetter): List<String> {
+    protected open fun printArrayClassConstantGetter(
+        owner: ActionSequence,
+        call: ArrayClassConstantGetter
+    ): List<String> {
         call.elementType.printAsJava()
         val actualType = ASClass(ctx.types.classType)
         actualTypes[owner] = actualType

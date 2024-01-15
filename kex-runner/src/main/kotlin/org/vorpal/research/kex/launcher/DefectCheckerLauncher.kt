@@ -30,12 +30,13 @@ internal fun preparePackage(
 }
 
 @ExperimentalSerializationApi
-class DefectCheckerLauncher(classPaths: List<String>, targetName: String) : KexAnalysisLauncher(classPaths, targetName) {
+class DefectCheckerLauncher(classPaths: List<String>, targetName: String) :
+    KexAnalysisLauncher(classPaths, targetName) {
     override fun launch() {
         val psa = PredicateStateAnalysis(context.cm)
 
         preparePackage(context, psa, Package.defaultPackage)
-        runPipeline(context ,analysisLevel) {
+        runPipeline(context, analysisLevel) {
             +DefectChecker(context, psa)
         }
 

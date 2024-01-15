@@ -12,10 +12,11 @@ import org.vorpal.research.kthelper.assert.asserted
 @InheritorOf("Predicate")
 @Serializable
 class CallPredicate(
-        val lhvUnsafe: Term?,
-        val callTerm: Term,
-        @Required override val type: PredicateType = PredicateType.State(),
-        @Required @Contextual override val location: Location = Location()) : Predicate() {
+    val lhvUnsafe: Term?,
+    val callTerm: Term,
+    @Required override val type: PredicateType = PredicateType.State(),
+    @Required @Contextual override val location: Location = Location()
+) : Predicate() {
     val hasLhv by lazy { lhvUnsafe != null }
     override val operands by lazy { listOfNotNull(lhvUnsafe, callTerm) }
 
@@ -36,6 +37,7 @@ class CallPredicate(
                 tLhv == lhv && tCall == call -> this
                 else -> predicate(type, location) { tLhv!!.call(tCall) }
             }
+
             else -> when (tCall) {
                 call -> this
                 else -> predicate(type, location) { call(tCall) }

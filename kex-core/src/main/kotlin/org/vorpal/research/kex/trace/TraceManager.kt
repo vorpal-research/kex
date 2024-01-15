@@ -17,5 +17,6 @@ abstract class TraceManager<T : AbstractTrace> {
             else -> reduce { acc, b -> acc && b }
         }
     }
+
     fun isFullCovered(method: Method) = method.body.basicBlocks.all { isCovered(it) }
 }

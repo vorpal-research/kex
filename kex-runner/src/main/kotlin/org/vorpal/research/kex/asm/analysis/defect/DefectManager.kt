@@ -15,6 +15,7 @@ object DefectManager {
         kexConfig.outputDirectory.resolve(kexConfig.getStringValue("defect", "outputFile")
             ?: unreachable { log.error("You need to specify parameters file to be able to use Z3 SMT") })
     }
+
     @Suppress("MemberVisibilityCanBePrivate")
     val defects: Set<Defect> get() = innerDefects
 

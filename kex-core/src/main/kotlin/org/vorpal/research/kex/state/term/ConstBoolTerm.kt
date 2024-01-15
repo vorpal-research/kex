@@ -13,5 +13,5 @@ class ConstBoolTerm(val value: Boolean) : Term() {
     override val type: KexType = KexBool
     override val subTerms by lazy { listOf<Term>() }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
+    override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
 }

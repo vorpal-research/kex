@@ -28,13 +28,13 @@ import ru.spbstu.wheels.mapToArray
 
 fun FieldTerm.unmappedKfgField(cm: ClassManager): Field {
     val kfgKlass = cm[this.klass]
-    return  when {
+    return when {
         kfgKlass.isKexRt -> kfgKlass.getField(fieldName, type.getKfgType(cm.type))
         else -> kfgKlass.getField(fieldName, type.rtUnmapped.getKfgType(cm.type))
     }
 }
 
-class KexRtAdapter(val cm: ClassManager) : PredicateBuilder, Transformer<KexRtAdapter>,  IncrementalTransformer {
+class KexRtAdapter(val cm: ClassManager) : PredicateBuilder, Transformer<KexRtAdapter>, IncrementalTransformer {
     override val type = PredicateType.State()
     override val location = Location()
 

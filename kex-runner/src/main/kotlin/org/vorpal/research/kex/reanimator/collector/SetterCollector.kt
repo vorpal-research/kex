@@ -68,16 +68,18 @@ class SetterCollector(val ctx: ExecutionContext) : ClassVisitor {
                             Locale.getDefault()
                         ) else character.toString()
                     }
-                }" }
+                }"
+            }
         }.getOrNull() ?: return
         if (fieldInstances.isEmpty()) return
         require(fieldInstances.size == 1)
         val fieldReflection = fieldInstances.first()
         val methodFA = method.fieldAccesses
         if (methodFA.size == 1
-                && `try` { fieldReflection.eq(ctx.loader, methodFA.first()) }.getOrElse { false }
-                && method.argTypes.size == 1
-                && fieldReflection.type.isAssignableFrom(ctx.loader.loadClass(method.argTypes.first()))) {
+            && `try` { fieldReflection.eq(ctx.loader, methodFA.first()) }.getOrElse { false }
+            && method.argTypes.size == 1
+            && fieldReflection.type.isAssignableFrom(ctx.loader.loadClass(method.argTypes.first()))
+        ) {
             log.info("Method $method is java setter for $fieldReflection")
             settersInner[methodFA.first()] = method
         }

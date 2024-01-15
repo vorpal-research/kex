@@ -1,4 +1,5 @@
-@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE", "SENSELESS_COMPARISON")
+@file:Suppress("SENSELESS_COMPARISON", "unused")
+
 package org.vorpal.research.kex.test
 
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics.kexAssert

@@ -39,6 +39,7 @@ class SMTProxySolver(
 
     constructor(ctx: ExecutionContext, engine: String) : this(ctx, getSolver(ctx, engine))
 }
+
 class IncrementalSMTProxySolver(
     ctx: ExecutionContext,
     private val solver: AbstractIncrementalSMTSolver = getSolver(ctx, engine)

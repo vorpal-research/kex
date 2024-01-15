@@ -378,8 +378,8 @@ class LoopDeroller(override val cm: ClassManager) : LoopOptimizer(cm) {
 
             val users = inst.users.filterIsInstance<Instruction>()
             if (users.any {
-                it.hasParent && it.parent !in state.blockMappings && it.parent in method.body && it !is PhiInst
-            }) {
+                    it.hasParent && it.parent !in state.blockMappings && it.parent in method.body && it !is PhiInst
+                }) {
                 for (exit in state.exits) {
                     val mappings = exit.predecessors
                         .filter { it in state.exitingBlocks }

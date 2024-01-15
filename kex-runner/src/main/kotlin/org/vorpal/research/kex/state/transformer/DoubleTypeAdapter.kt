@@ -20,6 +20,7 @@ class DoubleTypeAdapter : RecollectingTransformer<DoubleTypeAdapter> {
                 is KexFloat -> {
                     currentBuilder += assume { it inequality Float.NaN }
                 }
+
                 is KexDouble -> {
                     currentBuilder += assume { it inequality Double.NaN }
                 }

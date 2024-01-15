@@ -11,9 +11,9 @@ class NegTerm(override val type: KexType, val operand: Term) : Term() {
     override val name = "-$operand"
     override val subTerms by lazy { listOf(operand) }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term =
-            when (val tOperand = t.transform(operand)) {
-                operand -> this
-                else -> term { termFactory.getNegTerm(tOperand) }
-             }
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
+        when (val tOperand = t.transform(operand)) {
+            operand -> this
+            else -> term { termFactory.getNegTerm(tOperand) }
+        }
 }

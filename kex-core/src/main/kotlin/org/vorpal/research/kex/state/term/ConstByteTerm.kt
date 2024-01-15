@@ -13,5 +13,5 @@ class ConstByteTerm(val value: Byte) : Term() {
     override val type: KexType = KexByte
     override val subTerms by lazy { listOf<Term>() }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
+    override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
 }

@@ -17,6 +17,7 @@ class ReflectionUtilsPrinter(
     val newArray: JavaBuilder.JavaFunction
     val newObjectArray: JavaBuilder.JavaFunction
     val newPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
+
     @Suppress("MemberVisibilityCanBePrivate")
     val getField: JavaBuilder.JavaFunction
     val setField: JavaBuilder.JavaFunction
@@ -98,6 +99,7 @@ class ReflectionUtilsPrinter(
                             +"}"
                             +"return mods"
                         }
+
                         else -> {
                             +"return Field.class.getDeclaredField(\"modifiers\")"
                         }

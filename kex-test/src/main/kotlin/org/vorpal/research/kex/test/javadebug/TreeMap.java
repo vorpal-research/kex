@@ -146,8 +146,7 @@ public class TreeMap<V> {
             if (!(o instanceof Entry)) {
                 return false;
             }
-            @SuppressWarnings("unchecked")
-            final Entry e = (Entry) o;
+            @SuppressWarnings("unchecked") final Entry e = (Entry) o;
 
             return (this.key == e.getKey())
                     && TreeMap.valEquals(this.value, e.getValue());
@@ -285,7 +284,7 @@ public class TreeMap<V> {
 
     /**
      * Balancing operations.
-     *
+     * <p>
      * Implementations of rebalancings during insertion and deletion are slightly
      * different than the CLR version. Rather than using dummy nilnodes, we use a
      * set of accessors that deal properly with null. They are used to avoid
@@ -381,15 +380,11 @@ public class TreeMap<V> {
     /**
      * Returns <tt>true</tt> if this map contains a mapping for the specified key.
      *
-     * @param key
-     *          key whose presence in this map is to be tested.
-     *
+     * @param key key whose presence in this map is to be tested.
      * @return <tt>true</tt> if this map contains a mapping for the specified key.
-     * @throws ClassCastException
-     *           if the key cannot be compared with the keys currently in the map.
-     * @throws NullPointerException
-     *           key is <tt>null</tt> and this map uses natural ordering, or its
-     *           comparator does not tolerate <tt>null</tt> keys.
+     * @throws ClassCastException   if the key cannot be compared with the keys currently in the map.
+     * @throws NullPointerException key is <tt>null</tt> and this map uses natural ordering, or its
+     *                              comparator does not tolerate <tt>null</tt> keys.
      */
     public boolean containsKey(final int key) {
         return getEntry(key) != null;
@@ -403,10 +398,9 @@ public class TreeMap<V> {
      * will probably require time linear in the Map size for most implementations
      * of Map.
      *
-     * @param value
-     *          value whose presence in this Map is to be tested.
+     * @param value value whose presence in this Map is to be tested.
      * @return <tt>true</tt> if a mapping to <tt>value</tt> exists; <tt>false</tt>
-     *         otherwise.
+     * otherwise.
      * @since 1.2
      */
     public boolean containsValue(final Object value) {
@@ -494,14 +488,15 @@ public class TreeMap<V> {
      * Returns the first (lowest) key currently in this sorted map.
      *
      * @return the first (lowest) key currently in this sorted map.
-     * @throws NoSuchElementException
-     *           Map is empty.
+     * @throws NoSuchElementException Map is empty.
      */
     public int firstKey() {
         return TreeMap.key(firstEntry());
     }
 
-    /** From CLR * */
+    /**
+     * From CLR *
+     */
     private void fixAfterDeletion(Entry<V> x) {
         while ((x != this.root) && (TreeMap.colorOf(x) == TreeMap.BLACK)) {
             if (x == TreeMap.leftOf(TreeMap.parentOf(x))) {
@@ -564,7 +559,9 @@ public class TreeMap<V> {
         TreeMap.setColor(x, TreeMap.BLACK);
     }
 
-    /** From CLR * */
+    /**
+     * From CLR *
+     */
     private void fixAfterInsertion(Entry<V> x) {
         x.color = TreeMap.RED;
 
@@ -622,16 +619,12 @@ public class TreeMap<V> {
      * key to <tt>null</tt>. The <tt>containsKey</tt> operation may be used to
      * distinguish these two cases.
      *
-     * @param key
-     *          key whose associated value is to be returned.
+     * @param key key whose associated value is to be returned.
      * @return the value to which this map maps the specified key, or
-     *         <tt>null</tt> if the map contains no mapping for the key.
-     * @throws ClassCastException
-     *           key cannot be compared with the keys currently in the map.
-     * @throws NullPointerException
-     *           key is <tt>null</tt> and this map uses natural ordering, or its
-     *           comparator does not tolerate <tt>null</tt> keys.
-     *
+     * <tt>null</tt> if the map contains no mapping for the key.
+     * @throws ClassCastException   key cannot be compared with the keys currently in the map.
+     * @throws NullPointerException key is <tt>null</tt> and this map uses natural ordering, or its
+     *                              comparator does not tolerate <tt>null</tt> keys.
      * @see #containsKey(Object)
      */
     //@ requires ((this.root == null) || this.root.consistency()) && (this.size == this.realSize());
@@ -646,12 +639,10 @@ public class TreeMap<V> {
      * does not contain an entry for the key.
      *
      * @return this map's entry for the given key, or <tt>null</tt> if the map
-     *         does not contain an entry for the key.
-     * @throws ClassCastException
-     *           if the key cannot be compared with the keys currently in the map.
-     * @throws NullPointerException
-     *           key is <tt>null</tt> and this map uses natural order, or its
-     *           comparator does not tolerate * <tt>null</tt> keys.
+     * does not contain an entry for the key.
+     * @throws ClassCastException   if the key cannot be compared with the keys currently in the map.
+     * @throws NullPointerException key is <tt>null</tt> and this map uses natural order, or its
+     *                              comparator does not tolerate * <tt>null</tt> keys.
      */
     private Entry<V> getEntry(final int key) {
         Entry<V> p = this.root;
@@ -693,8 +684,7 @@ public class TreeMap<V> {
      * Returns the last (highest) key currently in this sorted map.
      *
      * @return the last (highest) key currently in this sorted map.
-     * @throws NoSuchElementException
-     *           Map is empty.
+     * @throws NoSuchElementException Map is empty.
      */
     //@ requires ((this.root == null) || this.root.consistency()) && (this.size == this.realSize());
     //@ ensures true;
@@ -744,20 +734,15 @@ public class TreeMap<V> {
      * Associates the specified value with the specified key in this map. If the
      * map previously contained a mapping for this key, the old value is replaced.
      *
-     * @param key
-     *          key with which the specified value is to be associated.
-     * @param value
-     *          value to be associated with the specified key.
-     *
+     * @param key   key with which the specified value is to be associated.
+     * @param value value to be associated with the specified key.
      * @return previous value associated with specified key, or <tt>null</tt> if
-     *         there was no mapping for key. A <tt>null</tt> return can also
-     *         indicate that the map previously associated <tt>null</tt> with the
-     *         specified key.
-     * @throws ClassCastException
-     *           key cannot be compared with the keys currently in the map.
-     * @throws NullPointerException
-     *           key is <tt>null</tt> and this map uses natural order, or its
-     *           comparator does not tolerate <tt>null</tt> keys.
+     * there was no mapping for key. A <tt>null</tt> return can also
+     * indicate that the map previously associated <tt>null</tt> with the
+     * specified key.
+     * @throws ClassCastException   key cannot be compared with the keys currently in the map.
+     * @throws NullPointerException key is <tt>null</tt> and this map uses natural order, or its
+     *                              comparator does not tolerate <tt>null</tt> keys.
      */
 
     public int realSize() {
@@ -770,18 +755,14 @@ public class TreeMap<V> {
     /**
      * Removes the mapping for this key from this TreeMapGeneric if present.
      *
-     * @param key
-     *          key for which mapping should be removed
+     * @param key key for which mapping should be removed
      * @return previous value associated with specified key, or <tt>null</tt> if
-     *         there was no mapping for key. A <tt>null</tt> return can also
-     *         indicate that the map previously associated <tt>null</tt> with the
-     *         specified key.
-     *
-     * @throws ClassCastException
-     *           key cannot be compared with the keys currently in the map.
-     * @throws NullPointerException
-     *           key is <tt>null</tt> and this map uses natural order, or its
-     *           comparator does not tolerate <tt>null</tt> keys.
+     * there was no mapping for key. A <tt>null</tt> return can also
+     * indicate that the map previously associated <tt>null</tt> with the
+     * specified key.
+     * @throws ClassCastException   key cannot be compared with the keys currently in the map.
+     * @throws NullPointerException key is <tt>null</tt> and this map uses natural order, or its
+     *                              comparator does not tolerate <tt>null</tt> keys.
      */
     //@ requires ((this.root == null) || this.root.consistency()) && (this.size == this.realSize());
     //@ ensures ((this.root == null) || this.root.consistency()) && (this.size == this.realSize());
@@ -796,7 +777,9 @@ public class TreeMap<V> {
         return oldValue;
     }
 
-    /** From CLR * */
+    /**
+     * From CLR *
+     */
     private void rotateLeft(final Entry<V> p) {
         final Entry<V> r = p.right;
         p.right = r.left;
@@ -815,7 +798,9 @@ public class TreeMap<V> {
         p.parent = r;
     }
 
-    /** From CLR * */
+    /**
+     * From CLR *
+     */
     private void rotateRight(final Entry<V> p) {
         final Entry<V> l = p.left;
         p.left = l.right;

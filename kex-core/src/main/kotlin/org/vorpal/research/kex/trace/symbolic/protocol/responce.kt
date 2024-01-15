@@ -12,17 +12,17 @@ sealed class ExecutionResult
 @Serializable
 data class ExecutionFailedResult(
     val message: String,
-): ExecutionResult()
+) : ExecutionResult()
 
 @Serializable
 data class SetupFailedResult(
     val message: String,
-): ExecutionResult()
+) : ExecutionResult()
 
 @Serializable
 data class ExecutionTimedOutResult(
     val message: String,
-): ExecutionResult()
+) : ExecutionResult()
 
 
 @Serializable
@@ -30,6 +30,7 @@ sealed class ExecutionCompletedResult : ExecutionResult() {
     abstract val symbolicState: SymbolicState
     abstract val trace: List<Instruction>
 }
+
 @Serializable
 data class ExceptionResult(
     val cause: @Contextual Descriptor,

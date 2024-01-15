@@ -70,6 +70,7 @@ class PathChecker(val model: SMTModel) : Transformer<PathChecker> {
             val condValues = conditions.map { (it as ConstIntTerm).value }
             lhvValue !in condValues
         }
+
         else -> unreachable { log.error("Unexpected predicate in path: $path") }
     }
 }

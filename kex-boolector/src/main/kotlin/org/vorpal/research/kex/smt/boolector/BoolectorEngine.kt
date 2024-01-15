@@ -239,24 +239,30 @@ object BoolectorEngine :
                     else
                         and(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
                 }
+
                 else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
             }
+
             Opcode.OR -> when {
                 (lhv.isBoolNode && rhv.isBoolNode) -> or(lhv.toBoolNode(), rhv.toBoolNode())
                 !(lhv.isArrayNode && rhv.isArrayNode) -> {
                     if (lhv.width >= rhv.width) or(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
                     else or(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
                 }
+
                 else -> unreachable { log.error("Unexpected or arguments: $lhv or $rhv") }
             }
+
             Opcode.XOR -> when {
                 (lhv.isBoolNode && rhv.isBoolNode) -> xor(lhv.toBoolNode(), rhv.toBoolNode())
                 !(lhv.isArrayNode && rhv.isArrayNode) -> {
                     if (lhv.width >= rhv.width) xor(lhv.toBitvecNode(), rhv.toBitvecNode(lhv.width))
                     else xor(lhv.toBitvecNode(rhv.width), rhv.toBitvecNode())
                 }
+
                 else -> unreachable { log.error("Unexpected xor arguments: $lhv xor $rhv") }
             }
+
             Opcode.IMPLIES -> implies(lhv.toBoolNode(), rhv.toBoolNode())
             Opcode.IFF -> iff(lhv.toBoolNode(), rhv.toBoolNode())
             Opcode.CONCAT -> concat(lhv.toBitvecNode(), rhv.toBitvecNode())

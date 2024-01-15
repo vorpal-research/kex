@@ -20,8 +20,8 @@ abstract class KexProcessor : AbstractProcessor() {
         val parameters = mutableMapOf<String, Any>()
 
         for (property in klass.declaredMemberProperties) {
-            parameters[property.name] = instance.getProperty(property.name) ?:
-                    unreachable { error("Could not get property $property of annotation $instance") }
+            parameters[property.name] = instance.getProperty(property.name)
+                ?: unreachable { error("Could not get property $property of annotation $instance") }
         }
 
         return parameters

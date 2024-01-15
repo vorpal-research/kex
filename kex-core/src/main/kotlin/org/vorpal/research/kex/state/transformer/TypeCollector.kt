@@ -41,6 +41,7 @@ fun hasClassAccesses(ps: PredicateState) = ClassAccessDetector().let {
     it.apply(ps)
     it.hasClassAccess
 }
+
 fun hasClassAccesses(state: IncrementalPredicateState) = ClassAccessDetector().let {
     it.apply(state.state)
     for (query in state.queries) {
