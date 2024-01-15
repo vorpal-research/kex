@@ -80,6 +80,7 @@ class ExceptionPreconditionChannel<T>(
                     .mapValues { (key, _) -> getPreconditions(key.first, key.second) }
                     .filterValues { it.isNotEmpty() }
                     .also { hasNewPreconditions = false }
+
                 else -> emptyMap()
             }
         }
@@ -91,6 +92,7 @@ class ExceptionPreconditionChannel<T>(
                     mappings.getOrPut(location to state, ::mutableSetOf)
                     return emptySet()
                 }
+
                 else -> {
                     val preconditions = builder.build(location, state)
                     val uncheckedPreconditions = preconditions - mappings.getOrPut(location to state, ::mutableSetOf)

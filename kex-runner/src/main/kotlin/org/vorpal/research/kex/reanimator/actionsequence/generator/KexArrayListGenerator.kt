@@ -68,7 +68,8 @@ class KexArrayListGenerator(val fallback: Generator) : Generator {
         val actionSequence = ActionList(name)
         saveToCache(descriptor, actionSequence)
 
-        val outerListField = kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.asType }
+        val outerListField =
+            kfgClass.fields.first { it.name.startsWith("this\$") && it.type == kfgClass.outerClass!!.asType }
         val outerListClass = (outerListField.type as ClassType).klass
         val outerListFieldKey = outerListField.name to outerListField.type.kexType
         if (outerListFieldKey !in descriptor.fields) {
@@ -78,8 +79,8 @@ class KexArrayListGenerator(val fallback: Generator) : Generator {
         val outerListAS = fallback.generate(outerListDescriptor, generationDepth)
 
         val iteratorMethod = when (descriptor.type) {
-            iteratorClass ->  outerListClass.getMethod("iterator", cm["java/util/Iterator"].asType)
-            else ->  outerListClass.getMethod("listIterator", cm["java/util/ListIterator"].asType)
+            iteratorClass -> outerListClass.getMethod("iterator", cm["java/util/Iterator"].asType)
+            else -> outerListClass.getMethod("listIterator", cm["java/util/ListIterator"].asType)
         }
         actionSequence += ExternalMethodCall(iteratorMethod, outerListAS, emptyList())
 

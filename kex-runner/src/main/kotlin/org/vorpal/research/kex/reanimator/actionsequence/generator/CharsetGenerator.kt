@@ -15,10 +15,12 @@ class CharsetGenerator(private val fallback: Generator) : Generator {
         private const val DEFAULT_CHARSET = "US_ASCII"
         private val existingCharsets = setOf("US_ASCII", "ISO_8859_1", "UTF_8", "UTF_16BE", "UTF_16LE", "UTF_16")
     }
+
     override val context: GeneratorContext
         get() = fallback.context
 
-    override fun supports(descriptor: Descriptor) = descriptor.type.toString() == CHARSET_CLASS && descriptor is ObjectDescriptor
+    override fun supports(descriptor: Descriptor) =
+        descriptor.type.toString() == CHARSET_CLASS && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()

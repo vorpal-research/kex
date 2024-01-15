@@ -50,6 +50,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, Incr
                 val assumption = call.arguments[0]
                 assume { assumption equality true }
             }
+
             kim.kexNotNull(method.cm) -> {
                 val value = call.arguments[0]
                 val term = term { generate(KexBool) }
@@ -58,10 +59,12 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, Incr
                     assume { term equality false }
                 )
             }
+
             kim.kexAssert(method.cm) -> {
                 val assertion = call.arguments[0]
                 require { assertion equality true }
             }
+
             else -> nothing()
         }
     }
@@ -71,6 +74,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, Incr
             kim.kexForAll(method.cm) -> state {
                 lhv() equality forAll(call.arguments[0], call.arguments[1], call.arguments[2])
             }
+
             in kim.kexContainsMethods(method.cm) -> {
                 val (array, value) = call.arguments
                 val length = generate(KexInt)
@@ -81,6 +85,7 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, Incr
                     lhv() equality (value `in` array)
                 }
             }
+
             kim.kexContains(method.cm) -> {
                 val (array, value) = call.arguments
                 val start = const(0)
@@ -97,18 +102,20 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, Incr
                     }
                 }
             }
+
             in kim.kexGenerateArrayMethods(method.cm) -> {
                 state {
                     generateArray(lhv(), call.arguments[0], call.arguments[1])
                 }
             }
+
             else -> nothing()
         }
     }
 
     private fun objectIntrinsicsAdapter(method: Method, call: CallTerm, lhv: () -> Term): PredicateState = basic {
         when (method) {
-            kim.kexEquals(method.cm) -> state { lhv() equality (call.arguments[0].equls(call.arguments[1]))  }
+            kim.kexEquals(method.cm) -> state { lhv() equality (call.arguments[0].equls(call.arguments[1])) }
             else -> nothing()
         }
     }

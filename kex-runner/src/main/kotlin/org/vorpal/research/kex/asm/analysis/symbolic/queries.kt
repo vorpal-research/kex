@@ -75,6 +75,7 @@ data class UpdateAndReportQuery(
     override operator fun plus(other: PersistentSymbolicState): UpdateAndReportQuery = this.copy(
         query = query + other
     )
+
     override operator fun plus(other: UpdateQuery): UpdateQuery = when (other) {
         is UpdateOnlyQuery -> UpdateAndReportQuery(
             this.query + other.query,
@@ -122,6 +123,7 @@ data class EmptyQuery(
 
     override fun plus(other: OptionalErrorCheckQuery): OptionalErrorCheckQuery =
         other.withHandler(action) as OptionalErrorCheckQuery
+
     override fun withHandler(newAction: UpdateAction): EmptyQuery =
         EmptyQuery { state ->
             newAction(action(state))
@@ -139,6 +141,7 @@ data class ExceptionCheckQuery(
     val errorQueries: List<SingleQuery>
 ) : OptionalErrorCheckQuery() {
     override val normalQuery = noErrorQuery.query
+
     constructor(vararg queries: SingleQuery) : this(queries[0] as UpdateQuery, queries.drop(1).toList())
 
     override fun plus(other: OptionalErrorCheckQuery): OptionalErrorCheckQuery = when (other) {
@@ -151,6 +154,7 @@ data class ExceptionCheckQuery(
 
     override fun withHandler(newAction: UpdateAction): ExceptionCheckQuery =
         ExceptionCheckQuery(noErrorQuery + newAction, errorQueries)
+
     override fun withHandler(newAction: ReportAction): IncrementalQuery =
         ExceptionCheckQuery(noErrorQuery + newAction, errorQueries)
 
@@ -167,6 +171,7 @@ data class ConditionCheckQuery(
 
     override fun withHandler(newAction: UpdateAction): ConditionCheckQuery =
         ConditionCheckQuery(queries.map { it + newAction })
+
     override fun withHandler(newAction: ReportAction): IncrementalQuery =
         ConditionCheckQuery(queries.map { it + newAction })
 }

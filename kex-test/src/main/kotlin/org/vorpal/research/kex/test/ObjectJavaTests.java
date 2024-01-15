@@ -4,7 +4,7 @@ package org.vorpal.research.kex.test;
 import static org.vorpal.research.kex.intrinsics.AssertIntrinsics.kexAssert;
 import static org.vorpal.research.kex.intrinsics.AssertIntrinsics.kexUnreachable;
 
-@SuppressWarnings("ConstantConditions")
+@SuppressWarnings({"ConstantConditions", "unused"})
 public class ObjectJavaTests {
     public static class PointJava {
         int x;
@@ -30,6 +30,7 @@ public class ObjectJavaTests {
             return x;
         }
     }
+
     public static class LineJava {
         PointJava start;
         PointJava end;
@@ -68,7 +69,7 @@ public class ObjectJavaTests {
         }
     }
 
-    public LineJava testObjects(PointJava a , DoublePointJava b) {
+    public LineJava testObjects(PointJava a, DoublePointJava b) {
         double xs = b.x - a.x;
         double ys = b.y - a.y;
         double zs = b.z - a.z;

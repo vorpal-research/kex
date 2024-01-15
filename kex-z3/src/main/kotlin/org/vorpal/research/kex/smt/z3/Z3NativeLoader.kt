@@ -26,12 +26,15 @@ abstract class Z3NativeLoader {
                 osProperty.startsWith("linux") -> {
                     "z3-$Z3_VERSION-linux64-native.zip" to libraries.map { "$it.so" }
                 }
+
                 osProperty.startsWith("windows") -> {
                     "z3-$Z3_VERSION-win64-native.zip" to (vcWinLibrariesToLoadBefore + libraries).map { "$it.dll" }
                 }
+
                 osProperty.startsWith("mac") -> {
                     "z3-$Z3_VERSION-osx64-native.zip" to libraries.map { "$it.dylib" }
                 }
+
                 else -> unreachable { log.error("Unknown OS: $osProperty") }
             }
 

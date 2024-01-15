@@ -60,6 +60,7 @@ private fun symbolicComputeEnumConstants(ctx: GeneratorContext, enumType: KexTyp
                 log.debug("Model: {}", result.model)
                 generateFinalDescriptors(staticInit, context, result.model, checker.state)
             }
+
             else -> null
         } ?: return mapOf()
 
@@ -97,6 +98,7 @@ private fun Descriptor.matches(
         visited[this to other] = false
         false
     }
+
     this is ConstantDescriptor.Null -> other is ConstantDescriptor.Null
     this is ConstantDescriptor.Bool -> this.value == (other as? ConstantDescriptor.Bool)?.value
     this is ConstantDescriptor.Byte -> this.value == (other as? ConstantDescriptor.Byte)?.value
@@ -116,6 +118,7 @@ private fun Descriptor.matches(
         visited[this to other] = res
         res
     }
+
     this is ArrayDescriptor -> {
         other as ArrayDescriptor
         visited[this to other] = false
@@ -130,6 +133,7 @@ private fun Descriptor.matches(
             false
         }
     }
+
     else -> false
 }
 
@@ -183,6 +187,7 @@ class EnumGenerator(private val fallback: Generator) : Generator {
                 val valuesMethod = normalizedEnumCLass.getMethod("values", normalizedEnumCLass.asType.asArray)
                 StaticMethodCall(valuesMethod, emptyList())
             }
+
             else -> {
                 val result = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
                     ?: enumConstants.filter { it.second.type == normalizedKexType }.randomOrNull(context.random)
@@ -249,6 +254,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
                 val fieldAS = fallback.generate(valuesFieldDescriptor, generationDepth)
                 ExternalMethodCall(getMethod, fieldAS, listOf(PrimaryValue(null)))
             }
+
             else -> {
                 val enumPair = enumConstants.firstOrNull { it.second.matches(descriptor, mutableMapOf()) }
                     ?: enumConstants.filter { it.second.type == descriptor.type }.randomOrNull(context.random)

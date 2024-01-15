@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.test.generation
 
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics.kexAssert
@@ -6,12 +8,15 @@ class BasicGenerationTests {
     open class Point(val x: Int, val y: Int, val z: Int) {
         override fun toString() = "($x, $y, $z)"
     }
+
     class Point4(x: Int, y: Int, z: Int, val t: Int) : Point(x, y, z) {
         override fun toString() = "($x, $y, $z, $t)"
     }
+
     data class Line(val start: Point, val end: Point) {
         override fun toString() = "{$start, $end}"
     }
+
     data class DoublePoint(val x: Double, val y: Double, val z: Double) {
         override fun toString() = "($x, $y, $z)"
     }

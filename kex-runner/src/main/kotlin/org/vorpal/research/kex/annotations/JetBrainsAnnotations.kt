@@ -22,7 +22,7 @@ import org.vorpal.research.kthelper.logging.log
 @AnnotationFunctionality("org.jetbrains.annotations.Range")
 class Range(val from: Long, val to: Long) : AnnotationInfo() {
     override fun preciseValue(value: Term) =
-            assume { (value ge from) equality true }.wrap() + assume { (value le to) equality true }
+        assume { (value ge from) equality true }.wrap() + assume { (value le to) equality true }
 }
 
 @Suppress("unused")
@@ -47,7 +47,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
         companion object {
             private val byLiteral = entries.associateBy { it.literal }
             operator fun get(literal: String) = byLiteral[literal]
-                    ?: throw AnnotationParserException("Unsupported value constraint \"$literal\"")
+                ?: throw AnnotationParserException("Unsupported value constraint \"$literal\"")
         }
     }
 
@@ -73,6 +73,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                         val i = resultLiteral.substring(5).toInt()
                         Record(args, Constraints.Param, i - 1)
                     }
+
                     else -> Record(args, Constraints[resultLiteral])
                 }
             }
@@ -84,6 +85,7 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                 when (param) {
                     in effects2, Constraints.New, Constraints.Fail ->
                         throw IllegalStateException("Constraint ${param.literal} is an effect")
+
                     else -> Unit
                 }
             }
@@ -98,8 +100,10 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
             Constraints.True -> arg eq true
             Constraints.False -> arg eq false
             Constraints.Fail, Constraints.New, Constraints.This, Constraints.Param, Constraints.Empty ->
-                throw IllegalStateException("The ${constraint.literal} constraint value may be" +
-                        " interpreted as effect only")
+                throw IllegalStateException(
+                    "The ${constraint.literal} constraint value may be" +
+                            " interpreted as effect only"
+                )
         }
     }
 
@@ -149,11 +153,11 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                     argUnion equality accumulator
                 }
                 result += listOf(
-                        path { argUnion equality true }.wrap() + state {
-                            if (returnTerm.type is KexArray) returnTerm.new(generate(KexInt))
-                            else returnTerm.new()
-                        },
-                        path { argUnion equality false }.wrap()
+                    path { argUnion equality true }.wrap() + state {
+                        if (returnTerm.type is KexArray) returnTerm.new(generate(KexInt))
+                        else returnTerm.new()
+                    },
+                    path { argUnion equality false }.wrap()
                 )
             }
         }
@@ -171,11 +175,11 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                     argUnion equality accumulator
                 }
                 result += listOf(
-                        path { argUnion equality true }.wrap() + state {
-                            if (returnTerm.type is KexArray) returnTerm.new(0)
-                            else returnTerm.new()
-                        },
-                        path { argUnion equality false }.wrap()
+                    path { argUnion equality true }.wrap() + state {
+                        if (returnTerm.type is KexArray) returnTerm.new(0)
+                        else returnTerm.new()
+                    },
+                    path { argUnion equality false }.wrap()
                 )
             }
         }
@@ -223,14 +227,14 @@ class Contract(val value: String = ""/*, pure: Boolean = false*/) : AnnotationIn
                     argUnion equality accumulator
                 }
                 result += listOf(
-                        path { argUnion equality true }.wrap() + assume {
-                            returnTerm equality when (record.result) {
-                                Constraints.This -> call.owner
-                                Constraints.Param -> args[record.meta]
-                                else -> unreachable { record.result }
-                            }
-                        },
-                        path { argUnion equality false }.wrap()
+                    path { argUnion equality true }.wrap() + assume {
+                        returnTerm equality when (record.result) {
+                            Constraints.This -> call.owner
+                            Constraints.Param -> args[record.meta]
+                            else -> unreachable { record.result }
+                        }
+                    },
+                    path { argUnion equality false }.wrap()
                 )
             }
         }

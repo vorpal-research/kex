@@ -166,6 +166,7 @@ class PredicateBuilderTest : KexTest("predicate-builder") {
                         }
                     }
                 }.getOrElse { tf.getValue(this) }
+
                 else -> tf.getValue(this)
             }
 
@@ -308,6 +309,7 @@ class PredicateBuilderTest : KexTest("predicate-builder") {
                         assertTrue(rhv is NegTerm)
                         assertEquals(rhv.operand, tf.getValue(inst.operand))
                     }
+
                     UnaryOpcode.LENGTH -> {
                         assertTrue(rhv is ArrayLengthTerm)
                         assertEquals(rhv.arrayRef, tf.getValue(inst.operand))

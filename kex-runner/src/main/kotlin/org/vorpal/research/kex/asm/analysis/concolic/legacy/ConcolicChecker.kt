@@ -124,10 +124,12 @@ class ConcolicChecker(
                         ++staticLevel
                         false
                     }
+
                     is StaticInitExit -> {
                         --staticLevel
                         false
                     }
+
                     else -> staticLevel == 0
                 }
             }
@@ -141,6 +143,7 @@ class ConcolicChecker(
                     prevBlockStack.push(BlockWrapper(null))
                     builder.enterMethod(action.method.unwrap(cm))
                 }
+
                 is MethodReturn -> {
                     val exitMethod = methodStack.pop()
                     val prevBlock = prevBlockStack.pop()
@@ -150,6 +153,7 @@ class ConcolicChecker(
                     builder.build(current, prevBlock.block, next)
                     builder.exitMethod(action.method.unwrap(cm))
                 }
+
                 is MethodThrow -> {
                     val exitMethod = methodStack.pop()
                     val prevBlock = prevBlockStack.pop()
@@ -159,6 +163,7 @@ class ConcolicChecker(
                     builder.build(current, prevBlock.block, next)
                     builder.exitMethod(action.method.unwrap(cm))
                 }
+
                 is MethodCall -> {
                     val currentMethod = methodStack.peek()
                     val nm = currentMethod.nameMapper
@@ -183,6 +188,7 @@ class ConcolicChecker(
                     builder.build(current, prevBlock.block, next)
                     prevBlockStack.push(current.wrap())
                 }
+
                 is BlockBranch -> {
                     val currentMethod = methodStack.peek()
                     val prevBlock = prevBlockStack.pop()
@@ -192,6 +198,7 @@ class ConcolicChecker(
                     builder.build(current, prevBlock.block, next)
                     prevBlockStack.push(current.wrap())
                 }
+
                 is BlockSwitch -> {
                     val currentMethod = methodStack.peek()
                     val prevBlock = prevBlockStack.pop()
@@ -201,6 +208,7 @@ class ConcolicChecker(
                     builder.build(current, prevBlock.block, next)
                     prevBlockStack.push(current.wrap())
                 }
+
                 else -> {
                 }
             }
@@ -227,6 +235,7 @@ class ConcolicChecker(
                         currentState += it
                         false
                     }
+
                     else -> {
                         currentState += current
                         true

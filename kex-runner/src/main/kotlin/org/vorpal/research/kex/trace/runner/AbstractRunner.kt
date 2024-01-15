@@ -16,10 +16,10 @@ import java.lang.reflect.Method as ReflectMethod
 private val timeout = kexConfig.getLongValue("runner", "timeout", 1000L)
 
 data class InvocationResult(
-        val output: ByteArray,
-        val error: ByteArray,
-        val returnValue: Any? = null,
-        val exception: Throwable? = null
+    val output: ByteArray,
+    val error: ByteArray,
+    val returnValue: Any? = null,
+    val exception: Throwable? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -126,8 +126,7 @@ abstract class AbstractRunner(val method: Method, protected val loader: ClassLoa
     open fun invokeStatic(args: Array<Any?>) = invoke(null, args)
 }
 
-abstract class TracingAbstractRunner<T>(method: Method, loader: ClassLoader)
-    : AbstractRunner(method, loader) {
+abstract class TracingAbstractRunner<T>(method: Method, loader: ClassLoader) : AbstractRunner(method, loader) {
     abstract fun generateArguments(): Parameters<Any?>?
     abstract fun enableCollector()
     abstract fun disableCollector()

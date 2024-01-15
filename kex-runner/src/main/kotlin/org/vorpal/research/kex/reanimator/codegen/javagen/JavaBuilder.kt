@@ -184,7 +184,8 @@ class JavaBuilder(val pkg: String = "") {
             return this
         }
 
-        fun ifElse(condition: String, body: ElseIfStatement.() -> Unit) = ifElse(StringConditionStatement(condition), body)
+        fun ifElse(condition: String, body: ElseIfStatement.() -> Unit) =
+            ifElse(StringConditionStatement(condition), body)
     }
     // TODO: add iterateStatement as Data Class
     data class ForStatement(

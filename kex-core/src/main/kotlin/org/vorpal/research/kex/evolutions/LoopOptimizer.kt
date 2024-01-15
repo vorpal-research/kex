@@ -37,7 +37,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
 
     override fun cleanup() {}
 
-    protected fun precalculateEvolutions(topLoops : List<Loop>) {
+    protected fun precalculateEvolutions(topLoops: List<Loop>) {
         cleanup()
         walkLoops(topLoops).forEach { loop ->
             loop
@@ -68,7 +68,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
         clearUnused(loop)
     }
 
-    protected fun clearUnused(loop: Loop) = with(ctx){
+    protected fun clearUnused(loop: Loop) = with(ctx) {
         val unused = mutableListOf<Instruction>()
         for (b in loop.body) {
             for (i in b) {
@@ -231,6 +231,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
                 collector.add(divLcm)
                 return divLcm
             }
+
             is SymDouble -> {
                 val mulConst =
                     instructions.getBinary(ctx, BinaryOpcode.MUL, res, values.getDouble(const.toDouble()))
@@ -284,7 +285,7 @@ open class LoopOptimizer(cm: ClassManager) : Evolutions(cm), LoopVisitor {
 
     private fun lcm(a: Long, b: Long): Long = (a / gcd(a, b)) * b
 
-    protected fun rebuild(loop: Loop): Pair<List<Instruction>,List<Pair<PhiInst, Value>>>?   {
+    protected fun rebuild(loop: Loop): Pair<List<Instruction>, List<Pair<PhiInst, Value>>>? {
         val phis = loop.body.flatMap { it.instructions }.mapNotNull { it as? PhiInst }
             .mapNotNull { if (phiToEvo.containsKey(it)) it else null }
         val newBlock = mutableListOf<Instruction>()

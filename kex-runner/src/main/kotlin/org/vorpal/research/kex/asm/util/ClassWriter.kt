@@ -10,6 +10,7 @@ import org.vorpal.research.kthelper.tryOrNull
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@Suppress("unused")
 class ClassWriter(val ctx: ExecutionContext, val target: Path) : ClassVisitor {
     override val cm: ClassManager
         get() = ctx.cm
@@ -18,7 +19,8 @@ class ClassWriter(val ctx: ExecutionContext, val target: Path) : ClassVisitor {
 
     override fun visit(klass: Class) {
         tryOrNull {
-            val classFileName = target.resolve(Paths.get(klass.pkg.fileSystemPath, "${klass.name}.class")).toAbsolutePath()
+            val classFileName =
+                target.resolve(Paths.get(klass.pkg.fileSystemPath, "${klass.name}.class")).toAbsolutePath()
             klass.write(cm, ctx.loader, classFileName)
         } ?: log.warn("Could not write class $klass")
     }

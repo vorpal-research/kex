@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.vorpal.research.kex.test.concolic.kaf
 
 class Lesson2 {
@@ -34,6 +36,7 @@ class Lesson2 {
                 year % 4 == 0 && year % 100 != 0 -> 29
                 else -> 28
             }
+
             1, 3, 5, 7, 8, 10, 12 -> 31
             else -> 30
         }

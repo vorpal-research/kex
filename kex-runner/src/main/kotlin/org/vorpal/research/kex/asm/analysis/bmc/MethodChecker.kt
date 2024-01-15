@@ -48,10 +48,10 @@ class KexRunnerException(val inner: Exception, val model: Parameters<Any?>) : Ex
 
 @Serializable
 data class Failure(
-        @Contextual val `class`: Class,
-        @Contextual val method: Method,
-        val message: String,
-        val state: PredicateState
+    @Contextual val `class`: Class,
+    @Contextual val method: Method,
+    val message: String,
+    val state: PredicateState
 )
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -60,7 +60,8 @@ data class Failure(
 open class MethodChecker(
     val ctx: ExecutionContext,
     protected val tm: TraceManager<ActionTrace>,
-    protected val psa: PredicateStateAnalysis) : MethodVisitor {
+    protected val psa: PredicateStateAnalysis
+) : MethodVisitor {
     protected val nameContext = NameMapperContext()
     override val cm: ClassManager get() = ctx.cm
     val random: Randomizer get() = ctx.random
@@ -143,7 +144,7 @@ open class MethodChecker(
     protected open fun coverBlock(method: Method, block: BasicBlock): Result {
         val checker = Checker(method, ctx, psa)
         val ps = checker.createState(block.terminator)
-                ?: return Result.UnknownResult("Could not create a predicate state for instruction")
+            ?: return Result.UnknownResult("Could not create a predicate state for instruction")
 
         val result = try {
             checker.prepareAndCheck(ps)
@@ -170,9 +171,12 @@ open class MethodChecker(
                     throw KexRunnerException(e, Parameters(instance, args, setOf()))
                 }
             }
+
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
-            is Result.UnknownResult -> log.debug("Can't decide on reachability of " +
-                    "instruction ${block.terminator.print()}, reason: ${result.reason}")
+            is Result.UnknownResult -> log.debug(
+                "Can't decide on reachability of " +
+                        "instruction ${block.terminator.print()}, reason: ${result.reason}"
+            )
         }
         return result
     }

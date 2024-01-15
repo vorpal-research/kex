@@ -25,11 +25,12 @@ import kotlin.reflect.full.staticProperties
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.jvmErasure
 
-val KType.isNonNullable get() = when {
-    this.isMarkedNullable -> false
-    this.toString().endsWith("!") -> false // THIS IS FUCKED UP
-    else -> true
-}
+val KType.isNonNullable
+    get() = when {
+        this.isMarkedNullable -> false
+        this.toString().endsWith("!") -> false // THIS IS FUCKED UP
+        else -> true
+    }
 
 fun KexType.isNonNullable(kType: KType) = when (this) {
     is KexPointer -> kType.isNonNullable
@@ -41,6 +42,7 @@ fun KexType.isElementNullable(kType: KType) = when (this) {
         kType.arguments.isEmpty() -> false
         else -> kType.arguments[0].type?.isMarkedNullable ?: true
     }
+
     else -> false
 }
 
@@ -97,6 +99,7 @@ fun KClass<*>.getKFunction(method: Method): KFunction<*>? {
                 val supertypes = `try` { klass.supertypes }.getOrElse { emptyList() }
                 queue.addAll(supertypes.map { it.classifier }.filterIsInstance<KClass<*>>())
             }
+
             else -> return kFunction
         }
     }
@@ -104,6 +107,6 @@ fun KClass<*>.getKFunction(method: Method): KFunction<*>? {
 }
 
 fun KClass<*>.getKProperty(field: Field) =
-        `try` { this.declaredMemberProperties }
-                .map { klass -> klass.find { it.name == field.name } }
-                .getOrNull()
+    `try` { this.declaredMemberProperties }
+        .map { klass -> klass.find { it.name == field.name } }
+        .getOrNull()

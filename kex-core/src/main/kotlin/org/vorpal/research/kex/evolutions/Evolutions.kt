@@ -49,6 +49,7 @@ fun evaluateEvolutions(s: Symbolic, iterations: MutableMap<Loop, Var>): Symbolic
                 EvoOpcode.TIMES -> lhv * RowProduct.of(variable, Const(1), variable, rhv)
             }
         }
+
         else -> transform(sym)
     }
 }
@@ -186,6 +187,7 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
                     Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
                 )
             }
+
             is ShiftRight -> {
                 val (lhv, rhv) = recur.arguments
                 if (lhv != me) return Undefined
@@ -194,24 +196,28 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
                     Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
                 )
             }
+
             is KFGBinary -> {
                 val (lhv, rhv) = recur.arguments
                 if (lhv != me) return Undefined
                 return when (recur.opcode) {
-                        BinaryOpcode.DIV -> KFGBinary(
+                    BinaryOpcode.DIV -> KFGBinary(
                         BinaryOpcode.DIV,
                         base,
                         Evolution(v.loop, EvoOpcode.TIMES, Const.ONE, rhv)
                     )
+
                     BinaryOpcode.USHR ->
                         KFGBinary(
                             recur.opcode,
                             base,
                             Evolution(v.loop, EvoOpcode.PLUS, Const.ZERO, rhv)
                         )
+
                     else -> Undefined
                 }
             }
+
             is Apply -> return recur
             is Product -> {
                 // decompose recur to (Alpha * me)
@@ -220,6 +226,7 @@ open class Evolutions(override val cm: ClassManager) : MethodVisitor {
 
                 return Evolution(v.loop, EvoOpcode.TIMES, base, alpha)
             }
+
             is Sum -> {
                 // decompose recur to (Alpha * me + Beta)
                 val (l, beta) = recur.partition { it.hasVar(me) }

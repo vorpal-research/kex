@@ -8,13 +8,14 @@ import org.vorpal.research.kex.state.term.ReturnValueTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.ValueTerm
 
-val Term.isVariable: Boolean get() = when (this) {
-    is ArgumentTerm -> true
-    is ValueTerm -> true
-    is ReturnValueTerm -> true
-    is FieldTerm -> true
-    else -> false
-}
+val Term.isVariable: Boolean
+    get() = when (this) {
+        is ArgumentTerm -> true
+        is ValueTerm -> true
+        is ReturnValueTerm -> true
+        is FieldTerm -> true
+        else -> false
+    }
 
 class VariableCollector : Transformer<VariableCollector> {
     val variables = linkedSetOf<Term>()

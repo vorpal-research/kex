@@ -12,6 +12,7 @@ class MethodEntry(method: MethodWrapper, val instance: Any?, val args: Array<Any
     override fun toString() = "Enter $method"
 }
 
+@Suppress("unused")
 class MethodReturn(method: MethodWrapper, val block: BlockWrapper, val returnValue: Any?) : MethodAction(method) {
     override fun toString() = "Return from $method"
 }
@@ -20,7 +21,12 @@ class MethodThrow(method: MethodWrapper, val block: BlockWrapper, val throwable:
     override fun toString() = "Throw from $method"
 }
 
-class MethodCall(method: MethodWrapper, val returnValue: ValueWrapper?, val instance: ValueWrapper?, val args: Array<ValueWrapper>) :
+class MethodCall(
+    method: MethodWrapper,
+    val returnValue: ValueWrapper?,
+    val instance: ValueWrapper?,
+    val args: Array<ValueWrapper>
+) :
     MethodAction(method) {
     override fun toString() = "Call $method"
 }
@@ -42,6 +48,7 @@ class BlockJump(bb: BlockWrapper) : BlockAction(bb) {
     override fun toString() = "Jump from ${block.name}"
 }
 
+@Suppress("unused")
 class BlockBranch(bb: BlockWrapper, val condition: Any?, val expected: Any?) : BlockAction(bb) {
     override fun toString() = "Branch from ${block.name}"
 }

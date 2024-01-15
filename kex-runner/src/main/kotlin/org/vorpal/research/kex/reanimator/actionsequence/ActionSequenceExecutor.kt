@@ -80,6 +80,7 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         cache[actionSequence] = instance
                         instance
                     }
+
                     is ConstructorCall -> {
                         val reflection = ctx.loader.loadClass(call.constructor.klass)
                         val constructor = reflection.getConstructor(call.constructor, ctx.loader)
@@ -92,6 +93,7 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         cache[actionSequence] = instance
                         instance
                     }
+
                     is ExternalConstructorCall -> {
                         val reflection = ctx.loader.loadClass(call.constructor.klass)
                         val javaMethod = reflection.getMethod(call.constructor, ctx.loader)
@@ -104,6 +106,7 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         cache[actionSequence] = instance
                         instance
                     }
+
                     is ExternalMethodCall -> {
                         val reflection = ctx.loader.loadClass(call.method.klass)
                         val javaMethod = reflection.getMethod(call.method, ctx.loader)
@@ -117,6 +120,7 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         cache[actionSequence] = instance
                         instance
                     }
+
                     is InnerClassConstructorCall -> {
                         val reflection = ctx.loader.loadClass(call.constructor.klass)
                         val constructor = reflection.getConstructor(call.constructor, ctx.loader)
@@ -130,6 +134,7 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         cache[actionSequence] = instance
                         instance
                     }
+
                     is MethodCall -> {
                         val reflection = ctx.loader.loadClass(call.method.klass)
                         val javaMethod = reflection.getMethod(call.method, ctx.loader)
@@ -140,6 +145,7 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         }
                         current
                     }
+
                     is StaticMethodCall -> {
                         val reflection = ctx.loader.loadClass(call.method.klass)
                         val javaMethod = reflection.getMethod(call.method, ctx.loader)
@@ -150,23 +156,27 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         }
                         current
                     }
+
                     is NewArray -> {
                         val length = execute(call.length)!! as Int
                         val elementReflection = ctx.loader.loadClass(call.asArray.component)
                         Array.newInstance(elementReflection, length)
                     }
+
                     is ArrayWrite -> {
                         val index = execute(call.index)!! as Int
                         val value = execute(call.value)
                         setValue(current!!, index, value)
                         current
                     }
+
                     is NewArrayWithInitializer -> {
                         val length = call.elements.size
                         val elementReflection = ctx.loader.loadClass(call.asArray.component)
                         val array = Array.newInstance(elementReflection, length)
                         (0 until length).forEach { setValue(array, it, execute(call.elements[it])) }
                     }
+
                     is FieldSetter -> {
                         val field = call.field
                         val reflection = ctx.loader.loadClass(field.klass)
@@ -177,6 +187,7 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         fieldReflection.setValue(current, value)
                         current
                     }
+
                     is StaticFieldSetter -> {
                         val field = call.field
                         val reflection = ctx.loader.loadClass(field.klass)
@@ -187,20 +198,24 @@ class ActionSequenceExecutor(val ctx: ExecutionContext) {
                         fieldReflection.setValue(null, value)
                         current
                     }
+
                     is EnumValueCreation -> {
                         val reflection = ctx.loader.loadClass(call.klass)
                         val fieldReflect = reflection.getDeclaredField(call.name)
                         fieldReflect.get(null)
                     }
+
                     is StaticFieldGetter -> {
                         val reflection = ctx.loader.loadClass(call.field.klass)
                         val fieldReflect = reflection.getDeclaredField(call.field.name)
                         fieldReflect.get(null)
                     }
+
                     is ClassConstantGetter -> ctx.loader.loadClass(call.type)
                     is ArrayClassConstantGetter -> (execute(call.elementType) as Class<*>).asArray()
                 }
             }
+
             else -> log.error { "Unexpected type of action sequence in executor: $actionSequence" }
         }
 

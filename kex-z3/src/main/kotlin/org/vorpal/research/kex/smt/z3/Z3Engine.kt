@@ -79,7 +79,9 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
         else -> makeFalse(ctx)
     }
 
-    override fun makeIntConst(ctx: ExtendedContext, value: Short): Expr<*> = ctx.mkNumeral(value.toInt(), getBVSort(ctx, WORD))
+    override fun makeIntConst(ctx: ExtendedContext, value: Short): Expr<*> =
+        ctx.mkNumeral(value.toInt(), getBVSort(ctx, WORD))
+
     override fun makeIntConst(ctx: ExtendedContext, value: Int): Expr<*> = ctx.mkNumeral(value, getBVSort(ctx, WORD))
     override fun makeLongConst(ctx: ExtendedContext, value: Long): Expr<*> = ctx.mkNumeral(value, getBVSort(ctx, DWORD))
     override fun makeNumericConst(ctx: ExtendedContext, sort: Sort, value: Long): Expr<*> = ctx.mkNumeral(value, sort)
@@ -99,7 +101,8 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
         return ctx.mkNumeral(bitStr, getBVSort(ctx, width))
     }
 
-    override fun apply(ctx: ExtendedContext, f: FuncDecl<*>, args: List<Expr<*>>): Expr<*> = f.apply(*args.toTypedArray())
+    override fun apply(ctx: ExtendedContext, f: FuncDecl<*>, args: List<Expr<*>>): Expr<*> =
+        f.apply(*args.toTypedArray())
 
     override fun negate(ctx: ExtendedContext, expr: Expr<*>): Expr<*> = when (expr) {
         is BoolExpr -> ctx.mkNot(expr)
@@ -116,46 +119,55 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
             lhv is FPExpr && rhv is FPExpr -> add(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
+
         Opcode.SUB -> when {
             lhv is BitVecExpr && rhv is BitVecExpr -> sub(ctx, lhv, rhv)
             lhv is FPExpr && rhv is FPExpr -> sub(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
+
         Opcode.MUL -> when {
             lhv is BitVecExpr && rhv is BitVecExpr -> mul(ctx, lhv, rhv)
             lhv is FPExpr && rhv is FPExpr -> mul(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
+
         Opcode.DIVIDE -> when {
             lhv is BitVecExpr && rhv is BitVecExpr -> sdiv(ctx, lhv, rhv)
             lhv is FPExpr && rhv is FPExpr -> sdiv(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
+
         Opcode.MOD -> when {
             lhv is BitVecExpr && rhv is BitVecExpr -> smod(ctx, lhv, rhv)
             lhv is FPExpr && rhv is FPExpr -> fmod(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected mod arguments: $lhv and $rhv") }
         }
+
         Opcode.GT -> when {
             lhv is BitVecExpr && rhv is BitVecExpr -> gt(ctx, lhv, rhv)
             lhv is FPExpr && rhv is FPExpr -> gt(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
+
         Opcode.GE -> when {
             lhv is BitVecExpr && rhv is BitVecExpr -> ge(ctx, lhv, rhv)
             lhv is FPExpr && rhv is FPExpr -> ge(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
+
         Opcode.LT -> when {
             lhv is BitVecExpr && rhv is BitVecExpr -> lt(ctx, lhv, rhv)
             lhv is FPExpr && rhv is FPExpr -> lt(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
+
         Opcode.LE -> when {
             lhv is BitVecExpr && rhv is BitVecExpr -> le(ctx, lhv, rhv)
             lhv is FPExpr && rhv is FPExpr -> le(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
+
         Opcode.SHL -> shl(ctx, lhv as BitVecExpr, rhv as BitVecExpr)
         Opcode.SHR -> lshr(ctx, lhv as BitVecExpr, rhv as BitVecExpr)
         Opcode.ASHR -> ashr(ctx, lhv as BitVecExpr, rhv as BitVecExpr)
@@ -164,16 +176,19 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
             lhv is BitVecExpr && rhv is BitVecExpr -> and(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected and arguments: $lhv and $rhv") }
         }
+
         Opcode.OR -> when {
             lhv is BoolExpr && rhv is BoolExpr -> or(ctx, lhv, rhv)
             lhv is BitVecExpr && rhv is BitVecExpr -> or(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected or arguments: $lhv or $rhv") }
         }
+
         Opcode.XOR -> when {
             lhv is BoolExpr && rhv is BoolExpr -> xor(ctx, lhv, rhv)
             lhv is BitVecExpr && rhv is BitVecExpr -> xor(ctx, lhv, rhv)
             else -> unreachable { log.error("Unexpected xor arguments: $lhv xor $rhv") }
         }
+
         Opcode.IMPLIES -> implies(ctx, lhv as BoolExpr, rhv as BoolExpr)
         Opcode.IFF -> iff(ctx, lhv as BoolExpr, rhv as BoolExpr)
         Opcode.CONCAT -> concat(ctx, lhv as BitVecExpr, rhv as BitVecExpr)
@@ -387,11 +402,13 @@ object Z3Engine : SMTEngine<ExtendedContext, Expr<*>, Sort, FuncDecl<*>, Pattern
         )
 
     override fun indexOf(ctx: ExtendedContext, seq: Expr<*>, subSeq: Expr<*>, offset: Expr<*>): Expr<*> =
-        ctx.mkInt2BV(WORD, ctx.mkIndexOf(
-            seq as Expr<SeqSort<BitVecSort>>,
-            subSeq as Expr<SeqSort<BitVecSort>>,
-            ctx.mkBV2Int(offset as Expr<BitVecSort>, true)
-        ))
+        ctx.mkInt2BV(
+            WORD, ctx.mkIndexOf(
+                seq as Expr<SeqSort<BitVecSort>>,
+                subSeq as Expr<SeqSort<BitVecSort>>,
+                ctx.mkBV2Int(offset as Expr<BitVecSort>, true)
+            )
+        )
 
     override fun concat(ctx: ExtendedContext, lhv: Expr<*>, rhv: Expr<*>): Expr<*> =
         ctx.mkConcat(lhv as Expr<SeqSort<BitVecSort>>, rhv as Expr<SeqSort<BitVecSort>>)

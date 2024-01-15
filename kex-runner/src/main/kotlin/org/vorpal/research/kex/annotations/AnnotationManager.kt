@@ -104,21 +104,28 @@ object AnnotationManager {
     private fun cast(value: String, type: KClass<*>): Any = when (type) {
         Int::class -> getSpecialConstantTyped<Int>(value)
             ?: clearStr(value).toInt()
+
         Byte::class -> getSpecialConstantTyped<Byte>(value)
             ?: clearStr(value).toByte()
+
         Short::class -> getSpecialConstantTyped<Short>(value)
             ?: clearStr(value).toShort()
+
         Long::class -> getSpecialConstantTyped<Long>(value)
             ?: clearStr(value).toLong()
+
         Float::class -> getSpecialConstantTyped<Float>(value)
             ?: clearStr(value).toFloat()
+
         Double::class -> getSpecialConstantTyped<Double>(value)
             ?: clearStr(value).toDouble()
+
         Boolean::class -> when (value) {
             "true" -> true
             "false" -> false
             else -> throw IllegalStateException("Invalid boolean constant $value")
         }
+
         Char::class -> when (val c = getSpecialConstant(value)) {
             is Char -> c
             null -> {
@@ -127,16 +134,20 @@ object AnnotationManager {
                 check(result.length == 1) { "Character literal contains ${result.length} characters" }
                 result.first()
             }
+
             else -> throw IllegalStateException("Specified constant is not java.lang.Character")
         }
+
         String::class -> when (val special = getSpecialConstant(value)) {
             is String -> special
             null -> {
                 check(value.first() == '"' && value.last() == '"') { "Invalid string literal" }
                 unescapeJava(value.substring(1..(value.length - 2)))
             }
+
             else -> throw IllegalStateException("Specified constant is not java.lang.String")
         }
+
         else -> throw IllegalArgumentException("Only primitive types or String supported in annotations arguments")
     }
 }

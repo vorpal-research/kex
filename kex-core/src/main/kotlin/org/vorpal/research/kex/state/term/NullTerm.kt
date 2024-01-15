@@ -12,5 +12,5 @@ class NullTerm : Term() {
     override val type = KexNull()
     override val subTerms by lazy { listOf<Term>() }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
+    override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
 }

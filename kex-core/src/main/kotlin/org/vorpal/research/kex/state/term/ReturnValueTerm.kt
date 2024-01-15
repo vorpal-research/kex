@@ -10,10 +10,11 @@ import org.vorpal.research.kfg.ir.Method
 @InheritorOf("Term")
 @Serializable
 class ReturnValueTerm(
-        override val type: KexType,
-        @Contextual val method: Method) : Term() {
+    override val type: KexType,
+    @Contextual val method: Method
+) : Term() {
     override val name = "<retval>"
     override val subTerms by lazy { listOf<Term>() }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
+    override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
 }

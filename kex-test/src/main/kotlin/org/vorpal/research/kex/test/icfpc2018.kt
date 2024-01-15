@@ -1,4 +1,4 @@
-@file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_PARAMETER", "UNUSED_VARIABLE", "UNREACHABLE_CODE")
+@file:Suppress("unused", "UNUSED_PARAMETER", "UNUSED_VARIABLE", "UNREACHABLE_CODE", "MemberVisibilityCanBePrivate")
 
 package org.vorpal.research.kex.test
 
@@ -12,7 +12,7 @@ import java.nio.file.StandardCopyOption
 
 class Icfpc2018Test {
     class ZipWriter {
-        fun createZip(name: String): Unit {}
+        fun createZip(name: String) {}
     }
 
     class Results(val elements: MutableMap<String, Result>) : MutableMap<String, Result> by elements {
@@ -75,8 +75,10 @@ class Icfpc2018Test {
                 kexAssert(true)
 
                 val bestSolution = result.getSortedSolutions().first().second
-                Files.copy(File(bestSolution.trace).toPath(), File("submit/$task.nbt").toPath(),
-                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+                Files.copy(
+                    File(bestSolution.trace).toPath(), File("submit/$task.nbt").toPath(),
+                    StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES
+                )
             } else {
                 kexAssert(true)
 
@@ -107,8 +109,10 @@ class Icfpc2018Test {
                         continue
                     }
 
-                    Files.copy(File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
-                            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+                    Files.copy(
+                        File(solution.trace).toPath(), File("submit/$task.nbt").toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES
+                    )
                     haveSolution = true
                     break
                     kexUnreachable()
@@ -125,7 +129,7 @@ class Icfpc2018Test {
     }
 
     fun portfolioSolve() {
-        val task = "taskname"
+        val task = "taskName"
         val target = Model.readMDL(ByteArrayInputStream("models/${task}_tgt.mdl".toByteArray()))
         val initialState = State()
         val system = System(initialState)
