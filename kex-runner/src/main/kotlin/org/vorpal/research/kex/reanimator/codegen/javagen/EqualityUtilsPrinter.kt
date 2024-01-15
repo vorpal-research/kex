@@ -175,7 +175,7 @@ class EqualityUtilsPrinter(
                     returnType = type("boolean")
                     visibility = Visibility.PUBLIC
                     modifiers += "static"
-                    +"return equalsAll(t1, t2, new HashMap<>(), new HashMap<>())"
+                    +"return equalsAll(t1, t2, new IdentityHashMap<>(), new IdentityHashMap<>())"
                 }
             }
         }
