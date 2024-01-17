@@ -46,6 +46,8 @@ class ReflectionUtilsPrinter(
             }
         }
 
+        fun reflectionUtilsClasses(): Set<Path> = reflectionUtilsInstances.mapTo(mutableSetOf()) { it.key.first }
+
         @Suppress("unused")
         fun invalidateAll() {
             reflectionUtilsInstances.clear()

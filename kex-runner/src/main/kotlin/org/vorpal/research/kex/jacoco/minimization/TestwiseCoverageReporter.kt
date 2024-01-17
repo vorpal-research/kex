@@ -28,6 +28,7 @@ class TestwiseCoverageReporter(
     containers: List<Container> = listOf()
 ) : CoverageReporter(classManager, containers) {
 
+    @Suppress("unused")
     fun computeTestwiseCoverageInfo(
         analysisLevel: AnalysisLevel,
         testClasses: Set<Path> = this.allTestClasses
@@ -40,8 +41,8 @@ class TestwiseCoverageReporter(
 
         val req = mutableSetOf<Pair<String, Int>>()
         val tests = mutableListOf<TestCoverageInfo>()
-        val coverageBuilder = buildCoverageBuilder(coverageContext, testClasses, executionData)
         for (testPath in testClasses) {
+            val coverageBuilder = buildCoverageBuilder(coverageContext, setOf(testPath), executionData)
             req += getRequirements(coverageBuilder)
             val satisfied = getSatisfiedLines(coverageBuilder)
             tests += TestCoverageInfo(testPath, satisfied)
