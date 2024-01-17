@@ -6,6 +6,7 @@ import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.ICounter
 import org.jacoco.core.analysis.ICoverageNode
+import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
 import org.jacoco.core.data.SessionInfoStore
 import org.jacoco.core.instr.Instrumenter
@@ -86,22 +87,26 @@ class CoverageReporter(
                         )
                     }
                     .toList()
-                val coverageBuilder = getCoverageBuilder(classes, testClasses)
+                val coverageBuilder = getCoverageBuilderAndCleanup(classes, testClasses)
                 getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
             }
 
             is ClassLevel -> {
                 val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                val coverageBuilder =
-                    getCoverageBuilder(listOf(jacocoInstrumentedDir.resolve("$klass.class")), testClasses)
+                val coverageBuilder = getCoverageBuilderAndCleanup(
+                    listOf(jacocoInstrumentedDir.resolve("$klass.class")),
+                    testClasses
+                )
                 getClassCoverage(cm, coverageBuilder).first()
             }
 
             is MethodLevel -> {
                 val method = analysisLevel.method
                 val klass = method.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                val coverageBuilder =
-                    getCoverageBuilder(listOf(jacocoInstrumentedDir.resolve("$klass.class")), testClasses)
+                val coverageBuilder = getCoverageBuilderAndCleanup(
+                    listOf(jacocoInstrumentedDir.resolve("$klass.class")),
+                    testClasses
+                )
                 getMethodCoverage(coverageBuilder, method)!!
             }
         }
@@ -133,58 +138,47 @@ class CoverageReporter(
         return batches.toSortedMap()
     }
 
-    fun computeSaturationCoverage(
+    fun computeCoverageSaturation(
         cm: ClassManager,
         analysisLevel: AnalysisLevel,
     ): SortedMap<Duration, CommonCoverageInfo> {
         val testClasses = Files.walk(compileDir).filter { it.isClass }.toList()
         val batchedTestClasses = testClasses.batchByTime()
         val maxTime = batchedTestClasses.lastKey()
-        return when (analysisLevel) {
-            is PackageLevel -> {
-                val classes = Files.walk(jacocoInstrumentedDir)
+
+        val coverageContext = when (analysisLevel) {
+            is PackageLevel -> buildCoverageContext(
+                Files.walk(jacocoInstrumentedDir)
                     .filter { it.isClass }
-                    .filter {
-                        analysisLevel.pkg.isParent(
-                            it.fullyQualifiedName(jacocoInstrumentedDir)
-                                .asmString
-                        )
-                    }
+                    .filter { analysisLevel.pkg.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).asmString) }
                     .toList()
-                batchedTestClasses.mapValues { (duration, batchedTests) ->
-                    log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
-                    val coverageBuilder = getCoverageBuilder(classes, batchedTests, logProgress = false)
-                    getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
-                }
-            }
+            )
 
             is ClassLevel -> {
                 val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                batchedTestClasses.mapValues { (duration, batchedTests) ->
-                    log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
-                    val coverageBuilder = getCoverageBuilder(
-                        listOf(jacocoInstrumentedDir.resolve("$klass.class")),
-                        batchedTests,
-                        logProgress = false
-                    )
-                    getClassCoverage(cm, coverageBuilder).first()
-                }
+                buildCoverageContext(listOf(jacocoInstrumentedDir.resolve("$klass.class")))
             }
 
             is MethodLevel -> {
                 val method = analysisLevel.method
                 val klass = method.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                batchedTestClasses.mapValues { (duration, batchedTests) ->
-                    log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
-                    val coverageBuilder = getCoverageBuilder(
-                        listOf(jacocoInstrumentedDir.resolve("$klass.class")),
-                        batchedTests,
-                        logProgress = false
-                    )
-                    getMethodCoverage(coverageBuilder, method)!!
-                }
+                buildCoverageContext(listOf(jacocoInstrumentedDir.resolve("$klass.class")))
             }
-        }.toSortedMap()
+        }
+        val executionData = computeExecutionData(coverageContext, testClasses)
+
+        val coverageSaturation = batchedTestClasses.mapValuesTo(sortedMapOf()) { (duration, batchedTests) ->
+            log.debug("Running tests for batch {} / {}", duration.inWholeSeconds, maxTime.inWholeSeconds)
+            val coverageBuilder = buildCoverageBuilder(coverageContext, batchedTests, executionData)
+            when (analysisLevel) {
+                is PackageLevel -> getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
+                is ClassLevel -> getClassCoverage(cm, coverageBuilder).first()
+                is MethodLevel -> getMethodCoverage(coverageBuilder, analysisLevel.method)!!
+            }
+        }
+
+        resetCoverageContext(coverageContext)
+        return coverageSaturation
     }
 
     @Suppress("unused")
@@ -200,11 +194,26 @@ class CoverageReporter(
         }
     }
 
-    private fun getCoverageBuilder(
+    private fun getCoverageBuilderAndCleanup(
         classes: List<Path>,
-        testClasses: List<Path>,
-        logProgress: Boolean = true
+        testClasses: List<Path>
     ): CoverageBuilder {
+        val context = buildCoverageContext(classes)
+        val executionData = computeExecutionData(context, testClasses)
+        val coverageBuilder = buildCoverageBuilder(context, testClasses, executionData)
+        resetCoverageContext(context)
+        return coverageBuilder
+    }
+
+    class CoverageContext(
+        val runtime: LoggerRuntime,
+        val classes: List<Path>,
+        val originalClassBytecode: Map<Path, ByteArray>
+    )
+
+    private fun buildCoverageContext(
+        classes: List<Path>
+    ): CoverageContext {
         val runtime = LoggerRuntime()
         val originalClasses = mutableMapOf<Path, ByteArray>()
         for (classPath in classes) {
@@ -216,8 +225,44 @@ class CoverageReporter(
             }
             classPath.writeBytes(instrumented)
         }
+        return CoverageContext(runtime, classes, originalClasses)
+    }
+
+    private fun buildCoverageBuilder(
+        context: CoverageContext,
+        testClasses: List<Path>,
+        executionData: Map<Path, ExecutionDataStore>,
+        logProgress: Boolean = true
+    ): CoverageBuilder {
+        val mergedExecutionData = ExecutionDataStore()
+        for (testPath in testClasses) {
+            val executions = executionData[testPath] ?: continue
+            for (data in executions.contents) {
+                mergedExecutionData.put(data)
+            }
+        }
+
+        if (logProgress) log.debug("Analyzing Coverage...")
+        val coverageBuilder = CoverageBuilder()
+        val analyzer = Analyzer(mergedExecutionData, coverageBuilder)
+        for (className in context.classes) {
+            context.originalClassBytecode[className]?.inputStream()?.use {
+                tryOrNull {
+                    analyzer.analyzeClass(it, className.fullyQualifiedName(jacocoInstrumentedDir))
+                }
+            }
+        }
+        return coverageBuilder
+    }
+
+    private fun computeExecutionData(
+        context: CoverageContext,
+        testClasses: List<Path>,
+        logProgress: Boolean = true
+    ): Map<Path, ExecutionDataStore> {
+        val datum = mutableMapOf<Path, ExecutionDataStore>()
         val data = RuntimeData()
-        runtime.startup(data)
+        context.runtime.startup(data)
 
         if (logProgress) log.debug("Running tests...")
         val classLoader = PathClassLoader(listOf(jacocoInstrumentedDir, compileDir))
@@ -225,37 +270,37 @@ class CoverageReporter(
             val testClassName = testPath.fullyQualifiedName(compileDir)
             val testClass = classLoader.loadClass(testClassName)
             if (logProgress) log.debug("Running test $testClassName")
+
             val jcClass = classLoader.loadClass("org.junit.runner.JUnitCore")
             val jc = jcClass.newInstance()
-//            if (kexConfig.getBooleanValue("testGen", "logJUnit", false)) {
-//                jcClass.getMethod("addListener", classLoader.loadClass("org.junit.runner.notification.RunListener"))
-//                    .invoke(jc, classLoader.loadClass("org.vorpal.research.kex."))
-//
-//                jc.addListener(TestLogger())
-//            }
             val computerClass = classLoader.loadClass("org.junit.runner.Computer")
             jcClass.getMethod("run", computerClass, Class::class.java.asArray())
                 .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
-//            jc.run(Computer(), testClass)
+
+            val executionData = ExecutionDataStore()
+            data.collect(executionData, SessionInfoStore(), false)
+            datum[testPath] = executionData.deepCopy()
+            data.reset()
         }
 
-        if (logProgress) log.debug("Analyzing Coverage...")
-        val executionData = ExecutionDataStore()
-        val sessionInfos = SessionInfoStore()
-        data.collect(executionData, sessionInfos, false)
-        runtime.shutdown()
+        context.runtime.shutdown()
+        return datum
+    }
 
-        val coverageBuilder = CoverageBuilder()
-        val analyzer = Analyzer(executionData, coverageBuilder)
-        for (className in classes) {
-            originalClasses[className]?.inputStream()?.use {
-                tryOrNull {
-                    analyzer.analyzeClass(it, className.fullyQualifiedName(jacocoInstrumentedDir))
-                }
-            }
-            className.writeBytes(originalClasses[className]!!)
+    private fun ExecutionDataStore.deepCopy(): ExecutionDataStore {
+        val executionDataCopy = ExecutionDataStore()
+        for (content in contents) {
+            val ed = ExecutionData(content.id, content.name, content.probes.copyOf())
+            executionDataCopy.put(ed)
         }
-        return coverageBuilder
+        return executionDataCopy
+    }
+
+    private fun resetCoverageContext(context: CoverageContext) {
+        for (className in context.classes) {
+            val bytecode = context.originalClassBytecode[className] ?: continue
+            className.writeBytes(bytecode)
+        }
     }
 
     private val String.fullyQualifiedName: String
@@ -331,16 +376,16 @@ fun reportCoverage(
 ) {
     if (kexConfig.getBooleanValue("kex", "computeCoverage", true)) {
         val coverageInfo = when {
-            kexConfig.getBooleanValue("kex", "computeSaturationCoverage", true) -> {
-                val saturationCoverage = CoverageReporter(containers)
-                    .computeSaturationCoverage(cm, analysisLevel)
+            kexConfig.getBooleanValue("kex", "computeCoverageSaturation", true) -> {
+                val coverageSaturation = CoverageReporter(containers)
+                    .computeCoverageSaturation(cm, analysisLevel)
                 PermanentSaturationCoverageInfo.putNewInfo(
                     "concolic",
                     analysisLevel.toString(),
-                    saturationCoverage.toList()
+                    coverageSaturation.toList()
                 )
                 PermanentSaturationCoverageInfo.emit()
-                saturationCoverage[saturationCoverage.lastKey()]!!
+                coverageSaturation[coverageSaturation.lastKey()]!!
             }
 
             else -> CoverageReporter(containers).execute(cm, analysisLevel)
