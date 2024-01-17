@@ -33,7 +33,7 @@ abstract class ConcolicTest(testDirectoryName: String) : KexRunnerTest(testDirec
                 InstructionConcolicChecker.run(analysisContext, setOf(method))
             }
 
-            val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))
+            val coverage = CoverageReporter(klass.cm, listOf(jar)).computeCoverage(ClassLevel(klass))
             log.debug(coverage.print(true))
             assertEquals(expectedCoverage, coverage.instructionCoverage.ratio, eps)
         }

@@ -5,8 +5,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.symbolic.InstructionSymbolicChecker
-import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.jacoco.minimization.Minimizer
 import org.vorpal.research.kex.jacoco.reportCoverage
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.visitor.Pipeline
@@ -32,10 +30,6 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
             InstructionSymbolicChecker.run(context, setOfTargets)
         }
 
-        if (kexConfig.getBooleanValue("kex", "minimization", false)) {
-            Minimizer(containers, context.cm, analysisLevel).execute(true, "symbolic")
-        } else {
-            reportCoverage(containers, context.cm, analysisLevel, "symbolic")
-        }
+        reportCoverage(context.cm, containers, analysisLevel, "symbolic")
     }
 }
