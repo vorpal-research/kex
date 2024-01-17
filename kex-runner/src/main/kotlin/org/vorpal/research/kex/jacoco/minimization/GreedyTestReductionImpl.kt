@@ -1,11 +1,11 @@
 package org.vorpal.research.kex.jacoco.minimization
 
+import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
-
-interface TestReduction
+import kotlin.io.path.deleteIfExists
 
 private class Test(
-    val reqs: List<Int>
+    val reqs: Set<Pair<String, Int>>
 ) {
     var power: Int = reqs.size
 }
@@ -25,40 +25,41 @@ private class Requirement {
     }
 }
 
-class GreedyTestReductionImpl(
-    testCoverage: TestwiseCoverageInfo
-) : TestReduction {
-    private var tests = mutableMapOf<Path, Test>()
-    private var requirements = mutableMapOf<Int, Requirement>()
+class GreedyTestReductionImpl : TestSuiteMinimizer {
+    private val tests = mutableMapOf<Path, Test>()
+    private val requirements = mutableMapOf<Pair<String, Int>, Requirement>()
 
-    init {
+    override fun minimize(testCoverage: TestwiseCoverageInfo, deleteMinimized: Boolean): Set<Path> {
         testCoverage.req.forEach { requirements[it] = Requirement() }
         for (test in testCoverage.tests) {
             tests[test.testName] = Test(test.satisfies)
             for (requirement in test.satisfies)
                 requirements[requirement]!!.addTest(test.testName)
         }
-    }
 
-    fun minimized(): List<Path> {
-        val requestSet = mutableSetOf<Int>()
-        for (test in tests) {
-            test.value.reqs.forEach { requestSet.add(it) }
-        }
+        val requestSet = tests.values.flatMapTo(mutableSetOf()) { it.reqs }
 
         var satisfiedReq = 0
-        val importantTests = emptyList<Path>().toMutableList()
+        val importantTests = mutableSetOf<Path>()
         while (satisfiedReq < requestSet.size) {
-            var maxTest: Path? = null
-            tests.forEach { if (it.value.power > (tests[maxTest]?.power ?: -1)) maxTest = it.key }
-            if ((tests[maxTest]?.power ?: 0) == 0) break
+            val (maxTestPath, maxTest) = tests.maxByOrNull { it.value.power } ?: break
+            if (maxTest.power == 0) break
 
-            satisfiedReq += tests[maxTest]!!.power
-            tests[maxTest]!!.reqs.forEach { requirements[it]!!.visit(tests) }
-            importantTests.add(importantTests.size, maxTest!!)
+            satisfiedReq += maxTest.power
+            maxTest.reqs.forEach { requirements[it]!!.visit(tests) }
+            importantTests.add(maxTestPath)
         }
 
         val allTests = tests.keys.toList()
-        return allTests.subtract(importantTests.toSet()).toList()
+        val reducedTests = allTests.subtract(importantTests.toSet()).toSet()
+        if (deleteMinimized) {
+            for (classPath in reducedTests) {
+                if (!classPath.deleteIfExists()) {
+                    log.error("Failed to delete file ${classPath.toAbsolutePath()}")
+                }
+            }
+        }
+
+        return importantTests.toSet()
     }
 }
