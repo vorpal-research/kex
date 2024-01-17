@@ -1,8 +1,6 @@
 package org.vorpal.research.kex.jacoco.minimization
 
-import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
-import kotlin.io.path.deleteIfExists
 
 private class Test(
     val reqs: Set<Pair<String, Int>>
@@ -53,13 +51,9 @@ class GreedyTestReductionImpl : TestSuiteMinimizer {
         val allTests = tests.keys.toList()
         val reducedTests = allTests.subtract(importantTests.toSet()).toSet()
         if (deleteMinimized) {
-            for (classPath in reducedTests) {
-                if (!classPath.deleteIfExists()) {
-                    log.error("Failed to delete file ${classPath.toAbsolutePath()}")
-                }
-            }
+            TestSuiteMinimizer.deleteTestCases(reducedTests)
         }
 
-        return importantTests.toSet()
+        return importantTests
     }
 }
