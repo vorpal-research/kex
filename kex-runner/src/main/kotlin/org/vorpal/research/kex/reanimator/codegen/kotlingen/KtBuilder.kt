@@ -50,6 +50,7 @@ class KtBuilder(val pkg: String = "") {
     data class StringType(val name: String) : Type {
         override fun toString() = name
     }
+
     val unit = StringType("Unit")
 
     interface KtCode {
@@ -61,6 +62,7 @@ class KtBuilder(val pkg: String = "") {
         override fun toString() = statement
         override fun print(level: Int): String = "${level.asOffset}$statement"
     }
+
     interface ControlStatement : KtStatement
 
     open class KtFunction(val name: String) : KtCode {
@@ -103,6 +105,7 @@ class KtBuilder(val pkg: String = "") {
         override val signature: String
             get() = "constructor(${arguments.joinToString(", ")})"
     }
+
     class KtMethod(val klass: KtClass, name: String) : KtFunction(name)
 
     class KtExtension(val type: Type, name: String) : KtFunction(name) {

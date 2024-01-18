@@ -1,8 +1,8 @@
 package org.vorpal.research.kex.annotations
 
 import org.vorpal.research.kex.util.asmString
-import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kfg.Package
+import org.vorpal.research.kthelper.assert.ktassert
 import org.w3c.dom.Element
 import java.io.File
 import java.io.InputStream
@@ -13,6 +13,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
     private val root = PackageTreeNode("", null)
 
     fun loadFrom(path: File) = scanSubTree(path)
+
     @Suppress("unused")
     fun loadFrom(stream: InputStream) = loadAnnotations(stream, "[stream source]")
     fun loadFrom(url: URL) = loadAnnotations(url.openStream(), url.toString())
@@ -41,6 +42,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                         current = newPackage
                     }
                 }
+
                 else -> current = p
             }
         }
@@ -70,6 +72,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
             when {
                 it.name == callName && params.size == it.params.size ->
                     params.withIndex().all { (index, param) -> param == it.params[index].type }
+
                 else -> false
             }
         }
@@ -83,6 +86,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                 node.entities += newCall
                 newCall
             }
+
             else -> call
         }
     }
@@ -196,6 +200,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                             }
                         }
                     }
+
                     ')' -> {
                         // this is a call
                         call.annotations += annotations
@@ -210,6 +215,7 @@ class ExternalAnnotationsLoader : AnnotationsLoader {
                             }
                         }
                     }
+
                     else -> throw IllegalStateException("Name attribute of the call has invalid format")
                 }
             }

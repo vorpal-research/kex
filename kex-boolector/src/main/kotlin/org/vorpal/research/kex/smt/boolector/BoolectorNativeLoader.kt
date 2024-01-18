@@ -24,6 +24,7 @@ abstract class BoolectorNativeLoader {
                 osProperty.startsWith("linux") -> {
                     "boolector-$BOOLECTOR_VERSION-linux64-native.zip" to libraries.map { "$it.so" }
                 }
+
                 else -> unreachable { log.error("Unknown OS: $osProperty") }
             }
 

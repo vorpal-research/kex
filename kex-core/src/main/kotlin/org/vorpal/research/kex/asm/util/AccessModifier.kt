@@ -116,6 +116,7 @@ fun Method.getAccessModifier(cm: ClassManager): AccessModifier = when {
     this.isProtected -> (this.declaringClass.toKfgType(cm.type) as ClassType).klass.let {
         AccessModifier.Protected(it)
     }
+
     else -> (this.declaringClass.toKfgType(cm.type) as ClassType).klass.let {
         AccessModifier.Package(it.pkg)
     }
@@ -127,6 +128,7 @@ fun Field.getAccessModifier(cm: ClassManager): AccessModifier = when {
     this.isProtected -> (this.declaringClass.toKfgType(cm.type) as ClassType).klass.let {
         AccessModifier.Protected(it)
     }
+
     else -> (this.declaringClass.toKfgType(cm.type) as ClassType).klass.let {
         AccessModifier.Package(it.pkg)
     }

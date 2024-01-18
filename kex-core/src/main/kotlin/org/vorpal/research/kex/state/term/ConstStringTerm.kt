@@ -11,5 +11,5 @@ class ConstStringTerm(override val type: KexType, val value: String) : Term() {
     override val name = "\'$value\'"
     override val subTerms by lazy { listOf<Term>() }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
+    override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
 }

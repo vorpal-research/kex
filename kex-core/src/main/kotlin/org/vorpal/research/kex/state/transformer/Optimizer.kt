@@ -28,10 +28,12 @@ class Optimizer : Transformer<Optimizer>, IncrementalTransformer {
                 merge(ps.base.curr, ps.curr)?.let {
                     transformChainState(ChainState(ps.base.base, it))
                 }
+
             ps.base is BasicState && ps.curr is ChainState ->
                 merge(ps.base, ps.curr.base)?.let {
                     transformChainState(ChainState(it, ps.curr.curr))
                 }
+
             else -> null
         } ?: ps
     }
@@ -45,18 +47,21 @@ class Optimizer : Transformer<Optimizer>, IncrementalTransformer {
                 BasicState(first.predicates + second.predicates).also {
                     cache[key] = it
                 }
+
             first is ChainState && first.curr is BasicState && second is BasicState ->
                 merge(first.curr, second)?.let { merged ->
                     ChainState(first.base, merged).also {
                         cache[key] = it
                     }
                 }
+
             first is BasicState && second is ChainState && second.base is BasicState ->
                 merge(first, second.base)?.let { merged ->
                     ChainState(merged, second.curr).also {
                         cache[key] = it
                     }
                 }
+
             else -> cache.getOrPut(key) { null }
         }
     }

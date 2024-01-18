@@ -66,6 +66,7 @@ object KexRtManager {
                 this.returnType.rtMapped,
                 *this.argTypes.mapToArray { it.rtMapped }
             )
+
             else -> this
         }
 

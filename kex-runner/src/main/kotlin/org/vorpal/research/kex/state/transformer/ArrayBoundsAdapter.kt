@@ -66,10 +66,12 @@ class ArrayBoundsAdapter : RecollectingTransformer<ArrayBoundsAdapter> {
                     val length = dimensions.first()
                     if (length !is ConstIntTerm) addArray(predicate.lhv)
                 }
+
                 is GenerateArrayPredicate -> {
                     val length = predicate.length
                     if (length !is ConstIntTerm) addArray(predicate.lhv)
                 }
+
                 else -> {
                     addArray(predicate.receiver!!)
                 }

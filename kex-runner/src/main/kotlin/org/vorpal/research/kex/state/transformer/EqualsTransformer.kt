@@ -37,6 +37,7 @@ class EqualsTransformer : Transformer<EqualsTransformer>, IncrementalTransformer
             is EqualsTerm -> predicate(predicate.type, predicate.location) {
                 predicate.receiver!! equality rhv
             }
+
             else -> unreachable { log.error("Unknown rhv in call predicate: $rhv") }
         }
 

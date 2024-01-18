@@ -336,6 +336,7 @@ class SymbolicTraceBuilder(
             is KexClass -> type
             else -> this
         }
+
         else -> this
     }
 

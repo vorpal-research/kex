@@ -18,13 +18,14 @@ class ReflectionReanimator(
 ) : ParameterGenerator {
     // todo: maybe add proper test generation
 
-    override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel): Parameters<Any?> = try {
-        generateInputByModel(ctx, method, state, model)
-    } catch (e: GenerationException) {
-        throw e
-    } catch (e: Exception) {
-        throw GenerationException(e)
-    }
+    override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel): Parameters<Any?> =
+        try {
+            generateInputByModel(ctx, method, state, model)
+        } catch (e: GenerationException) {
+            throw e
+        } catch (e: Exception) {
+            throw GenerationException(e)
+        }
 
     override fun emit(): Path {
         return Paths.get(".")

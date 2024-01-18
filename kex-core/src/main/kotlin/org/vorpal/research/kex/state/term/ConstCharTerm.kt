@@ -13,5 +13,5 @@ class ConstCharTerm(val value: Char) : Term() {
     override val type: KexType = KexChar
     override val subTerms by lazy { listOf<Term>() }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
+    override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
 }

@@ -36,11 +36,11 @@ class PredicateStateBuilderTest : KexTest("predicate-state-builder") {
 
                 val catchBlocks = method.body.catchBlocks
                 method.body.filter { it !in catchBlocks }
-                        .flatten()
-                        .filter { it !is UnreachableInst }
-                        .forEach {
-                    assertNotNull(psa.getInstructionState(it))
-                }
+                    .flatten()
+                    .filter { it !is UnreachableInst }
+                    .forEach {
+                        assertNotNull(psa.getInstructionState(it))
+                    }
             }
         }
     }

@@ -44,7 +44,7 @@ object RandomLambdaBodySlicer : Transformer<RandomSlicer> {
 
     override fun transformLambda(term: LambdaTerm): Term {
         size = TermCollector.getFullTermSet(term.body).size
-        return term{ lambda(term.type, term.parameters, super.transform(term.body)) }
+        return term { lambda(term.type, term.parameters, super.transform(term.body)) }
     }
 
     override fun transformInstanceOf(term: InstanceOfTerm): Term = when {
@@ -64,18 +64,19 @@ object RandomLambdaBodySlicer : Transformer<RandomSlicer> {
             else -> transform(term.falseValue)
         }
 
-        else -> term{ ite(term.type, transform(term.cond), transform(term.trueValue), transform(term.falseValue)) }
+        else -> term { ite(term.type, transform(term.cond), transform(term.trueValue), transform(term.falseValue)) }
     }
 
     override fun transformArrayLoad(term: ArrayLoadTerm): Term = when {
         random.nextDouble() < (2.0 / size) -> term { generate(term.type) }
-        else -> term{ transform(term.arrayRef).load() }
+        else -> term { transform(term.arrayRef).load() }
     }
 
     override fun transformFieldLoad(term: FieldLoadTerm): Term = when {
         random.nextDouble() < (2.0 / size) -> term { generate(term.type) }
-        else -> term{ transform(term.field).load() }
+        else -> term { transform(term.field).load() }
     }
+
     override fun transformBinary(term: BinaryTerm): Term = when {
         random.nextDouble() < (2.0 / size) -> when (term.opcode) {
             BinaryOpcode.ADD -> when {
@@ -122,7 +123,7 @@ object RandomLambdaBodySlicer : Transformer<RandomSlicer> {
             }
         }
 
-        else -> term{ transform(term.lhv).apply(term.type, term.opcode, transform(term.rhv)) }
+        else -> term { transform(term.lhv).apply(term.type, term.opcode, transform(term.rhv)) }
     }
 
     override fun transformForAll(term: ForAllTerm): Term = when {
@@ -206,7 +207,13 @@ class LambdaBodyDeltaDebugger(
                     temp = RandomLambdaBodySlicer.apply(current)
                 temp
             }
-            log.debug("Old size: ${TermCollector.getFullTermSet(current).size}, reduced size: ${TermCollector.getFullTermSet(reduced).size}")
+            log.debug(
+                "Old size: ${TermCollector.getFullTermSet(current).size}, reduced size: ${
+                    TermCollector.getFullTermSet(
+                        reduced
+                    ).size
+                }"
+            )
 
             if (predicate(reduced)) {
                 log.debug("Successful reduce")

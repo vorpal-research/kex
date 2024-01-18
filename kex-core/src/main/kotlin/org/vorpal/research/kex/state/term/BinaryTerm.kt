@@ -10,14 +10,15 @@ import org.vorpal.research.kfg.ir.value.instruction.BinaryOpcode
 @InheritorOf("Term")
 @Serializable
 class BinaryTerm(
-        override val type: KexType,
-        @Contextual val opcode: BinaryOpcode,
-        val lhv: Term,
-        val rhv: Term) : Term() {
+    override val type: KexType,
+    @Contextual val opcode: BinaryOpcode,
+    val lhv: Term,
+    val rhv: Term
+) : Term() {
     override val name = "$lhv $opcode $rhv"
     override val subTerms by lazy { listOf(lhv, rhv) }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
         val tLhv = t.transform(lhv)
         val tRhv = t.transform(rhv)
         return when {

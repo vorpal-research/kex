@@ -71,7 +71,7 @@ private val isMemspacingEnabled by lazy { kexConfig.getBooleanValue("smt", "mems
 private val isSlicingEnabled by lazy { kexConfig.getBooleanValue("smt", "slicing", false) }
 private val logQuery by lazy { kexConfig.getBooleanValue("smt", "logQuery", false) }
 
-class DefectChecker                                                                                                                                                                                                                                                                                                                                                                                                                                         (
+class DefectChecker(
     val ctx: ExecutionContext,
     private val psa: PredicateStateAnalysis
 ) : MethodVisitor {
@@ -119,6 +119,7 @@ class DefectChecker                                                             
             nonNulls = when {
                 predecessorInfo.isNotEmpty() -> predecessorInfo.reduce { prev, curr -> prev.intersect(curr) }
                     .toHashSet()
+
                 else -> mutableSetOf()
             }
 
@@ -200,6 +201,7 @@ class DefectChecker                                                             
                 dm += Defect.npe(inst, id = null, testFile = path, testCaseName = testName)
                 false
             }
+
             else -> true
         }.also {
             // in case of any result this object can be considered non-null
@@ -219,9 +221,10 @@ class DefectChecker                                                             
             is Result.SatResult -> {
                 failingBlocks += currentBlock
                 val (path, testName) = getTest("OutOfBounds", checkerState, result) ?: (null to null)
-                dm += Defect.oob(inst,  id = null, testFile = path, testCaseName = testName)
+                dm += Defect.oob(inst, id = null, testFile = path, testCaseName = testName)
                 false
             }
+
             else -> true
         }
     }
@@ -250,18 +253,20 @@ class DefectChecker                                                             
             is Result.SatResult -> {
                 failingBlocks += currentBlock
                 val (path, testName) = getTest("Assertion", checkerState, result) ?: (null to null)
-                dm += Defect.assert(inst,  id = id, testFile = path, testCaseName = testName)
+                dm += Defect.assert(inst, id = id, testFile = path, testCaseName = testName)
                 false
             }
+
             else -> true
         }
     }
 
-    private fun getTest(nameBase: String, state: PredicateState, result: Result.SatResult): Pair<Path, String>? = tryOrNull {
-        val testName = "test$nameBase${testIndex++}"
-        generator.generate(testName, method, state, result.model)
-        generator.printer.targetFile.toPath() to testName
-    }
+    private fun getTest(nameBase: String, state: PredicateState, result: Result.SatResult): Pair<Path, String>? =
+        tryOrNull {
+            val testName = "test$nameBase${testIndex++}"
+            generator.generate(testName, method, state, result.model)
+            generator.printer.targetFile.toPath() to testName
+        }
 
     private fun prepareState(ps: PredicateState, typeInfoMap: TypeInfoMap) = transform(ps) {
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)

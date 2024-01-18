@@ -13,11 +13,11 @@ class InstanceOfTerm(val checkedType: KexType, val operand: Term) : Term() {
     override val type: KexType = KexBool
     override val subTerms by lazy { listOf(operand) }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term =
-            when (val tOperand = t.transform(operand)) {
-                operand -> this
-                else -> term { termFactory.getInstanceOf(checkedType, tOperand) }
-             }
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
+        when (val tOperand = t.transform(operand)) {
+            operand -> this
+            else -> term { termFactory.getInstanceOf(checkedType, tOperand) }
+        }
 
     override fun hashCode() = 31 * super.hashCode() + checkedType.hashCode()
 

@@ -41,6 +41,7 @@ class UnknownGenerator(
                     actionSequence += ReflectionSetField(kfgField, valueAS)
                 }
             }
+
             is ArrayDescriptor -> {
                 val kfgArray = (descriptor.type.getKfgType(types) as ArrayType)
                 val lengthCall = PrimaryValue(descriptor.length)
@@ -80,8 +81,9 @@ class UnknownGenerator(
         getFromCache(descriptor)!!
     }
 
-    private val Descriptor.wrappedType get() = when (this.type) {
-        is KexNull -> context.types.objectType
-        else -> this.type.getKfgType(context.types)
-    }
+    private val Descriptor.wrappedType
+        get() = when (this.type) {
+            is KexNull -> context.types.objectType
+            else -> this.type.getKfgType(context.types)
+        }
 }

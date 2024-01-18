@@ -17,6 +17,11 @@ interface ConcolicPathSelector : SuspendableIterator<Pair<Method, PersistentSymb
     val ctx: ExecutionContext
 
     suspend fun isEmpty(): Boolean
-    suspend fun addExecutionTrace(method: Method, checkedState: PersistentSymbolicState, result: ExecutionCompletedResult)
+    suspend fun addExecutionTrace(
+        method: Method,
+        checkedState: PersistentSymbolicState,
+        result: ExecutionCompletedResult
+    )
+
     fun reverse(pathClause: PathClause): PathClause?
 }

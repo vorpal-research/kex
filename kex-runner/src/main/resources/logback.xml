@@ -32,7 +32,7 @@
 
     <logger name="org.reflections.Reflections" level="error"
             additivity="false">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="STDOUT"/>
     </logger>
 
     <logger name="org.vorpal.research" level="ALL" additivity="false">
