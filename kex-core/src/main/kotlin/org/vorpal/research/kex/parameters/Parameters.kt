@@ -104,12 +104,12 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 private fun Descriptor.insertMocks(
     types: TypeFactory,
     descriptorToMock: MutableMap<Descriptor, MockDescriptor>,
-    visited: MutableSet<Descriptor>
+    withMocksInserted: MutableSet<Descriptor>
 ) {
-    fun Descriptor.replaceWithMock(): Descriptor = replaceWithMock(types, descriptorToMock, visited)
+    fun Descriptor.replaceWithMock() = replaceWithMock(types, descriptorToMock, withMocksInserted)
 
-    if (this in visited) return
-    visited.add(this)
+    if (this in withMocksInserted) return
+    withMocksInserted.add(this)
 
     when (this) {
         is ConstantDescriptor -> {}
@@ -142,27 +142,27 @@ fun Descriptor.isBasicMockable(types: TypeFactory): Boolean {
 private fun Descriptor.replaceWithMock(
     types: TypeFactory,
     descriptorToMock: MutableMap<Descriptor, MockDescriptor>,
-    visited: MutableSet<Descriptor>
+    withMocksInserted: MutableSet<Descriptor>
 ): Descriptor {
-    val descriptor = this
-    if (descriptorToMock[descriptor] != null) return descriptorToMock[descriptor]!!
-    val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass
-    return if (!descriptor.isBasicMockable(types)) {
-        descriptor.insertMocks(types, descriptorToMock, visited)
-        descriptor
-    } else {
-        klass ?: return descriptor.also { log.error { "Got null class to mock. Descriptor: $descriptor" } }
-        val mock = if (descriptor is ObjectDescriptor) {
-            MockDescriptor(klass.methods, descriptor).also { it.fields.putAll(descriptor.fields) }
-        } else {
-            log.warn { "Strange descriptor to mock. Expected ObjectDescriptor. Got: $descriptor" }
-            MockDescriptor(descriptor.term, descriptor.type as KexClass, klass.methods)
-        }.also { log.debug { "Created mock descriptor for ${it.term}" } }
-        visited.add(descriptor)
-        descriptorToMock[descriptor] = mock
-        mock.insertMocks(types, descriptorToMock, visited)
-        mock
+    if (descriptorToMock[this] != null) return descriptorToMock[this]!!
+    if (!this.isBasicMockable(types)) {
+        this.insertMocks(types, descriptorToMock, withMocksInserted)
+        return this
     }
+
+    val klass = (this.type.getKfgType(types) as? ClassType)?.klass
+    klass ?: return this.also { log.error { "Got null class to mock. Descriptor: $this" } }
+    val mock = if (this is ObjectDescriptor) {
+        MockDescriptor(klass.methods, this).also { it.fields.putAll(this.fields) }
+    } else {
+        log.warn { "Strange descriptor to mock. Expected ObjectDescriptor. Got: $this" }
+        MockDescriptor(this.term, this.type as KexClass, klass.methods)
+    }.also { log.debug { "Created mock descriptor for ${it.term}" } }
+    withMocksInserted.add(this)
+    descriptorToMock[this] = mock
+    descriptorToMock[mock] = mock
+    mock.insertMocks(types, descriptorToMock, withMocksInserted)
+    return mock
 }
 
 private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
