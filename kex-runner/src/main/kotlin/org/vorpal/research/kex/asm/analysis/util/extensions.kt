@@ -21,8 +21,11 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
+import org.vorpal.research.kex.util.MockingMode
+import org.vorpal.research.kex.util.getMockingEnabled
+import org.vorpal.research.kex.util.getMockingMode
+import org.vorpal.research.kex.util.getMockito
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
@@ -65,26 +68,10 @@ fun methodCalls(
         }
         .filter { (_, value) -> value != null }
         .map { (call, value) -> call to value!! }
-        .map { (call, value) -> call to descriptorToMock.getOrElse(value) { value } }
+        .map { (call, value) -> call to (descriptorToMock[value] ?: value) }
         .toList()
 }
 
-
-fun Descriptor.requireMocks(visited: MutableSet<Descriptor>, types: TypeFactory): Boolean {
-    if (this in visited) return false
-    if (isMockable(types)) return true
-    visited += this
-
-    fun Descriptor.requireMocks(): Boolean = this.requireMocks(visited, types)
-    return when (this) {
-        is ConstantDescriptor -> false
-
-        is MockDescriptor -> fields.values.any { it.requireMocks() } || allReturns.any { it.requireMocks() }
-        is ClassDescriptor -> fields.values.any { it.requireMocks() }
-        is ObjectDescriptor -> fields.values.any { it.requireMocks() }
-        is ArrayDescriptor -> elements.values.any { it.requireMocks() }
-    }
-}
 
 suspend fun Method.checkAsync(
     ctx: ExecutionContext,
@@ -112,16 +99,7 @@ suspend fun Method.checkAsync(
             checker.state
         )
 
-        val finalDescriptors = if (initialDescriptors.asList.any { it.isMockable(ctx.types) }) {
-            generator.generateAll()
-            val descriptors = with(initialDescriptors) { Parameters(instance, arguments, statics, generator.allValues) }
-            val (withMocks, descriptorToMock) = descriptors.generateInitialMocks(ctx.types)
-            val methodCalls = methodCalls(state, generator.memory, descriptorToMock)
-            setupMocks(methodCalls, generator.memory, descriptorToMock)
-            withMocks
-        } else {
-            initialDescriptors
-        }
+        val finalDescriptors = initialDescriptors.finalizeDescriptors(ctx, generator, state)
 
         finalDescriptors
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
@@ -133,6 +111,29 @@ suspend fun Method.checkAsync(
         log.error("Error during descriptor generation: ", e)
         null
     }
+}
+
+private fun Parameters<Descriptor>.finalizeDescriptors(
+    ctx: ExecutionContext,
+    generator: DescriptorGenerator,
+    state: SymbolicState
+): Parameters<Descriptor> {
+    if (!getMockingEnabled() || getMockito() == null || getMockingMode() == null) {
+        return this
+    }
+    if (getMockingMode() == MockingMode.FULL) {
+        TODO("Not implemented")
+    }
+    if (!asList.any { it.isBasicMockable(ctx.types) }) {
+        return this
+    }
+
+    generator.generateAll()
+    val descriptors = Parameters(instance, arguments, statics, generator.allValues)
+    val (withMocks, descriptorToMock) = descriptors.generateInitialMocks(ctx.types)
+    val methodCalls = methodCalls(state, generator.memory, descriptorToMock)
+    setupMocks(methodCalls, generator.memory, descriptorToMock)
+    return withMocks
 }
 
 @Suppress("unused")

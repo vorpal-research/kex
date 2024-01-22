@@ -134,7 +134,7 @@ private fun Descriptor.insertMocks(
     }
 }
 
-fun Descriptor.isMockable(types: TypeFactory): Boolean {
+fun Descriptor.isBasicMockable(types: TypeFactory): Boolean {
     val klass = (type.getKfgType(types) as? ClassType)?.klass
     return klass != null && !instantiationManager.isInstantiable(klass) && !type.isKexRt && this is ObjectDescriptor
 }
@@ -147,7 +147,7 @@ private fun Descriptor.replaceWithMock(
     val descriptor = this
     if (descriptorToMock[descriptor] != null) return descriptorToMock[descriptor]!!
     val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass
-    return if (!descriptor.isMockable(types)) {
+    return if (!descriptor.isBasicMockable(types)) {
         descriptor.insertMocks(types, descriptorToMock, visited)
         descriptor
     } else {
