@@ -55,8 +55,16 @@ class DescriptorGenerator(
         }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
-        is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a.numericValue == b.numericValue }
-        is InequalityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a.numericValue != b.numericValue }
+        is EqualityPredicate -> checkTerms(
+            path.lhv,
+            path.rhv
+        ) { a, b -> a.numericValue == b.numericValue }
+
+        is InequalityPredicate -> checkTerms(
+            path.lhv,
+            path.rhv
+        ) { a, b -> a.numericValue != b.numericValue }
+
         is DefaultSwitchPredicate -> {
             val lhv = path.cond
             val conditions = path.cases
@@ -137,7 +145,7 @@ fun generateInitialDescriptors(
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
         generator.staticFields,
-        generator.allValues
+        generator.others
     ) to generator
 }
 

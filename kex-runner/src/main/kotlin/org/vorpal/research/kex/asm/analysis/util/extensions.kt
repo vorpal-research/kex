@@ -129,7 +129,7 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
     }
 
     generator.generateAll()
-    val descriptors = Parameters(instance, arguments, statics, generator.allValues)
+    val descriptors = Parameters(instance, arguments, statics, generator.others)
     val (withMocks, descriptorToMock) = descriptors.generateInitialMocks(ctx.types)
     val methodCalls = methodCalls(state, generator.memory, descriptorToMock)
     setupMocks(methodCalls, generator.memory, descriptorToMock)

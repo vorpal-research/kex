@@ -45,7 +45,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     val instance get() = thisTerm?.let { memory[it] }
     val args get() = argTerms.map { memory[it.value] }
     val staticFields get() = staticFieldOwners.mapTo(mutableSetOf()) { memory[it]!! }
-    val allValues get() = allTerms.mapTo(mutableSetOf()) { memory[it]!! } // TODO check is !! correct
+    val others get() = memory.values.filterNotTo(mutableSetOf()) { it == instance && it in staticFields && it in args }
 
     fun generateThis() = thisTerm?.let {
         memory[it] = modelReanimator.reanimate(it)
