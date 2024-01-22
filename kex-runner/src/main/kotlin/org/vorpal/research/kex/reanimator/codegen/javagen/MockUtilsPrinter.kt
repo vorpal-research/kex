@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.reanimator.codegen.javagen
 
+import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.testcaseDirectory
@@ -10,15 +11,14 @@ class MockUtilsPrinter(
 ) {
     private val builder = JavaBuilder(packageName)
     val klass = builder.run { klass(packageName, MOCK_UTILS_CLASS) }
-    val initMockito: JavaBuilder.JavaFunction
 //    val innerClass = builder.run { klass(packageName, MOCK_INIT_TEST_CLASS) }
 
 //    val newPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
 
     companion object {
         const val MOCK_UTILS_CLASS = "MockUtils"
-
         const val MOCK_INIT_TEST_CLASS = "InitTest"
+
         private val mockUtilsInstances = mutableMapOf<Pair<Path, String>, MockUtilsPrinter>()
         fun mockUtils(packageName: String): MockUtilsPrinter {
             val testDirectory = kexConfig.testcaseDirectory
@@ -47,14 +47,12 @@ class MockUtilsPrinter(
             import ("org.junit.Test")
 
             with(klass) {
-                initMockito = method("mockitoInitTest") {
-                    +"Object mock = Mockito.mock(Object.class)"
-                    +"assert (mock.hashCode() == 0 || mock.hashCode() != 0)"
-                }.apply {
-                    returnType = void
-                    annotations += "Test" // TODO timeout
-                }
                 staticClass(MOCK_INIT_TEST_CLASS) {
+                    field("globalTimeout", type("Timeout")) {
+                        visibility = Visibility.PUBLIC
+                        initializer = "new Timeout($testTimeout, TimeUnit.SECONDS)"
+                        annotations += "Rule"
+                    }
                     method("mockitoInitTest") {
                         +"Object mock = Mockito.mock(Object.class)"
                         +"assert (mock.hashCode() == 0 || mock.hashCode() != 0)"
