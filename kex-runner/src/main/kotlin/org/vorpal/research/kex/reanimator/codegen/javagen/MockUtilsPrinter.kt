@@ -44,6 +44,7 @@ class MockUtilsPrinter(
     init {
         with(builder) {
             import("org.mockito.Mockito")
+            import ("org.junit.Test")
 
             with(klass) {
                 initMockito = method("mockitoInitTest") {
