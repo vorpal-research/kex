@@ -101,6 +101,26 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
     return Parameters(instance, arguments, filteredStatics, others)
 }
 
+
+fun Parameters<Descriptor>.generateInitialMocks(
+    types: TypeFactory
+): Pair<Parameters<Descriptor>, Map<Descriptor, MockDescriptor>> {
+    val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
+    val mockedArguments = arguments.replaceUninstantiableWithMocks(types, descriptorToMock).toList()
+    val mockedStatics = statics.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
+    val mockedOthers = others.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
+
+    return Parameters(instance, mockedArguments, mockedStatics, mockedOthers) to descriptorToMock
+}
+
+private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
+    types: TypeFactory,
+    descriptorToMock: MutableMap<Descriptor, MockDescriptor>
+): Collection<Descriptor> {
+    val visited = mutableSetOf<Descriptor>()
+    return map { it.replaceWithMock(types, descriptorToMock, visited) }
+}
+
 private fun Descriptor.insertMocks(
     types: TypeFactory,
     descriptorToMock: MutableMap<Descriptor, MockDescriptor>,
@@ -134,7 +154,7 @@ private fun Descriptor.insertMocks(
     }
 }
 
-fun Descriptor.isBasicMockable(types: TypeFactory): Boolean {
+fun Descriptor.isMockable(types: TypeFactory): Boolean {
     val klass = (type.getKfgType(types) as? ClassType)?.klass
     return klass != null && !instantiationManager.isInstantiable(klass) && !type.isKexRt && this is ObjectDescriptor
 }
@@ -145,7 +165,7 @@ private fun Descriptor.replaceWithMock(
     withMocksInserted: MutableSet<Descriptor>
 ): Descriptor {
     if (descriptorToMock[this] != null) return descriptorToMock[this]!!
-    if (!this.isBasicMockable(types)) {
+    if (!this.isMockable(types)) {
         this.insertMocks(types, descriptorToMock, withMocksInserted)
         return this
     }
@@ -164,39 +184,6 @@ private fun Descriptor.replaceWithMock(
     mock.insertMocks(types, descriptorToMock, withMocksInserted)
     return mock
 }
-
-private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
-    types: TypeFactory,
-    descriptorToMock: MutableMap<Descriptor, MockDescriptor>
-): Collection<Descriptor> {
-    val visited = mutableSetOf<Descriptor>()
-    return map { it.replaceWithMock(types, descriptorToMock, visited) }
-}
-
-fun Parameters<Descriptor>.generateInitialMocks(
-    types: TypeFactory
-): Pair<Parameters<Descriptor>, Map<Descriptor, MockDescriptor>> {
-    val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
-    val mockedArguments = arguments.replaceUninstantiableWithMocks(types, descriptorToMock).toList()
-    val mockedStatics = statics.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
-    val mockedOthers = others.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
-
-    return Parameters(instance, mockedArguments, mockedStatics, mockedOthers) to descriptorToMock
-}
-
-
-/*
-fun Parameters<Descriptor>.generateMocks(
-    methodCalls: List<Pair<CallPredicate, Descriptor>>,
-    termToDescriptor: MutableMap<Term, Descriptor>,
-    cm: ClassManager,
-    accessLevel: AccessModifier
-): Parameters<Descriptor> {
-    val withMocks = this.generateInitialMocks(cm.type)
-    setupMocks(methodCalls, termToDescriptor)
-    return withMocks
-}
-*/
 
 fun setupMocks(
     methodCalls: List<Pair<CallPredicate, Descriptor>>,

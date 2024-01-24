@@ -124,7 +124,7 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
     if (getMockingMode() == MockingMode.FULL) {
         TODO("Not implemented")
     }
-    if (!asList.any { it.isBasicMockable(ctx.types) }) {
+    if (!asList.any { it.isMockable(ctx.types) }) {
         return this
     }
 

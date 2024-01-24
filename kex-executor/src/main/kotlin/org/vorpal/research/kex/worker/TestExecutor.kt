@@ -46,7 +46,7 @@ class TestExecutor(
             test.invoke(instance)
         } catch (e: Throwable) {
             exception = e
-            log.error("Execution failed with an exception $e") // no stacktrace???
+            log.error("Execution failed with an exception $e")
         }
         TraceCollectorProxy.disableCollector()
         log.debug("Collected state: {}", collector.symbolicState)

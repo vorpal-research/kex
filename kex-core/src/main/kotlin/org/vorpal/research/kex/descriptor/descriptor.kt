@@ -242,8 +242,7 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
     }
 }
 
-@Suppress("UNCHECKED_CAST")
-sealed class AbstractFieldContainingDescriptor<T : AbstractFieldContainingDescriptor<T>>(
+sealed class AbstractFieldContainingDescriptor(
     term: Term,
     klass: KexClass
 ) :
@@ -265,18 +264,24 @@ sealed class AbstractFieldContainingDescriptor<T : AbstractFieldContainingDescri
     fun remove(field: String, type: KexType): Descriptor? = fields.remove(field to type)
     fun remove(field: Pair<String, KexType>): Descriptor? = fields.remove(field)
 
-    fun merge(other: T): T {
-        val newFields = other.fields + this.fields
-        this.fields.clear()
-        this.fields.putAll(newFields)
-        return this as T
-    }
 
-    fun accept(other: T): T {
-        val newFields = other.fields.mapValues { it.value.deepCopy(mutableMapOf(other to this)) }
-        this.fields.clear()
-        this.fields.putAll(newFields)
-        return this as T
+    protected fun concretizeFields(
+        cm: ClassManager,
+        accessLevel: AccessModifier,
+        random: Random,
+        visited: MutableSet<Descriptor>
+    ) {
+        for ((field, value) in fields.toMap()) {
+            fields[field] = value.concretize(cm, accessLevel, random, visited)
+        }
+    }
+    protected fun reduceFields(visited: MutableSet<Descriptor>) {
+        for ((field, value) in fields.toMap()) {
+            when {
+                value eq descriptor { default(field.second) } -> fields.remove(field)
+                else -> fields[field] = value.reduce(visited)
+            }
+        }
     }
 
     override fun print(map: MutableMap<Descriptor, String>): String {
@@ -313,6 +318,7 @@ sealed class AbstractFieldContainingDescriptor<T : AbstractFieldContainingDescri
         }
     }
 
+
     override fun collectInitializerState(set: MutableSet<Descriptor>): PredicateState {
         if (this in set) return emptyState()
         set += this
@@ -325,6 +331,51 @@ sealed class AbstractFieldContainingDescriptor<T : AbstractFieldContainingDescri
             }
         }
     }
+
+    override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean {
+        if (this in visited) return false
+        if (this == other) return true
+        visited += this
+        return fields.values.any { it.contains(other, visited) }
+    }
+    override fun generateTypeInfo(visited: MutableSet<Descriptor>): PredicateState {
+        if (this in visited) return emptyState()
+        visited += this
+
+        val instanceOfTerm = term { generate(KexBool) }
+        return basic {
+            axiom { instanceOfTerm equality (term `is` this@AbstractFieldContainingDescriptor.type) }
+            axiom { instanceOfTerm equality true }
+            for ((key, field) in this@AbstractFieldContainingDescriptor.fields) {
+                val typeInfo = field.generateTypeInfo(visited)
+                if (typeInfo.isNotEmpty) {
+                    state {
+                        field.term equality this@AbstractFieldContainingDescriptor.term.field(key.second, key.first).load()
+                    }
+                    append(typeInfo)
+                }
+            }
+        }
+    }
+    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
+        if (this in cache) return cache[this]!!
+        if (this in visited) return 0
+        val newVisited = visited + this
+        var maxDepth = 0
+        for (value in fields.values) {
+            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
+        }
+        cache[this] = maxDepth + 1
+        return maxDepth + 1
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
+    term: Term,
+    klass: KexClass
+) :
+    AbstractFieldContainingDescriptor(term, klass) {
 
     override fun concretize(
         cm: ClassManager,
@@ -345,22 +396,18 @@ sealed class AbstractFieldContainingDescriptor<T : AbstractFieldContainingDescri
         return this as T
     }
 
-    protected fun concretizeFields(
-        cm: ClassManager,
-        accessLevel: AccessModifier,
-        random: Random,
-        visited: MutableSet<Descriptor>
-    ) {
-        for ((field, value) in fields.toMap()) {
-            fields[field] = value.concretize(cm, accessLevel, random, visited)
-        }
+    fun merge(other: T): T {
+        val newFields = other.fields + this.fields
+        this.fields.clear()
+        this.fields.putAll(newFields)
+        return this as T
     }
 
-    override fun contains(other: Descriptor, visited: MutableSet<Descriptor>): Boolean {
-        if (this in visited) return false
-        if (this == other) return true
-        visited += this
-        return fields.values.any { it.contains(other, visited) }
+    fun accept(other: T): T {
+        val newFields = other.fields.mapValues { it.value.deepCopy(mutableMapOf(other to this)) }
+        this.fields.clear()
+        this.fields.putAll(newFields)
+        return this as T
     }
 
     override fun reduce(visited: MutableSet<Descriptor>): T {
@@ -368,35 +415,6 @@ sealed class AbstractFieldContainingDescriptor<T : AbstractFieldContainingDescri
         visited += this
         reduceFields(visited)
         return this as T
-    }
-
-    protected fun reduceFields(visited: MutableSet<Descriptor>) {
-        for ((field, value) in fields.toMap()) {
-            when {
-                value eq descriptor { default(field.second) } -> fields.remove(field)
-                else -> fields[field] = value.reduce(visited)
-            }
-        }
-    }
-
-    override fun generateTypeInfo(visited: MutableSet<Descriptor>): PredicateState {
-        if (this in visited) return emptyState()
-        visited += this
-
-        val instanceOfTerm = term { generate(KexBool) }
-        return basic {
-            axiom { instanceOfTerm equality (term `is` this@AbstractFieldContainingDescriptor.type) }
-            axiom { instanceOfTerm equality true }
-            for ((key, field) in this@AbstractFieldContainingDescriptor.fields) {
-                val typeInfo = field.generateTypeInfo(visited)
-                if (typeInfo.isNotEmpty) {
-                    state {
-                        field.term equality this@AbstractFieldContainingDescriptor.term.field(key.second, key.first).load()
-                    }
-                    append(typeInfo)
-                }
-            }
-        }
     }
 
     override fun structuralEquality(other: Descriptor, map: MutableSet<Pair<Descriptor, Descriptor>>): Boolean {
@@ -413,25 +431,6 @@ sealed class AbstractFieldContainingDescriptor<T : AbstractFieldContainingDescri
         }
         return true
     }
-
-    override fun countDepth(visited: Set<Descriptor>, cache: MutableMap<Descriptor, Int>): Int {
-        if (this in cache) return cache[this]!!
-        if (this in visited) return 0
-        val newVisited = visited + this
-        var maxDepth = 0
-        for (value in fields.values) {
-            maxDepth = maxOf(maxDepth, value.countDepth(newVisited, cache))
-        }
-        cache[this] = maxDepth + 1
-        return maxDepth + 1
-    }
-}
-
-sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
-    term: Term,
-    klass: KexClass
-) :
-    AbstractFieldContainingDescriptor<T>(term, klass) {
 }
 
 class ObjectDescriptor(klass: KexClass) :
@@ -647,7 +646,7 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
 }
 
 class MockDescriptor(term: Term, type: KexClass, methods: Collection<Method> = emptyList()) :
-    AbstractFieldContainingDescriptor<MockDescriptor>(term, type) {
+    AbstractFieldContainingDescriptor(term, type) {
 
     constructor(type: KexClass, methods: Collection<Method>) : this(term { generate(type) }, type, methods)
     constructor(methods: Collection<Method>, original: ObjectDescriptor) : this(
