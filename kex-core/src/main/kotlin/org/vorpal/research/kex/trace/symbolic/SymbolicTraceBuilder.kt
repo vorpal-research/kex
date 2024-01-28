@@ -88,6 +88,7 @@ import org.vorpal.research.kthelper.collection.stackOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.toInt
 import org.vorpal.research.kthelper.`try`
+import java.util.*
 
 class SymbolicTraceException(message: String, cause: Throwable) : KtException(message, cause) {
     override fun toString() = "SymbolicTraceException: $message: ${cause?.message}"
@@ -423,6 +424,7 @@ class SymbolicTraceBuilder(
     }
 
     override fun track(value: String, concreteValue: Any?) {
+        (converter as? Object2DescriptorConverter)?.objectToDescriptor = IdentityHashMap<Any, Descriptor>()
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
         val descriptor = concreteValue.getAsDescriptor(termValue.type)

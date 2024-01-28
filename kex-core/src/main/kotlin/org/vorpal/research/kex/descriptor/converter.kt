@@ -33,7 +33,7 @@ private val maxArrayLength by lazy {
 
 
 class Object2DescriptorConverter : DescriptorBuilder() {
-    private val objectToDescriptor = IdentityHashMap<Any, Descriptor>()
+    var objectToDescriptor = IdentityHashMap<Any, Descriptor>()
 
     fun type(any: Any?): KexType {
         if (any == null) return KexNull()
