@@ -196,7 +196,7 @@ class DescriptorExceptionPreconditionBuilder(
         is ConstantDescriptor -> this.asSymbolicState(location, mapping, visited)
         is FieldContainingDescriptor<*> -> this.asSymbolicState(location, mapping, visited)
         is ArrayDescriptor -> this.asSymbolicState(location, mapping, visited)
-        is MockDescriptor -> this.asSymbolicState(location, mapping, visited)
+        is MockDescriptor -> TODO("Not implemented")
     }
 
     private fun ConstantDescriptor.asSymbolicState(
@@ -271,70 +271,6 @@ class DescriptorExceptionPreconditionBuilder(
             )
         }
         return current
-    }
-
-    private fun MockDescriptor.asSymbolicState(
-        location: Instruction,
-        mapping: MutableMap<Term, Term>,
-        visited: MutableSet<Descriptor>
-    ): PersistentSymbolicState {
-        TODO("Not implemented")
-/*
-        visited += this
-        var current = persistentSymbolicState()
-        val objectTerm = run {
-            val objectTerm = mapping.getOrDefault(this.term, this.term)
-            when {
-                objectTerm.type != this.type -> term { generate(this@asSymbolicState.type) }.also { replacement ->
-                    current += persistentSymbolicState(
-                        state = persistentClauseStateOf(
-                            StateClause(location, state {
-                                replacement equality (objectTerm `as` this@asSymbolicState.type)
-                            })
-                        )
-                    )
-                    mapping[this.term] = replacement
-                }
-
-                else -> objectTerm
-            }
-        }
-        current += persistentSymbolicState(
-            path = persistentPathConditionOf(
-                PathClause(PathClauseType.NULL_CHECK, location, path {
-                    (objectTerm eq null) equality false
-                })
-            )
-        )
-        for ((field, descriptor) in this.fields) {
-            current += descriptor.asSymbolicState(location, mapping, visited)
-            current += persistentSymbolicState(
-                path = persistentPathConditionOf(
-                    PathClause(PathClauseType.CONDITION_CHECK, location, path {
-                        val fieldTerm = mapping.getOrDefault(descriptor.term, descriptor.term)
-                        (objectTerm.field(field).load() eq fieldTerm) equality true
-                    })
-                )
-            )
-        }
-        for ((method, values) in this.methodReturns) {
-            for (descriptor in values) {
-                current += descriptor.asSymbolicState(location, mapping, visited)
-                current += persistentSymbolicState(
-                    path = persistentPathConditionOf(
-                        PathClause(PathClauseType.CONDITION_CHECK, location, path {
-                            TODO()
-                        }
-
-                        )
-                    )
-                )
-            }
-        }
-        TODO("Unimplemented")
-        return current
-
-*/
     }
 
     private fun ArrayDescriptor.asSymbolicState(
