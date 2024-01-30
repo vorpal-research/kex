@@ -152,10 +152,10 @@ fun String.removeMockitoMockSuffix(): String {
     return if (suffixIndex == -1) {
         this
     } else {
-        if (getLogTypeFix().also{log.debug{"getLogTypeFix: $it"}}){
-            log.debug { "MOCKITO_MOCK FIX. value: $this. Stack trace:" }
-            if (getLogStackTraceTypeFix().also{log.debug{"getLogStackTraceTypeFix: $it"}}){
-                log.debug(Thread.currentThread().stackTrace.joinToString("\n"))
+        if (getLogTypeFix()) {
+            log.debug { "MOCKITO_MOCK FIX. value: $this" }
+            if (getLogStackTraceTypeFix()) {
+                log.debug { "Stack trace: ${Thread.currentThread().stackTrace.joinToString("\n")}" }
             }
         }
         removeRange(suffixIndex, length)
