@@ -69,10 +69,16 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         }
     }
 
+//    private val cache : MutableMap<Class<*>, KexType> = hashMapOf()
     private fun Class<*>.toKexType(): KexType{
-        if (!this.name.contains(SUBSTRING_TO_FILTER_FROM_TYPE)) return this.kex
+        if (!this.name.containsMockitoMock) return this.kex
         return this.classLoader.loadClass(this.name.removeMockitoMockSuffix()).kex
     }
+//        if (!this.name.containsMockitoMock) return this.kex
+//        cache[this]?.let { return it}
+//        return this.classLoader.loadClass(this.name.removeMockitoMockSuffix()).kex.also{
+//            cache[this] = it
+//        }
 
     fun convert(any: Any?, depth: Int = 0): Descriptor {
         if (any == null) return `null`

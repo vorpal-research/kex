@@ -39,6 +39,7 @@ import org.vorpal.research.kthelper.collection.LRUCache
 import org.vorpal.research.kthelper.compareTo
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.logging.warn
 
 val Type.javaDesc get() = this.name.javaString
 
@@ -147,6 +148,9 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
 
 
 const val SUBSTRING_TO_FILTER_FROM_TYPE = "\$MockitoMock\$"
+
+val String.containsMockitoMock: Boolean get() = contains(SUBSTRING_TO_FILTER_FROM_TYPE)
+
 fun String.removeMockitoMockSuffix(): String {
     val suffixIndex = lastIndexOf(SUBSTRING_TO_FILTER_FROM_TYPE)
     return if (suffixIndex == -1) {
@@ -170,7 +174,8 @@ fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
 
 
 fun parseAsConcreteType(typeFactory: TypeFactory, name: String): KexType? {
-    val type = parseStringToType(typeFactory, name.removeMockitoMockSuffix())
+    if (name.containsMockitoMock) log.warn { "utils.kt parseAsConcreteType got type with MockitoMock: $name" }
+    val type = parseStringToType(typeFactory, name)
     return when {
         type.isConcrete -> type.kexType
         else -> null
@@ -199,15 +204,11 @@ private object SubTypeInfoCache {
     private val subtypeCache = LRUCache<Pair<String, String>, Boolean>(100_000U)
     fun check(lhv: Type, rhv: Type): Boolean {
         val key = lhv.toString() to rhv.toString()
-        return subtypeCache[key] ?: (lhv.isSubtypeOf(rhv, outerClassBehavior = false) || lhv.sameButMockito(rhv)).also {
+        return subtypeCache[key] ?: lhv.isSubtypeOf(rhv, outerClassBehavior = false).also {
             subtypeCache[key] = it
-            subtypeCache[lhv.name.removeMockitoMockSuffix() to rhv.name.removeMockitoMockSuffix()] = it
         }
     }
 }
-
-private fun Type.sameButMockito(expectedKfgType: Type) =
-    name.removeMockitoMockSuffix() == expectedKfgType.name.removeMockitoMockSuffix()
 
 fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, other)
 

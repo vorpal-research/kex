@@ -1265,14 +1265,12 @@ class SymbolicTraceBuilder(
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
         val realType = type.removeMockitoMockSuffix()
-//        val realType = type
         log.debug { "type: $type\nrealType: $realType" }
         val expectedKfgType = parseStringToType(cm.type, realType)
         val comparisonResult = when (concreteValue) {
             null -> false
             else -> {
                 val actualKfgType = concreteValue.getConcreteType(termValue.type).getKfgType(ctx.types)
-                // TODO: fix "...$MockitoMock$..." classes on the terms/descriptors generation
                 actualKfgType.isSubtypeOfCached(expectedKfgType)
             }
         }
