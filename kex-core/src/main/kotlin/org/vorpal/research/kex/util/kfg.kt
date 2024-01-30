@@ -174,7 +174,6 @@ fun Type.getAllSubtypes(tf: TypeFactory): Set<Type> = when (this) {
 
 
 fun parseAsConcreteType(typeFactory: TypeFactory, name: String): KexType? {
-    if (name.containsMockitoMock) log.warn { "utils.kt parseAsConcreteType got type with MockitoMock: $name" }
     val type = parseStringToType(typeFactory, name)
     return when {
         type.isConcrete -> type.kexType

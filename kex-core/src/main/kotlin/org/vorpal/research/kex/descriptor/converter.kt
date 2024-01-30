@@ -64,21 +64,21 @@ class Object2DescriptorConverter : DescriptorBuilder() {
                 is DoubleArray -> KexDouble.asArray()
                 is Array<*> -> any.javaClass.componentType.kex.asArray()
                 is String -> KexString()
-                else -> any.javaClass.toKexType()
+                else -> any.javaClass.kexTypeMockitoMockFixed
             }
         }
     }
 
-//    private val cache : MutableMap<Class<*>, KexType> = hashMapOf()
-    private fun Class<*>.toKexType(): KexType{
-        if (!this.name.containsMockitoMock) return this.kex
-        return this.classLoader.loadClass(this.name.removeMockitoMockSuffix()).kex
-    }
-//        if (!this.name.containsMockitoMock) return this.kex
-//        cache[this]?.let { return it}
-//        return this.classLoader.loadClass(this.name.removeMockitoMockSuffix()).kex.also{
-//            cache[this] = it
-//        }
+    private val classToKexType: MutableMap<Class<*>, KexType> = hashMapOf()
+    private val Class<*>.kexTypeMockitoMockFixed: KexType
+        get() {
+            if (classToKexType[this] != null) return classToKexType[this]!!
+            return if (!this.name.containsMockitoMock) {
+                this.kex
+            } else {
+                this.classLoader.loadClass(this.name.removeMockitoMockSuffix()).kex
+            }.also { classToKexType[this] = it }
+        }
 
     fun convert(any: Any?, depth: Int = 0): Descriptor {
         if (any == null) return `null`
