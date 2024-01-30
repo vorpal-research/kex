@@ -176,13 +176,7 @@ class SymbolicTraceBuilder(
 
     override fun toString() = "$clauses"
 
-    private fun String.toType(): Type = parseDescOrNull(cm.type, this)!!.let {
-        if (it.name.contains(SUBSTRING_TO_FILTER_FROM_TYPE)) {
-            it.name.removeMockitoMockSuffix().toType().also { log.debug { "Prevented mockito mock type: $it" } }
-        } else {
-            it
-        }
-    }
+    private fun String.toType(): Type = parseDescOrNull(cm.type, this)!!
 
     private fun safeCall(body: () -> Unit) = `try` {
         body()

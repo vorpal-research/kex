@@ -39,12 +39,16 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
 
     @Test
     fun mockStaticsTests() {
-        assertCoverage(cm[prefix + "MockStaticsTests"], 1.0, 0.03)
+//        val eps = 0.03
+        val eps = 0.0
+        assertCoverage(cm[prefix + "MockStaticsTests"], 1.0, eps)
     }
 
     @Test
     fun mockListTests() {
-        assertCoverage(cm[prefix + "MockListTests"], 1.0, 0.12)
+//        val eps = 0.12
+        val eps = 0.0
+        assertCoverage(cm[prefix + "MockListTests"], 1.0, eps)
     }
 
     @Test
@@ -55,6 +59,8 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
     @Test
     fun mockSetTests(){
         // unstable test. Anything can happen
-        assertCoverage(cm[prefix + "MockSetTests"], 1.0, 0.5)
+//        val eps = 0.5
+        val eps = 0.0
+        assertCoverage(cm[prefix + "MockSetTests"], 1.0, eps)
     }
 }
