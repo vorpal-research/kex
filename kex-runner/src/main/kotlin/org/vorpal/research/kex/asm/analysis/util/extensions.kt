@@ -21,10 +21,7 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.MockingMode
-import org.vorpal.research.kex.util.getMockingEnabled
-import org.vorpal.research.kex.util.getMockingMode
-import org.vorpal.research.kex.util.getMockito
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -215,7 +212,10 @@ suspend fun Method.checkAsyncIncremental(
         when (result) {
             is Result.SatResult -> try {
                 val fullPS = checker.state + checker.queries[index].hardConstraints
-                generateInitialDescriptors(this, ctx, result.model, fullPS).first
+                generateInitialDescriptors(this, ctx, result.model, fullPS)
+                    .let { (descriptors, generator) ->
+                        descriptors.finalizeDescriptors(ctx, generator, state)
+                    }
                     .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                         log.debug { "Generated params:\n$it" }
                     }
