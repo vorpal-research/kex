@@ -39,7 +39,6 @@ import org.vorpal.research.kthelper.collection.LRUCache
 import org.vorpal.research.kthelper.compareTo
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.logging.warn
 
 val Type.javaDesc get() = this.name.javaString
 
