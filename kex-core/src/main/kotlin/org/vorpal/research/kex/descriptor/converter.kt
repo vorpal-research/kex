@@ -16,11 +16,10 @@ import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.ktype.KexString
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.asArray
-import org.vorpal.research.kex.util.allFields
-import org.vorpal.research.kex.util.isStatic
-import org.vorpal.research.kex.util.kex
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import java.util.*
 
@@ -66,9 +65,15 @@ class Object2DescriptorConverter : DescriptorBuilder() {
                 is DoubleArray -> KexDouble.asArray()
                 is Array<*> -> any.javaClass.componentType.kex.asArray()
                 is String -> KexString()
-                else -> any.javaClass.kex
+                else -> if (!any.javaClass.name.contains(SUBSTRING_TO_FILTER_FROM_TYPE)) any.javaClass.kex else fixClass(any.javaClass)
             }
         }
+    }
+
+    private fun fixClass(javaClass: Class<Any>): KexType {
+        return javaClass.classLoader.loadClass(javaClass.name.removeMockitoMockSuffix()).also{
+            log.debug{"Fixed class: $javaClass, got: $it"}
+        }.kex
     }
 
     fun convert(any: Any?, depth: Int = 0): Descriptor {

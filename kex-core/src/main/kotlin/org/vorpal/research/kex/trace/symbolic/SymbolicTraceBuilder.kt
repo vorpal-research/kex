@@ -1270,8 +1270,8 @@ class SymbolicTraceBuilder(
 
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
-//        val realType = type.removeMockitoMockSuffix()
-        val realType = type
+        val realType = type.removeMockitoMockSuffix()
+//        val realType = type
         log.debug { "type: $type\nrealType: $realType" }
         val expectedKfgType = parseStringToType(cm.type, realType)
         val comparisonResult = when (concreteValue) {

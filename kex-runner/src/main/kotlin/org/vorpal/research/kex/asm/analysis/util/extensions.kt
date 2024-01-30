@@ -21,7 +21,6 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.MockingMode
 import org.vorpal.research.kex.util.getMockingEnabled
 import org.vorpal.research.kex.util.getMockingMode
 import org.vorpal.research.kex.util.getMockito
@@ -120,9 +119,6 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
 ): Parameters<Descriptor> {
     if (!getMockingEnabled() || getMockito() == null || getMockingMode() == null) {
         return this
-    }
-    if (getMockingMode() == MockingMode.FULL) {
-        TODO("Not implemented")
     }
     if (!asList.any { it.isMockable(ctx.types) }) {
         return this
