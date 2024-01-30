@@ -12,6 +12,8 @@ import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.util.KfgTargetFilter
+import org.vorpal.research.kex.util.MockingMode
+import org.vorpal.research.kex.util.getMockingMode
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
@@ -155,8 +157,14 @@ private fun Descriptor.insertMocks(
 }
 
 fun Descriptor.isMockable(types: TypeFactory): Boolean {
-    val klass = (type.getKfgType(types) as? ClassType)?.klass
-    return klass != null && !instantiationManager.isInstantiable(klass) && !type.isKexRt && this is ObjectDescriptor
+    val klass = (type.getKfgType(types) as? ClassType)?.klass ?: return false
+    val necessaryConditions = !klass.isFinal && !type.isKexRt && this is ObjectDescriptor
+    return necessaryConditions && when (getMockingMode()) {
+        MockingMode.FULL -> true
+        MockingMode.BASIC -> !instantiationManager.isInstantiable(klass)
+        null -> false
+    }
+
 }
 
 private fun Descriptor.replaceWithMock(

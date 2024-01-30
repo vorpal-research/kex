@@ -152,8 +152,12 @@ fun String.removeMockitoMockSuffix(): String {
     return if (suffixIndex == -1) {
         this
     } else {
-        log.debug { "MOCKITO_MOCK FIX. value: $this. Stack trace:" }
-//        log.debug(Thread.currentThread().stackTrace.joinToString("\n"))
+        if (getLogTypeFix().also{log.debug{"getLogTypeFix: $it"}}){
+            log.debug { "MOCKITO_MOCK FIX. value: $this. Stack trace:" }
+            if (getLogStackTraceTypeFix().also{log.debug{"getLogStackTraceTypeFix: $it"}}){
+                log.debug(Thread.currentThread().stackTrace.joinToString("\n"))
+            }
+        }
         removeRange(suffixIndex, length)
     }
 }
@@ -197,6 +201,7 @@ private object SubTypeInfoCache {
         val key = lhv.toString() to rhv.toString()
         return subtypeCache[key] ?: (lhv.isSubtypeOf(rhv, outerClassBehavior = false) || lhv.sameButMockito(rhv)).also {
             subtypeCache[key] = it
+            subtypeCache[lhv.name.removeMockitoMockSuffix() to rhv.name.removeMockitoMockSuffix()] = it
         }
     }
 }

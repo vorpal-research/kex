@@ -98,6 +98,14 @@ fun getMockingEnabled(): Boolean {
     return kexConfig.getBooleanValue("mock", "enabled", false)
 }
 
+fun getLogTypeFix(): Boolean {
+    return kexConfig.getBooleanValue("mock", "logTypeFix", false)
+}
+
+fun getLogStackTraceTypeFix(): Boolean {
+    return kexConfig.getBooleanValue("mock", "logStackTraceTypeFix", false)
+}
+
 fun getKexRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useKexRuntime", true)) return null
     val libPath = kexConfig.libPath ?: return null
