@@ -56,7 +56,6 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
 
     @Test
     fun mockSetTests(){
-        // unstable test. Anything can happen
         val eps = 0.5
         assertCoverage(cm[prefix + "MockSetTests"], 1.0, eps)
     }

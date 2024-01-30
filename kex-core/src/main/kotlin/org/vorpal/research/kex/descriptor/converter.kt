@@ -19,6 +19,8 @@ import org.vorpal.research.kex.ktype.asArray
 import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.collection.Cache
+import org.vorpal.research.kthelper.collection.LRUCache
 import org.vorpal.research.kthelper.logging.log
 import java.util.*
 
@@ -62,14 +64,16 @@ class Object2DescriptorConverter : DescriptorBuilder() {
                 is LongArray -> KexLong.asArray()
                 is FloatArray -> KexFloat.asArray()
                 is DoubleArray -> KexDouble.asArray()
-                is Array<*> -> any.javaClass.componentType.kex.asArray()
+                is Array<*> -> any.javaClass.componentType.kexTypeMockitoMockFixed.asArray()
                 is String -> KexString()
                 else -> any.javaClass.kexTypeMockitoMockFixed
             }
         }
     }
 
-    private val classToKexType: MutableMap<Class<*>, KexType> = hashMapOf()
+    companion object{
+        private val classToKexType: Cache<Class<*>, KexType> = LRUCache(250u)
+    }
     private val Class<*>.kexTypeMockitoMockFixed: KexType
         get() {
             if (classToKexType[this] != null) return classToKexType[this]!!
