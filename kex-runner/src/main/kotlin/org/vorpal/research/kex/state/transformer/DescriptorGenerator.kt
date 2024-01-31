@@ -138,14 +138,12 @@ fun generateInitialDescriptors(
 ): Pair<Parameters<Descriptor>, DescriptorGenerator> {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
-//    generator.generateAll()
     return Parameters(
         generator.instance,
         generator.args.mapIndexed { index, arg ->
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
-        generator.staticFields,
-        generator.others
+        generator.staticFields
     ) to generator
 }
 

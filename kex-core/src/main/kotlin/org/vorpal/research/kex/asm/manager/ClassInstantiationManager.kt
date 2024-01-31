@@ -307,7 +307,7 @@ class ClassInstantiationDetector(
     override fun cleanup() {}
 
     override fun visit(klass: Class) {
-        if (ignoredInstantiations.any { it.matches(klass.asType.kexType.toString()) }) {
+        if (ignoredInstantiations.any { it.matches(klass) }) {
             return
         }
 

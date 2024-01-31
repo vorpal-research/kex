@@ -6,6 +6,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExceptionPrecondition
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.util.AccessModifier
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
@@ -17,13 +18,14 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.predicate.CallPredicate
+import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.getMockingEnabled
-import org.vorpal.research.kex.util.getMockingMode
-import org.vorpal.research.kex.util.getMockito
+import org.vorpal.research.kex.util.isMockPessimizationEnabled
+import org.vorpal.research.kex.util.isMockingEnabled
+import org.vorpal.research.kex.util.mockingMode
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -56,7 +58,7 @@ fun methodCalls(
     return state.clauses
         .asSequence()
         .map { clause -> clause.predicate }
-        .filter { predicate -> predicate.type.name == "S" }
+        .filter { predicate -> predicate.type is PredicateType.State }
         .filterIsInstance<CallPredicate>()
         .filter { predicate -> predicate.hasLhv }
         .map { predicate ->
@@ -117,16 +119,26 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
     generator: DescriptorGenerator,
     state: SymbolicState
 ): Parameters<Descriptor> {
-    if (!getMockingEnabled() || getMockito() == null || getMockingMode() == null) {
+    if (!kexConfig.isMockingEnabled || kexConfig.mockingMode == null) {
         return this
     }
-    if (!asList.any { it.isMockable(ctx.types) }) {
-        return this
+    val visited = mutableSetOf<Descriptor>()
+
+    if (kexConfig.isMockPessimizationEnabled.also{log.debug{"Pessimization: $it"}}) {
+        if (this.asList.none { it.requireMocks(ctx.types, visited) }) {
+            return this
+        } else {
+            generator.generateAll()
+        }
+    } else {
+        generator.generateAll()
+        if (generator.allValues.none { it.requireMocks(ctx.types, visited) }) {
+            return this
+        }
     }
 
-    generator.generateAll()
-    val descriptors = Parameters(instance, arguments, statics, generator.others)
-    val (withMocks, descriptorToMock) = descriptors.generateInitialMocks(ctx.types)
+    val descriptorToMock = createDescriptorToMock(generator.allValues, ctx.types)
+    val withMocks = this.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
     val methodCalls = methodCalls(state, generator.memory, descriptorToMock)
     setupMocks(methodCalls, generator.memory, descriptorToMock)
     return withMocks

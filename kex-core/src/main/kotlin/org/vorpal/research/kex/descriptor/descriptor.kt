@@ -645,11 +645,11 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     }
 }
 
-class MockDescriptor(term: Term, type: KexClass, methods: Collection<Method> = emptyList()) :
+class MockDescriptor(term: Term, type: KexClass, methods: Set<Method> = emptySet()) :
     AbstractFieldContainingDescriptor(term, type) {
 
-    constructor(type: KexClass, methods: Collection<Method>) : this(term { generate(type) }, type, methods)
-    constructor(methods: Collection<Method>, original: ObjectDescriptor) : this(
+    constructor(type: KexClass, methods: Set<Method>) : this(term { generate(type) }, type, methods)
+    constructor(methods: Set<Method>, original: ObjectDescriptor) : this(
         original.term,
         original.type as KexClass,
         methods
@@ -824,7 +824,7 @@ open class DescriptorBuilder : StringInfoContext() {
     fun array(length: Int, elementType: KexType): ArrayDescriptor =
         ArrayDescriptor(elementType, length)
 
-    fun mock(type: KexClass, methods: Collection<Method>) = MockDescriptor(type, methods)
+    fun mock(type: KexClass, methods: Set<Method>) = MockDescriptor(type, methods)
     fun mock(type: KexClass, types: TypeFactory): MockDescriptor =
         MockDescriptor(type, (type.getKfgType(types) as ClassType).klass.methods)
 
@@ -926,7 +926,7 @@ class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilde
                     MockDescriptor(
                         descriptor.term,
                         descriptor.type.mapped as KexClass,
-                        descriptor.methods.map { method -> method.mapped })
+                        descriptor.methods.mapTo(mutableSetOf()) { method -> method.mapped })
                 cache[descriptor] = mockMapped
                 for ((field, value) in descriptor.fields) {
                     mockMapped[field.first, field.second.mapped] = map(value)

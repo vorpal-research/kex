@@ -35,8 +35,7 @@ val Parameters<Descriptor>.rtMapped: Parameters<Descriptor>
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
         val statics = statics.mapTo(mutableSetOf()) { mapper.map(it) }
-        val others = others.mapTo(mutableSetOf()) { mapper.map(it) }
-        return Parameters(instance, args, statics, others)
+        return Parameters(instance, args, statics)
     }
 
 val Parameters<ActionSequence>.rtUnmapped: Parameters<ActionSequence>
@@ -45,8 +44,7 @@ val Parameters<ActionSequence>.rtUnmapped: Parameters<ActionSequence>
         val instance = instance?.let { mapper.map(it) }
         val args = arguments.map { mapper.map(it) }
         val statics = statics.mapTo(mutableSetOf()) { mapper.map(it) }
-        val others = others.mapTo(mutableSetOf()) { mapper.map(it) }
-        return Parameters(instance, args, statics, others)
+        return Parameters(instance, args, statics)
     }
 
 class Reanimator(

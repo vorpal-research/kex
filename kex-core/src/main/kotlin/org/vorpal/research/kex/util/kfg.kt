@@ -2,6 +2,7 @@
 
 package org.vorpal.research.kex.util
 
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kfg.Package
@@ -155,9 +156,9 @@ fun String.removeMockitoMockSuffix(): String {
     return if (suffixIndex == -1) {
         this
     } else {
-        if (getLogTypeFix()) {
+        if (kexConfig.logTypeFix) {
             log.debug { "MOCKITO_MOCK FIX. value: $this" }
-            if (getLogStackTraceTypeFix()) {
+            if (kexConfig.logStackTraceTypeFix) {
                 log.debug { "Stack trace: ${Thread.currentThread().stackTrace.joinToString("\n")}" }
             }
         }

@@ -70,10 +70,11 @@ class Object2DescriptorConverter : DescriptorBuilder() {
     }
 
     private val Class<*>.kexTypeMockitoMockFixed: KexType
-        get() = if (!this.name.containsMockitoMock) {
-            this.kex
-        } else {
-            KexClass(this.kex.name.removeMockitoMockSuffix())
+        get() = when {
+            !kexConfig.isMockingEnabled || !kexConfig.isMockitoClassesWorkaroundEnabled -> this.kex
+
+            !this.name.containsMockitoMock -> this.kex
+            else -> KexClass(this.kex.name.removeMockitoMockSuffix())
         }
 
     fun convert(any: Any?, depth: Int = 0): Descriptor {

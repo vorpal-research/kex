@@ -13,7 +13,7 @@ import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kex.util.MockingMode
-import org.vorpal.research.kex.util.getMockingMode
+import org.vorpal.research.kex.util.mockingMode
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
@@ -27,10 +27,9 @@ import kotlin.random.Random
 data class Parameters<T>(
     val instance: T?,
     val arguments: List<T>,
-    val statics: Set<T> = setOf(),
-    val others: Set<T> = setOf()
+    val statics: Set<T> = setOf()
 ) {
-    val asList get() = listOfNotNull(instance) + arguments + statics + others
+    val asList get() = listOfNotNull(instance) + arguments + statics
 
     override fun toString(): String = buildString {
         appendLine("instance: $instance")
@@ -38,10 +37,15 @@ data class Parameters<T>(
             appendLine("args: ${arguments.joinToString("\n")}")
         if (statics.isNotEmpty())
             appendLine("statics: ${statics.joinToString("\n")}")
-        if (others.isNotEmpty()) {
-            appendLine("others: ${others.joinToString("\n")}")
-        }
     }
+}
+
+fun <T, U> Parameters<T>.map(transform: (T) -> U): Parameters<U> {
+    return Parameters(
+        this.instance?.let(transform),
+        this.arguments.map(transform),
+        this.statics.mapTo(mutableSetOf(), transform)
+    )
 }
 
 val Parameters<Any?>.asDescriptors: Parameters<Descriptor>
@@ -51,7 +55,6 @@ val Parameters<Any?>.asDescriptors: Parameters<Descriptor>
             context.convert(instance),
             arguments.map { context.convert(it) },
             statics.mapTo(mutableSetOf()) { context.convert(it) },
-            others.mapTo(mutableSetOf()) { context.convert(it) }
         )
     }
 
@@ -63,7 +66,6 @@ fun Parameters<Descriptor>.concreteParameters(
     instance?.concretize(cm, accessLevel, random),
     arguments.map { it.concretize(cm, accessLevel, random) },
     statics.mapTo(mutableSetOf()) { it.concretize(cm, accessLevel, random) },
-//    others.mapTo(mutableSetOf()) { it.concretize(cm, accessLevel, random) }
 )
 
 fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Descriptor> {
@@ -81,7 +83,7 @@ fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Desc
                 else -> null
             }
         }
-    return Parameters(instance, arguments, filteredStatics, others)
+    return Parameters(instance, arguments, filteredStatics)
 }
 
 private val ignoredStatics: Set<KfgTargetFilter> by lazy {
@@ -100,27 +102,18 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
                 !ignored.matches(typeName)
             }
         }
-    return Parameters(instance, arguments, filteredStatics, others)
+    return Parameters(instance, arguments, filteredStatics)
 }
 
 
-fun Parameters<Descriptor>.generateInitialMocks(
+fun createDescriptorToMock(
+    allDescriptors: Collection<Descriptor>,
     types: TypeFactory
-): Pair<Parameters<Descriptor>, Map<Descriptor, MockDescriptor>> {
+): Map<Descriptor, MockDescriptor> {
     val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
-    val mockedArguments = arguments.replaceUninstantiableWithMocks(types, descriptorToMock).toList()
-    val mockedStatics = statics.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
-    val mockedOthers = others.replaceUninstantiableWithMocks(types, descriptorToMock).toSet()
-
-    return Parameters(instance, mockedArguments, mockedStatics, mockedOthers) to descriptorToMock
-}
-
-private fun Collection<Descriptor>.replaceUninstantiableWithMocks(
-    types: TypeFactory,
-    descriptorToMock: MutableMap<Descriptor, MockDescriptor>
-): Collection<Descriptor> {
     val visited = mutableSetOf<Descriptor>()
-    return map { it.replaceWithMock(types, descriptorToMock, visited) }
+    allDescriptors.map { it.replaceWithMock(types, descriptorToMock, visited) }
+    return descriptorToMock
 }
 
 private fun Descriptor.insertMocks(
@@ -159,12 +152,25 @@ private fun Descriptor.insertMocks(
 fun Descriptor.isMockable(types: TypeFactory): Boolean {
     val klass = (type.getKfgType(types) as? ClassType)?.klass ?: return false
     val necessaryConditions = !klass.isFinal && !type.isKexRt && this is ObjectDescriptor
-    return necessaryConditions && when (getMockingMode()) {
+    return necessaryConditions && when (kexConfig.mockingMode) {
         MockingMode.FULL -> true
         MockingMode.BASIC -> !instantiationManager.isInstantiable(klass)
         null -> false
     }
+}
 
+fun Descriptor.requireMocks(types: TypeFactory, visited: MutableSet<Descriptor>): Boolean {
+    if (this in visited) return false
+    if (this.isMockable(types)) return true
+    visited.add(this)
+    fun Descriptor.requireMocks() = requireMocks(types, visited)
+    return when (this) {
+        is ConstantDescriptor -> false
+        is ClassDescriptor -> fields.values.any { it.requireMocks() }
+        is ObjectDescriptor -> fields.values.any { it.requireMocks() }
+        is MockDescriptor -> (fields.values + allReturns).any { it.requireMocks() }
+        is ArrayDescriptor -> elements.values.any { it.requireMocks() }
+    }
 }
 
 private fun Descriptor.replaceWithMock(
@@ -178,14 +184,13 @@ private fun Descriptor.replaceWithMock(
         return this
     }
 
+    this as ObjectDescriptor
     val klass = (this.type.getKfgType(types) as? ClassType)?.klass
     klass ?: return this.also { log.error { "Got null class to mock. Descriptor: $this" } }
-    val mock = if (this is ObjectDescriptor) {
-        MockDescriptor(klass.methods, this).also { it.fields.putAll(this.fields) }
-    } else {
-        log.warn { "Strange descriptor to mock. Expected ObjectDescriptor. Got: $this" }
-        MockDescriptor(this.term, this.type as KexClass, klass.methods)
-    }.also { log.debug { "Created mock descriptor for ${it.term}" } }
+
+    val mock = MockDescriptor(klass.methods, this)
+        .also { it.fields.putAll(this@replaceWithMock.fields) }
+        .also { log.debug { "Created mock descriptor for ${it.term}" } }
     withMocksInserted.add(this)
     descriptorToMock[this] = mock
     descriptorToMock[mock] = mock

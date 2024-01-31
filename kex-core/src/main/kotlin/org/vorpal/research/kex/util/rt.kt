@@ -9,7 +9,6 @@ import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.JarContainer
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.readLines
@@ -51,6 +50,36 @@ val Config.libPath: Path?
         runtimeDepsPath?.resolve(it)?.normalize()
     }
 
+val Config.isMockingEnabled: Boolean
+    get() = getBooleanValue("mock", "enabled", false)
+
+enum class MockingMode {
+    BASIC, FULL
+}
+
+val Config.mockingMode: MockingMode?
+    get() = getEnumValue<MockingMode>("mock", "mode", ignoreCase = true)
+
+val Config.isMockitoClassesWorkaroundEnabled: Boolean
+    get() = getBooleanValue("mock", "mockitoClassesWorkaround", true)
+
+val Config.logTypeFix: Boolean
+    get() = getBooleanValue("mock", "logTypeFix", false)
+
+val Config.logStackTraceTypeFix: Boolean
+    get() = getBooleanValue("mock", "logStackTraceTypeFix", false)
+
+val Config.isMockPessimizationEnabled: Boolean
+    get() = getBooleanValue("mock", "mockPessimizationEnabled", true)
+
+val Config.mockito: Container?
+    get() {
+        val libPath = libPath ?: return null
+        val mockitoVersion = getStringValue("mock", "mockitoVersion") ?: return null
+        val mockitoPath = libPath.resolve("mockito-core-$mockitoVersion.jar").toAbsolutePath()
+        return JarContainer(mockitoPath, Package("org.mockito"))
+    }
+
 fun getRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useJavaRuntime", true)) return null
     val libPath = kexConfig.libPath ?: return null
@@ -76,34 +105,6 @@ fun getJunit(): Container? {
         libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(),
         Package.defaultPackage
     )
-}
-
-fun getMockito(): Container? {
-    val libPath = kexConfig.libPath ?: return null
-    val mockitoVersion = kexConfig.getStringValue("mock", "mockitoVersion") ?: return null
-    val mockitoPath = libPath.resolve("mockito-core-$mockitoVersion.jar").toAbsolutePath()
-    return JarContainer(mockitoPath, Package("org.mockito"))
-}
-
-enum class MockingMode {
-    BASIC, FULL
-}
-
-fun getMockingMode(): MockingMode? {
-    val mockingMode = kexConfig.getStringValue("mock", "mode") ?: return null
-    return tryOrNull { MockingMode.valueOf(mockingMode.uppercase()) }
-}
-
-fun getMockingEnabled(): Boolean {
-    return kexConfig.getBooleanValue("mock", "enabled", false)
-}
-
-fun getLogTypeFix(): Boolean {
-    return kexConfig.getBooleanValue("mock", "logTypeFix", false)
-}
-
-fun getLogStackTraceTypeFix(): Boolean {
-    return kexConfig.getBooleanValue("mock", "logStackTraceTypeFix", false)
 }
 
 fun getKexRuntime(): Container? {
