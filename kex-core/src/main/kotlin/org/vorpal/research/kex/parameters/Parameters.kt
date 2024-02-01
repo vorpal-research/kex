@@ -199,15 +199,18 @@ private fun Descriptor.replaceWithMock(
 }
 
 fun setupMocks(
-    methodCalls: List<Pair<CallPredicate, Descriptor>>,
+    methodCalls: List<CallPredicate>,
     termToDescriptor: Map<Term, Descriptor>,
     descriptorToMock: Map<Descriptor, MockDescriptor>
 ) {
-    for ((callPredicate, value) in methodCalls) {
+    for (callPredicate in methodCalls) {
         val call = callPredicate.call as CallTerm
+
         val mock = termToDescriptor[call.owner]?.let { descriptorToMock[it] ?: it }
+        val value = termToDescriptor[callPredicate.lhvUnsafe]?.let { descriptorToMock[it] ?: it }
         mock ?: log.warn { "No mock for $call" }
-        if (mock is MockDescriptor) {
+
+        if (mock is MockDescriptor && value != null) {
             mock.addReturnValue(call.method, value)
         }
     }

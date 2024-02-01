@@ -18,14 +18,10 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.predicate.CallPredicate
-import org.vorpal.research.kex.state.predicate.PredicateType
-import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.isMockPessimizationEnabled
-import org.vorpal.research.kex.util.isMockingEnabled
-import org.vorpal.research.kex.util.mockingMode
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
@@ -50,27 +46,8 @@ suspend fun Method.analyzeOrTimeout(
 }
 
 
-fun methodCalls(
-    state: SymbolicState,
-    termToDescriptor: Map<Term, Descriptor>,
-    descriptorToMock: Map<Descriptor, Descriptor>
-): List<Pair<CallPredicate, Descriptor>> {
-    return state.clauses
-        .asSequence()
-        .map { clause -> clause.predicate }
-        .filter { predicate -> predicate.type is PredicateType.State }
-        .filterIsInstance<CallPredicate>()
-        .filter { predicate -> predicate.hasLhv }
-        .map { predicate ->
-            val term = predicate.lhv
-            val descriptor = termToDescriptor[term]
-            if (descriptor == null) log.debug { "Error. No descriptor for $term, type: ${term.type}\n" }
-            predicate to descriptor
-        }
-        .filter { (_, value) -> value != null }
-        .map { (call, value) -> call to value!! }
-        .map { (call, value) -> call to (descriptorToMock[value] ?: value) }
-        .toList()
+fun SymbolicState.methodCalls(): List<CallPredicate> {
+    return clauses.map { clause -> clause.predicate }.filterIsInstance<CallPredicate>()
 }
 
 
@@ -86,7 +63,8 @@ suspend fun Method.checkAsync(
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
-    val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
+    val result =
+        checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
     if (result !is Result.SatResult) {
         return null
     }
@@ -124,7 +102,7 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
     }
     val visited = mutableSetOf<Descriptor>()
 
-    if (kexConfig.isMockPessimizationEnabled.also{log.debug{"Pessimization: $it"}}) {
+    if (kexConfig.isMockPessimizationEnabled.also { log.debug { "Pessimization: $it" } }) {
         if (this.asList.none { it.requireMocks(ctx.types, visited) }) {
             return this
         } else {
@@ -139,7 +117,7 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
 
     val descriptorToMock = createDescriptorToMock(generator.allValues, ctx.types)
     val withMocks = this.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
-    val methodCalls = methodCalls(state, generator.memory, descriptorToMock)
+    val methodCalls = state.methodCalls()
     setupMocks(methodCalls, generator.memory, descriptorToMock)
     return withMocks
 }

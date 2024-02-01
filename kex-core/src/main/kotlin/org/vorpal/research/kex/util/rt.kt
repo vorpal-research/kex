@@ -80,6 +80,11 @@ val Config.mockito: Container?
         return JarContainer(mockitoPath, Package("org.mockito"))
     }
 
+// debug purposes, normally should be false
+val Config.isMockTest: Boolean
+    get() = getBooleanValue("mock", "test", false).also{if (it) println("Test feature invoked!")}
+
+
 fun getRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useJavaRuntime", true)) return null
     val libPath = kexConfig.libPath ?: return null
