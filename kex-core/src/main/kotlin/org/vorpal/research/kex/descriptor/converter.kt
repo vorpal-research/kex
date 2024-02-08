@@ -30,7 +30,9 @@ private val maxGenerationDepth by lazy {
 private val maxArrayLength by lazy {
     kexConfig.getIntValue("reanimator", "maxArrayLength", 10_000)
 }
-
+private val ignoreSyntheticObjects by lazy {
+    kexConfig.getBooleanValue("reanimator", "ignoreSyntheticObjects", false)
+}
 
 class Object2DescriptorConverter : DescriptorBuilder() {
     var objectToDescriptor = IdentityHashMap<Any, Descriptor>()
@@ -184,6 +186,8 @@ class Object2DescriptorConverter : DescriptorBuilder() {
         if (depth > maxGenerationDepth) return `null`
 
         val klass = any.javaClass
+        if (klass.isSynthetic) return `null`
+
         val kexClass = klass.kex as KexClass
         val result = `object`(kexClass)
         objectToDescriptor[any] = result
