@@ -100,22 +100,20 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
     if (!kexConfig.isMockingEnabled || kexConfig.mockingMode == null) {
         return this
     }
+    fun Collection<Descriptor>.removeInstance() = this.filterNot { it == instance }
     val visited = mutableSetOf<Descriptor>()
 
-    if (kexConfig.isMockPessimizationEnabled.also { log.debug { "Pessimization: $it" } }) {
-        if (this.asList.none { it.requireMocks(ctx.types, visited) }) {
-            return this
-        } else {
-            generator.generateAll()
-        }
-    } else {
-        generator.generateAll()
-        if (generator.allValues.none { it.requireMocks(ctx.types, visited) }) {
+    if (kexConfig.isMockPessimizationEnabled) {
+        if (this.asList.removeInstance().none { it.requireMocks(ctx.types, visited) }) {
             return this
         }
     }
+    generator.generateAll()
+    if (generator.allValues.removeInstance().none { it.requireMocks(ctx.types, visited) }) {
+        return this
+    }
 
-    val descriptorToMock = createDescriptorToMock(generator.allValues, ctx.types)
+    val descriptorToMock = createDescriptorToMock(generator.allValues.removeInstance(), ctx.types)
     val withMocks = this.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
     val methodCalls = state.methodCalls()
     setupMocks(methodCalls, generator.memory, descriptorToMock)
