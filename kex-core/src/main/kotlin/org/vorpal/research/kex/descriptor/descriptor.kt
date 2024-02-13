@@ -717,15 +717,16 @@ class MockDescriptor(term: Term, type: KexClass, methods: Set<Method> = emptySet
     override fun print(map: MutableMap<Descriptor, String>): String {
         if (this in map) return map[this]!!
         val base = super.print(map)
-        return base + "\n" + methodReturns.joinToString(separator = "\n") { method, values ->
-            "$method : ${
-                values.joinToString(
-                    separator = ", ",
-                    prefix = "{",
-                    postfix = "}"
-                ) { value -> value.print(map) }
-            }"
-        }
+        return base + "\n" + methodReturns.filter { (_, values) -> values.isNotEmpty() }
+            .joinToString(separator = "\n") { method, values ->
+                "$method : ${
+                    values.joinToString(
+                        separator = ", ",
+                        prefix = "{",
+                        postfix = "}"
+                    ) { value -> value.print(map) }
+                }"
+            }
 
     }
 
