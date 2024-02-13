@@ -183,7 +183,7 @@ class KexSerializerTest : KexTest("kex-serializer") {
         return with(DescriptorBuilder()) {
             val klass = KexClass("java/util/stream/Stream")
             val toArrayMethod = (klass.getKfgType(cm.type) as ClassType).klass.methods.first { it.name == "toArray" }
-            val instance = mock(klass, cm.type)
+            val instance = mock(klass)
             instance.addReturnValue(toArrayMethod, convertToDescriptor(Array(2) { Any() }))
             instance["selfReference" to klass] = instance
             instance["string" to cm.stringClass.kexType] = convertToDescriptor("test")

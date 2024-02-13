@@ -76,8 +76,7 @@ internal sealed class DescriptorWrapper {
     ) : DescriptorWrapper() {
         override fun convert(map: Map<Id, DescriptorWrapper>, output: MutableMap<Id, Descriptor>) {
             if (id in output) return
-            val methods = methodReturns.mapTo(mutableSetOf()) { (method, _) -> method }
-            val instance = descriptor { mock(type as KexClass, methods) }.also {
+            val instance = descriptor { mock(type as KexClass) }.also {
                 output[id] = it
             } as MockDescriptor
 

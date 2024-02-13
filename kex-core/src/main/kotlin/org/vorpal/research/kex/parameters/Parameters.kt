@@ -188,9 +188,7 @@ private fun Descriptor.replaceWithMock(
     val klass = (this.type.getKfgType(types) as? ClassType)?.klass
     klass ?: return this.also { log.error { "Got null class to mock. Descriptor: $this" } }
 
-    val mock = MockDescriptor(klass.methods, this)
-        .also { it.fields.putAll(this@replaceWithMock.fields) }
-        .also { log.debug { "Created mock descriptor for ${it.term}" } }
+    val mock = MockDescriptor(this).also { log.debug { "Created mock descriptor for ${it.term}" } }
     withMocksInserted.add(this)
     descriptorToMock[this] = mock
     descriptorToMock[mock] = mock
