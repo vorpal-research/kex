@@ -16,7 +16,7 @@ class MockUtilsPrinter(
 
     companion object {
         const val MOCK_UTILS_CLASS = "MockUtils"
-        const val MOCK_INIT_TEST_CLASS = "InitTest"
+//        const val MOCK_INIT_TEST_CLASS = "InitTest"
 
         private val mockUtilsInstances = mutableMapOf<Pair<Path, String>, MockUtilsPrinter>()
         fun mockUtils(packageName: String): MockUtilsPrinter {
@@ -84,14 +84,13 @@ class MockUtilsPrinter(
                     int cur = 0;
                     @Override
                     public Object answer(InvocationOnMock invocation) {
-                        if (cur == returns.length - 1){
-                            return returns[cur];
-                        }
+                        if (cur == returns.length - 1) return returns[cur];
                         return returns[cur++];
                     }
                 })"""
                 }
 
+/*
                 staticClass(MOCK_INIT_TEST_CLASS) {
                     field("globalTimeout", type("Timeout")) {
                         visibility = Visibility.PUBLIC
@@ -105,6 +104,7 @@ class MockUtilsPrinter(
                         +"assert (mock.hashCode() == 0 || mock.hashCode() != 0)"
                     }
                 }
+*/
             }
         }
     }
