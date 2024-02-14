@@ -59,4 +59,10 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
         val eps = 0.5
         assertCoverage(cm[prefix + "MockSetTests"], 1.0, eps)
     }
+
+    @Test
+    fun mockInheritanceTests(){
+        // TODO: force mocking mode "full"
+        assertCoverage(cm[prefix + "MockInheritanceTests"], 1.0)
+    }
 }

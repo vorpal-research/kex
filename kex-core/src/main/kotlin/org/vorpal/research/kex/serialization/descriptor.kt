@@ -70,7 +70,7 @@ internal sealed class DescriptorWrapper {
         override val id: Id,
         override val type: KexType,
         val fields: MutableList<Pair<Pair<String, KexType>, Id>>,
-        val methodReturns: MutableList<Pair<MethodId, MutableList<Id>>>
+        val methodReturns: MutableList<Pair<MockedMethod, MutableList<Id>>>
     ) : DescriptorWrapper() {
         override fun convert(map: Map<Id, DescriptorWrapper>, output: MutableMap<Id, Descriptor>) {
             if (id in output) return

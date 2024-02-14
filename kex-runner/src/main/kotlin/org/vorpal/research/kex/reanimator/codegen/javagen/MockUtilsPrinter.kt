@@ -75,7 +75,7 @@ class MockUtilsPrinter(
                     visibility = Visibility.PUBLIC
                     modifiers += "static"
                     exceptions += "Throwable"
-                    returnType = type("void")
+                    returnType = void
 
                     +"Class<?> klass = instance.getClass()"
                     +"Method method = klass.getDeclaredMethod(name, argTypes)"
@@ -99,11 +99,10 @@ class MockUtilsPrinter(
                         annotations += "Rule"
                     }
                     method("mockitoInitTest") {
+                        returnType = void
+                        annotations += "Test"
                         +"Object mock = Mockito.mock(Object.class)"
                         +"assert (mock.hashCode() == 0 || mock.hashCode() != 0)"
-                    }.apply {
-                        returnType = void;
-                        annotations += "Test"
                     }
                 }
             }

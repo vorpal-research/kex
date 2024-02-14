@@ -694,14 +694,14 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
 
 
 @Serializable
-data class MethodId(
+data class MockedMethod(
     val name: String,
     val paramTypes: List<KexType>,
     val returnType: KexType
-) {}
+)
 
 
-private val Method.id: MethodId get() = MethodId(name, argTypes.map{it.kexType}, returnType.kexType)
+private val Method.mocked: MockedMethod get() = MockedMethod(name, argTypes.map{it.kexType}, returnType.kexType)
 
 class MockDescriptor(term: Term, type: KexClass) :
     AbstractFieldContainingDescriptor(term, type) {
@@ -711,30 +711,25 @@ class MockDescriptor(term: Term, type: KexClass) :
         fields.putAll(original.fields)
     }
 
-    val methodReturns: MutableMap<MethodId, MutableList<Descriptor>> = mutableMapOf()
+    val methodReturns: MutableMap<MockedMethod, MutableList<Descriptor>> = mutableMapOf()
 
     val allReturns: Iterable<Descriptor>
         get() = methodReturns.values.asSequence().flatMap { it.asSequence() }.asIterable()
 
-    val methods: Set<MethodId>
+    val methods: Set<MockedMethod>
         get() = methodReturns.keys
 
-    operator fun get(method: Method) = get(method.id)
-    operator fun get(methodId: MethodId) = methodReturns[methodId]
-    operator fun set(method: Method, values: List<Descriptor>) {
-        methodReturns[method.id] = values.toMutableList()
-    }
-
-    operator fun set(methodId: MethodId, values: List<Descriptor>) {
-        methodReturns[methodId] = values.toMutableList()
+    operator fun get(mockedMethod: MockedMethod) = methodReturns[mockedMethod]
+    operator fun set(mockedMethod: MockedMethod, values: List<Descriptor>) {
+        methodReturns[mockedMethod] = values.toMutableList()
     }
 
     fun addReturnValue(method: Method, value: Descriptor) {
-        addReturnValue(method.id, value)
+        addReturnValue(method.mocked, value)
     }
 
-    internal fun addReturnValue(methodId: MethodId, value: Descriptor) {
-        methodReturns.getOrPut(methodId) { mutableListOf() }.add(value)
+    internal fun addReturnValue(mockedMethod: MockedMethod, value: Descriptor) {
+        methodReturns.getOrPut(mockedMethod) { mutableListOf() }.add(value)
     }
 
     override fun concretize(
@@ -959,15 +954,15 @@ class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilde
             KexRtManager.Mode.UNMAP -> rtUnmapped
         }
 
-    private val MethodId.mapped
+    private val MockedMethod.mapped
         get() = when (mode) {
-            KexRtManager.Mode.MAP -> MethodId(
+            KexRtManager.Mode.MAP -> MockedMethod(
                 name.rtMapped,
                 paramTypes.map { it.rtMapped },
                 returnType.rtMapped
             )
 
-            KexRtManager.Mode.UNMAP -> MethodId(
+            KexRtManager.Mode.UNMAP -> MockedMethod(
                 name.rtUnmapped,
                 paramTypes.map { it.rtUnmapped },
                 returnType.rtUnmapped
