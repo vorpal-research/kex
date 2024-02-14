@@ -728,7 +728,7 @@ class MockDescriptor(term: Term, type: KexClass) :
         addReturnValue(method.mocked, value)
     }
 
-    internal fun addReturnValue(mockedMethod: MockedMethod, value: Descriptor) {
+    fun addReturnValue(mockedMethod: MockedMethod, value: Descriptor) {
         methodReturns.getOrPut(mockedMethod) { mutableListOf() }.add(value)
     }
 
