@@ -18,7 +18,7 @@ class MockGenerator(private val fallback: Generator) : Generator {
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as? MockDescriptor ?: throw IllegalArgumentException("Expected MockDescriptor. Got: $descriptor")
-        descriptor as MockDescriptor // TODO remove. Helps autocompletion
+        descriptor as MockDescriptor // helps autocompletion
 
         val name = "${descriptor.term}"
         val actionSequence = MockSequence(name)
@@ -27,10 +27,6 @@ class MockGenerator(private val fallback: Generator) : Generator {
         actionSequence.mockCalls.add(MockNewInstance(kfgClass))
 
         for ((method, returnValuesDesc) in descriptor.methodReturns) {
-            if (method !in kfgClass.methods) {
-                log.warn("Method $method is not found in class $kfgClass")
-                continue
-            }
             val returnValues = returnValuesDesc.map { value -> fallback.generate(value) }
             actionSequence.mockCalls += MockSetupMethod(method, returnValues)
         }
