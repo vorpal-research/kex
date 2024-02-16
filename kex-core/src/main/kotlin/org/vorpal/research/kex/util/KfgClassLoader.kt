@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.util
 
+import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.util.toByteArray
@@ -19,6 +20,13 @@ class KfgClassLoader(
 ) : ClassLoader() {
     private val cache = hashMapOf<String, Class<*>>()
     val fallback = PathClassLoader(paths)
+
+    init {
+        if (kexConfig.isMockingEnabled) tryOrNull {
+            // hack to fix mockito with java 8
+            definePackage("org.mockito.codegen", "", "", "", "", "", "", null)
+        }
+    }
 
     companion object {
         private val INCLUDES = setOf(
