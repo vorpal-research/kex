@@ -178,12 +178,12 @@ class KSMTSolver(
 
 
     @Suppress("unused")
-    private suspend fun reduce(state: Bool_, query: Bool_, errorCondition: (KSolverException) -> Boolean) {
+    private suspend fun reduceException(state: Bool_, query: Bool_, errorCondition: (KSolverException) -> Boolean) {
         var actualState = state
         var actualQuery = query
         var currentState = actualState
         var currentQuery = actualQuery
-        repeat(1000) {
+        for (index in 0..1000) {
             currentState = reduce(actualState)
             currentQuery = reduce(actualQuery)
             val reproduced = try {
@@ -191,6 +191,36 @@ class KSMTSolver(
                 false
             } catch (e: KSolverException) {
                 errorCondition(e)
+            }
+            if (reproduced) {
+                actualState = currentState
+                actualQuery = currentQuery
+            } else {
+                currentState = actualState
+                currentQuery = actualQuery
+            }
+        }
+
+        check(currentState, currentQuery)
+    }
+
+
+    @Suppress("unused")
+    private suspend fun reduceResult(state: Bool_, query: Bool_, resultChecker: (Pair<KSolverStatus, Any>) -> Boolean) {
+        var actualState = state
+        var actualQuery = query
+        var currentState = actualState
+        var currentQuery = actualQuery
+        for (index in 0..10000) {
+            currentState = reduce(actualState)
+            currentQuery = reduce(actualQuery)
+            if (currentState == actualState && currentQuery == actualQuery) {
+                continue
+            }
+            val reproduced = try {
+                resultChecker(check(currentState, currentQuery))
+            } catch (e: KSolverException) {
+                false
             }
             if (reproduced) {
                 actualState = currentState
@@ -218,9 +248,12 @@ class KSMTSolver(
         } as KExpr<T>
 
         state is KAndNaryExpr -> when (executionContext.random.nextInt(100)) {
-            in 0..2 -> {
-                val nth = executionContext.random.nextInt(state.args.size)
-                ef.ctx.mkAnd(state.args.filterIndexed { index, _ -> index != nth })
+            in 0..2 -> when (state.args.size) {
+                0 -> ef.ctx.trueExpr
+                else -> {
+                    val nth = executionContext.random.nextInt(state.args.size)
+                    ef.ctx.mkAnd(state.args.filterIndexed { index, _ -> index != nth })
+                }
             }
 
             else -> ef.ctx.mkAnd(state.args.map { reduce(it) })
@@ -539,12 +572,12 @@ class KSMTSolver(
                             "length"
                         )
                         var (initialLength, finalLength) = (startLength.numericValue.toInt() to endLength.numericValue.toInt())
-                        // this is fucked up
+                        // this is bad, but we need it for safety
                         if (initialLength > maxArrayLength) {
                             log.warn("Reanimated length of an array is too big: $initialLength")
                             initialLength = maxArrayLength
                         }
-                        // this is fucked up
+                        // this is bad, but we need it for safety
                         if (finalLength > maxArrayLength) {
                             log.warn("Reanimated length of an array is too big: $finalLength")
                             finalLength = maxArrayLength
