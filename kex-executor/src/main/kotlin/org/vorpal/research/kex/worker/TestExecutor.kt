@@ -4,26 +4,15 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.descriptor.convertToDescriptor
 import org.vorpal.research.kex.trace.symbolic.TraceCollectorProxy
 import org.vorpal.research.kex.trace.symbolic.protocol.*
-import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kfg.ir.value.NameMapperContext
-import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 
 class TestExecutor(
     val ctx: ExecutionContext
 ) {
-    private var isFirstRun: Boolean = true
 
     fun executeTest(request: TestExecutionRequest): ExecutionResult {
         val javaClass = ctx.loader.loadClass(request.klass)
-        if (isFirstRun) {
-            log.debug { "First run with JUnit" }
-            executeTestFromJUnit(javaClass)
-            isFirstRun = false
-        } else {
-            log.debug { "No JUnit run" }
-        }
-
         val instance = javaClass.getConstructor().newInstance()
         log.debug("Loaded a test class and created an instance")
 
@@ -60,15 +49,27 @@ class TestExecutor(
             else -> SuccessResult(collector.instructionTrace, collector.symbolicState)
         }
     }
-
-    private fun executeTestFromJUnit(testClass: Class<*>?): Unit = try {
-        val jcClass = ctx.loader.loadClass("org.junit.runner.JUnitCore")
-        val jc = jcClass.getConstructor().newInstance()
-        log.debug { "Created JUnitCoreInstance" }
-        jcClass.getMethod("run", Class::class.java.asArray())
-            .invoke(jc, arrayOf(testClass))
-        log.debug { "JUnit successfully executed" }
-    } catch (e: Throwable) {
-        log.error("JUnit execution failed with an exception", e)
-    }
+//
+//    private fun fixMockito(javaClass: Class<*>?) {
+//        if (!kexConfig.isMockingEnabled) return
+//
+//        if (isFirstRun) {
+//            log.debug { "First run with JUnit" }
+//            executeTestFromJUnit(javaClass)
+//            isFirstRun = false
+//        } else {
+//            log.debug { "No JUnit run" }
+//        }
+//    }
+//
+//    private fun executeTestFromJUnit(testClass: Class<*>?): Unit = try {
+//        val jcClass = ctx.loader.loadClass("org.junit.runner.JUnitCore")
+//        val jc = jcClass.getConstructor().newInstance()
+//        log.debug { "Created JUnitCoreInstance" }
+//        jcClass.getMethod("run", Class::class.java.asArray())
+//            .invoke(jc, arrayOf(testClass))
+//        log.debug { "JUnit successfully executed" }
+//    } catch (e: Throwable) {
+//        log.error("JUnit execution failed with an exception", e)
+//    }
 }
