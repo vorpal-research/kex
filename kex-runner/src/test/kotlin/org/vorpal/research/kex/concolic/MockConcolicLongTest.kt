@@ -20,6 +20,7 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
     fun mockTest() {
         assertCoverage(cm[prefix + "MockTests"], 1.0)
     }
+
     @Test
     fun mockReturnsMockTest() {
         assertCoverage(cm[prefix + "MockReturnsMockTests"], 1.0)
@@ -53,21 +54,26 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
     }
 
     @Test
-    fun mockGenericsTests(){
+    fun mockGenericsTests() {
         assertCoverage(cm[prefix + "MockGenericsTests"], 1.0)
     }
 
     @Test
-    fun mockSetTests(){
+    fun mockSetTests() {
         val eps = 0.5
         assertCoverage(cm[prefix + "MockSetTests"], 1.0, eps)
     }
 
     @Test
-    fun mockInheritanceTests(){
+    fun mockInheritanceTests() {
         val oldMockingMode = kexConfig.mockingMode
         RuntimeConfig.setValue("mock", "mode", "full");
         assertCoverage(cm[prefix + "MockInheritanceTests"], 1.0)
         RuntimeConfig.setValue("mock", "mode", oldMockingMode.toString());
+    }
+
+    @Test
+    fun mockLambdaTests() {
+        assertCoverage(cm[prefix + "MockLambdaTests"], 1.0)
     }
 }

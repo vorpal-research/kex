@@ -36,12 +36,12 @@ class KfgClassLoader(
         }
     }
 
-
     private fun applyJava8Workaround(): Boolean {
         return tryOrNull {
             definePackage("org.mockito.codegen", "", "", "", "", "", "", null)
         } != null
     }
+
 
     companion object {
         private val INCLUDES = setOf(
