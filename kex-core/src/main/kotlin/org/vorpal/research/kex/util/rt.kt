@@ -63,6 +63,9 @@ val Config.mockingMode: MockingMode?
 val Config.isMockitoClassesWorkaroundEnabled: Boolean
     get() = getBooleanValue("mock", "mockitoClassesWorkaround", true)
 
+val Config.isMockitoJava8WorkaroundEnabled: Boolean
+    get() = getBooleanValue("mock", "java8WorkaroundEnabled", false)
+
 val Config.logTypeFix: Boolean
     get() = getBooleanValue("mock", "logTypeFix", false)
 
