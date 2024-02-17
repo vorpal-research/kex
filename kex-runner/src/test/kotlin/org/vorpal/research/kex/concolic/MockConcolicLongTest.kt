@@ -4,6 +4,9 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.junit.Test
+import org.vorpal.research.kex.config.RuntimeConfig
+import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.util.mockingMode
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -58,5 +61,13 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
     fun mockSetTests(){
         val eps = 0.5
         assertCoverage(cm[prefix + "MockSetTests"], 1.0, eps)
+    }
+
+    @Test
+    fun mockInheritanceTests(){
+        val oldMockingMode = kexConfig.mockingMode
+        RuntimeConfig.setValue("mock", "mode", "full");
+        assertCoverage(cm[prefix + "MockInheritanceTests"], 1.0)
+        RuntimeConfig.setValue("mock", "mode", oldMockingMode.toString());
     }
 }

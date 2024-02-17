@@ -18,10 +18,14 @@ class ExecutorAS2JavaPrinter(
     klassName: String,
     private val setupName: String
 ) : ActionSequence2JavaPrinter(ctx, packageName, klassName) {
-    private val surroundInTryCatch = kexConfig.getBooleanValue("testGen", "surroundInTryCatch", true)
+    private val surroundInTryCatch =
+        kexConfig.getBooleanValue("testGen", "surroundInTryCatch", true)
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private val reflectionUtils = ReflectionUtilsPrinter.reflectionUtils(packageName)
-    private val mockUtils by lazy { MockUtilsPrinter.mockUtils(packageName) }
+    private val mockUtils by lazy {
+        MockUtilsPrinter.mockUtils(packageName)
+            .also { builder.importStatic("$packageName.MockUtils.*") }
+    }
     private val printedDeclarations = hashSetOf<String>()
     private val printedInsides = hashSetOf<String>()
 
@@ -62,6 +66,11 @@ class ExecutorAS2JavaPrinter(
             import("java.lang.reflect.Constructor")
             import("java.lang.reflect.Field")
             import("java.lang.reflect.Array")
+
+            import("java.util.Arrays")
+            import("java.util.stream.Stream")
+            import("java.util.stream.Collectors")
+
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
 
             with(klass) {
@@ -108,7 +117,8 @@ class ExecutorAS2JavaPrinter(
                             is StringValue -> return@forEach
                             else -> unreachable { log.error("Unexpected call in arg") }
                         }
-                        val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
+                        val fieldType =
+                            type.kexType.primitiveName?.let { type(it) } ?: type("Object")
                         if (testParams.all { it.name != arg.name }) {
                             testParams += field(arg.name, fieldType)
                         }
@@ -275,7 +285,12 @@ class ExecutorAS2JavaPrinter(
         for (mockCall in owner.mockCalls) {
             when (mockCall) {
                 is MockNewInstance -> result += printMockNewInstance(owner, mockCall)
-                is MockSetupMethod -> mockCall.returnValues.forEach { printDeclarations(it, result) }
+                is MockSetupMethod -> mockCall.returnValues.forEach {
+                    printDeclarations(
+                        it,
+                        result
+                    )
+                }
             }
         }
         for (reflectionCall in owner.reflectionCalls) {
@@ -283,7 +298,10 @@ class ExecutorAS2JavaPrinter(
         }
     }
 
-    private fun printReflectionListDeclarations(owner: ReflectionList, result: MutableList<String>) {
+    private fun printReflectionListDeclarations(
+        owner: ReflectionList,
+        result: MutableList<String>
+    ) {
         if (owner.name in printedDeclarations) return
         printedDeclarations += owner.name
 
@@ -307,13 +325,14 @@ class ExecutorAS2JavaPrinter(
     }
 
 
-    private fun printInsides(owner: ActionSequence, result: MutableList<String>): Unit = when (owner) {
-        is ReflectionList -> printReflectionListInsides(owner, result)
-        is MockSequence -> printMockSequenceInsides(owner, result)
-        else -> {
-            owner.printAsJava()
+    private fun printInsides(owner: ActionSequence, result: MutableList<String>): Unit =
+        when (owner) {
+            is ReflectionList -> printReflectionListInsides(owner, result)
+            is MockSequence -> printMockSequenceInsides(owner, result)
+            else -> {
+                owner.printAsJava()
+            }
         }
-    }
 
     private fun printMockSequenceInsides(
         owner: MockSequence,
@@ -374,7 +393,10 @@ class ExecutorAS2JavaPrinter(
         }
     }
 
-    override fun printReflectionNewInstance(owner: ActionSequence, call: ReflectionNewInstance): List<String> {
+    override fun printReflectionNewInstance(
+        owner: ActionSequence,
+        call: ReflectionNewInstance
+    ): List<String> {
         val actualType = ASClass(ctx.types.objectType)
         val kfgClass = (call.type as ClassType).klass
         return listOf(
@@ -407,7 +429,10 @@ class ExecutorAS2JavaPrinter(
         else -> "Class.forName(\"java.lang.Object\")"
     }
 
-    override fun printReflectionNewArray(owner: ActionSequence, call: ReflectionNewArray): List<String> {
+    override fun printReflectionNewArray(
+        owner: ActionSequence,
+        call: ReflectionNewArray
+    ): List<String> {
         val elementType = call.asArray.component
         val (newArrayCall, actualType) = when {
             elementType.isPrimitive -> {
@@ -453,22 +478,34 @@ class ExecutorAS2JavaPrinter(
         )
     }
 
-    override fun printReflectionSetField(owner: ActionSequence, call: ReflectionSetField): List<String> {
-        val setFieldMethod = call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
-            ?: reflectionUtils.setField
+    override fun printReflectionSetField(
+        owner: ActionSequence,
+        call: ReflectionSetField
+    ): List<String> {
+        val setFieldMethod =
+            call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
+                ?: reflectionUtils.setField
         return listOf("${setFieldMethod.name}(${owner.name}, ${owner.name}.getClass(), \"${call.field.name}\", ${call.value.stackName})")
     }
 
-    override fun printReflectionSetStaticField(owner: ActionSequence, call: ReflectionSetStaticField): List<String> {
-        val setFieldMethod = call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
-            ?: reflectionUtils.setField
+    override fun printReflectionSetStaticField(
+        owner: ActionSequence,
+        call: ReflectionSetStaticField
+    ): List<String> {
+        val setFieldMethod =
+            call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
+                ?: reflectionUtils.setField
         return listOf("${setFieldMethod.name}(null, Class.forName(\"${call.field.klass.canonicalDesc}\"), \"${call.field.name}\", ${call.value.stackName})")
     }
 
-    override fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> {
+    override fun printReflectionArrayWrite(
+        owner: ActionSequence,
+        call: ReflectionArrayWrite
+    ): List<String> {
         val elementType = call.elementType
-        val setElementMethod = elementType.kexType.primitiveName?.let { reflectionUtils.setPrimitiveElementMap[it]!! }
-            ?: reflectionUtils.setElement
+        val setElementMethod =
+            elementType.kexType.primitiveName?.let { reflectionUtils.setPrimitiveElementMap[it]!! }
+                ?: reflectionUtils.setElement
         return listOf("${setElementMethod.name}(${owner.name}, ${call.index.stackName}, ${call.value.stackName})")
     }
 
@@ -522,15 +559,20 @@ class ExecutorAS2JavaPrinter(
         call.returnValues.forEach { it.printAsJava() }
 
         val returnValues = call.returnValues
-            .map { value -> value.cast(call.method.returnType.asType) }
-            .joinToString(", ") {
-                it
-            }
-        val method = call.method
-        val anys = call.method.argTypes.joinToString(", ") { type -> mockitoAnyFromType(type) }
+            .map { it.stackName }
+            .joinToString(separator = ", ", prefix = "new Object[]{", postfix = "}") { it }
 
-        val type = call.method.klass.asType.asType
-        // TODO: Mock. Call method using ReflectionUtils, so it can mock package-private methods
-        return listOf("Mockito.when((${owner.cast(type)}).${method.name}($anys)).thenReturn(${returnValues})")
+        val anys = call.method.paramTypes
+            .map { mockitoAnyFromType(it.getKfgType(ctx.types)) }
+            .joinToString(prefix = "new Object[]{", postfix = "}", separator = ", ") { it }
+
+        val paramTypes = call.method.paramTypes
+            .map { it.getKfgType(ctx.types).klassType }
+            .joinToString(prefix = "new Class<?>[] {", postfix = "}", separator = ",") { it }
+
+        val methodName = '"' + call.method.name + '"'
+        return listOf(
+            "${mockUtils.setupMethod.name}($methodName, $paramTypes, ${owner.stackName}, $anys, $returnValues)"
+        )
     }
 }

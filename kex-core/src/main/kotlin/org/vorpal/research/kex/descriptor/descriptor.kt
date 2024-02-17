@@ -2,6 +2,7 @@
 
 package org.vorpal.research.kex.descriptor
 
+import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.ktype.*
@@ -691,6 +692,17 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
     }
 }
 
+
+@Serializable
+data class MockedMethod(
+    val name: String,
+    val paramTypes: List<KexType>,
+    val returnType: KexType
+)
+
+
+private val Method.mocked: MockedMethod get() = MockedMethod(name, argTypes.map{it.kexType}, returnType.kexType)
+
 class MockDescriptor(term: Term, type: KexClass) :
     AbstractFieldContainingDescriptor(term, type) {
 
@@ -699,21 +711,25 @@ class MockDescriptor(term: Term, type: KexClass) :
         fields.putAll(original.fields)
     }
 
-    val methodReturns: MutableMap<Method, MutableList<Descriptor>> = mutableMapOf()
+    val methodReturns: MutableMap<MockedMethod, MutableList<Descriptor>> = mutableMapOf()
 
     val allReturns: Iterable<Descriptor>
         get() = methodReturns.values.asSequence().flatMap { it.asSequence() }.asIterable()
 
-    val methods: Set<Method>
+    val methods: Set<MockedMethod>
         get() = methodReturns.keys
 
-    operator fun get(method: Method) = methodReturns[method]
-    operator fun set(method: Method, values: List<Descriptor>) {
-        methodReturns[method] = values.toMutableList()
+    operator fun get(mockedMethod: MockedMethod) = methodReturns[mockedMethod]
+    operator fun set(mockedMethod: MockedMethod, values: List<Descriptor>) {
+        methodReturns[mockedMethod] = values.toMutableList()
     }
 
     fun addReturnValue(method: Method, value: Descriptor) {
-        methodReturns.getOrPut(method) { mutableListOf() }.add(value)
+        addReturnValue(method.mocked, value)
+    }
+
+    fun addReturnValue(mockedMethod: MockedMethod, value: Descriptor) {
+        methodReturns.getOrPut(mockedMethod) { mutableListOf() }.add(value)
     }
 
     override fun concretize(
@@ -743,7 +759,7 @@ class MockDescriptor(term: Term, type: KexClass) :
         visited += this
         reduceFields(visited)
         for ((method, list) in methodReturns) {
-            val type = method.returnType.kexType
+            val type = method.returnType
             while (list.isNotEmpty() && list.last() eq descriptor { default(type) }) {
                 list.removeLast()
             }
@@ -832,7 +848,8 @@ class MockDescriptor(term: Term, type: KexClass) :
         copied[this] = copy
 
         for ((method, list) in methodReturns) {
-            list.forEach { value -> copy.addReturnValue(method, value.deepCopy(copied)) }
+            copy.methodReturns[method] =
+                list.mapTo(mutableListOf()) { value -> value.deepCopy(copied) }
         }
         for ((field, value) in fields) {
             copy[field] = value.deepCopy(copied)
@@ -937,10 +954,19 @@ class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilde
             KexRtManager.Mode.UNMAP -> rtUnmapped
         }
 
-    private val Method.mapped
+    private val MockedMethod.mapped
         get() = when (mode) {
-            KexRtManager.Mode.MAP -> rtMapped
-            KexRtManager.Mode.UNMAP -> rtUnmapped
+            KexRtManager.Mode.MAP -> MockedMethod(
+                name.rtMapped,
+                paramTypes.map { it.rtMapped },
+                returnType.rtMapped
+            )
+
+            KexRtManager.Mode.UNMAP -> MockedMethod(
+                name.rtUnmapped,
+                paramTypes.map { it.rtUnmapped },
+                returnType.rtUnmapped
+            )
         }
 
     fun map(descriptor: Descriptor): Descriptor = cache.getOrElse(descriptor) {

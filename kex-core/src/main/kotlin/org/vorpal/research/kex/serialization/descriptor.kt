@@ -1,6 +1,5 @@
 package org.vorpal.research.kex.serialization
 
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -15,7 +14,6 @@ import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kfg.ir.Method
 
 @JvmInline
 @Serializable
@@ -72,7 +70,7 @@ internal sealed class DescriptorWrapper {
         override val id: Id,
         override val type: KexType,
         val fields: MutableList<Pair<Pair<String, KexType>, Id>>,
-        val methodReturns: MutableList<Pair<@Contextual Method, MutableList<Id>>>
+        val methodReturns: MutableList<Pair<MockedMethod, MutableList<Id>>>
     ) : DescriptorWrapper() {
         override fun convert(map: Map<Id, DescriptorWrapper>, output: MutableMap<Id, Descriptor>) {
             if (id in output) return

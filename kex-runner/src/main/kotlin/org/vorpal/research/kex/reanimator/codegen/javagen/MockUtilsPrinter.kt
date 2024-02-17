@@ -11,13 +11,12 @@ class MockUtilsPrinter(
 ) {
     private val builder = JavaBuilder(packageName)
     val klass = builder.run { klass(packageName, MOCK_UTILS_CLASS) }
-//    val innerClass = builder.run { klass(packageName, MOCK_INIT_TEST_CLASS) }
+    val setupMethod: JavaBuilder.JavaFunction
 
-//    val newPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
 
     companion object {
         const val MOCK_UTILS_CLASS = "MockUtils"
-        const val MOCK_INIT_TEST_CLASS = "InitTest"
+//        const val MOCK_INIT_TEST_CLASS = "InitTest"
 
         private val mockUtilsInstances = mutableMapOf<Pair<Path, String>, MockUtilsPrinter>()
         fun mockUtils(packageName: String): MockUtilsPrinter {
@@ -44,9 +43,54 @@ class MockUtilsPrinter(
     init {
         with(builder) {
             import("org.mockito.Mockito")
+            import ("org.mockito.invocation.InvocationOnMock")
+            import ("org.mockito.stubbing.Answer")
+
             import ("org.junit.Test")
+            import ("org.junit.Rule")
+            import ("org.junit.rules.Timeout")
+
+            import("java.lang.Class")
+            import("java.lang.reflect.Method")
+            import("java.lang.reflect.Constructor")
+            import("java.lang.reflect.Field")
+            import("java.lang.reflect.Array")
+            import("java.lang.reflect.Modifier")
+            import("sun.misc.Unsafe")
+
+            import ("java.lang.Throwable")
+            import ("java.lang.IllegalStateException")
+            import ("java.util.concurrent.TimeUnit")
+            import ("org.junit.Before")
+
 
             with(klass) {
+                setupMethod = method("setupMethod") {
+                    arguments += arg("name", type("String"))
+                    arguments += arg("argTypes", type("Class<?>[]"))
+                    arguments += arg("instance", type("Object"))
+                    arguments += arg("anys", type("Object[]"))
+                    arguments += arg("returns", type("Object[]"))
+
+                    visibility = Visibility.PUBLIC
+                    modifiers += "static"
+                    exceptions += "Throwable"
+                    returnType = void
+
+                    +"Class<?> klass = instance.getClass()"
+                    +"Method method = klass.getDeclaredMethod(name, argTypes)"
+                    +"method.setAccessible(true)"
+                    +"""Mockito.when(method.invoke(instance, anys)).thenAnswer(new Answer<Object>() {
+                    int cur = 0;
+                    @Override
+                    public Object answer(InvocationOnMock invocation) {
+                        if (cur == returns.length - 1) return returns[cur];
+                        return returns[cur++];
+                    }
+                })"""
+                }
+
+/*
                 staticClass(MOCK_INIT_TEST_CLASS) {
                     field("globalTimeout", type("Timeout")) {
                         visibility = Visibility.PUBLIC
@@ -54,13 +98,13 @@ class MockUtilsPrinter(
                         annotations += "Rule"
                     }
                     method("mockitoInitTest") {
+                        returnType = void
+                        annotations += "Test"
                         +"Object mock = Mockito.mock(Object.class)"
                         +"assert (mock.hashCode() == 0 || mock.hashCode() != 0)"
-                    }.apply {
-                        returnType = void;
-                        annotations += "Test"
                     }
                 }
+*/
             }
         }
     }
