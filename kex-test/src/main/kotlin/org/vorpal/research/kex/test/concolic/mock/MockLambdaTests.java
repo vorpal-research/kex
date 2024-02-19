@@ -17,7 +17,6 @@ public class MockLambdaTests {
         }
     }
 
-/*
     public void testBoxedIntSupplier(Supplier<Integer> a) {
         if (a.get() == 333) {
             AssertIntrinsics.kexAssert(true);
@@ -33,6 +32,5 @@ public class MockLambdaTests {
             AssertIntrinsics.kexAssert(true);
         }
     }
-*/
 }
 
