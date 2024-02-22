@@ -12,6 +12,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionTimedOutResult
 import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
+import org.vorpal.research.kex.util.getJavaPath
 import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.outputDirectory
@@ -56,7 +57,7 @@ internal object ExecutorMasterController : AutoCloseable {
 
         val kfgClassPath = ctx.classPath
         val pb = ProcessBuilder(
-            "java",
+            getJavaPath().toString(),
             "-Djava.security.manager", "-Djava.security.policy==${executorPolicyPath}",
             "-Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener",
             *getJvmModuleParams().toTypedArray(),
