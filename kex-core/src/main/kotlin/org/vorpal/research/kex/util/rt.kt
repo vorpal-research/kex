@@ -10,8 +10,10 @@ import org.vorpal.research.kfg.container.JarContainer
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 import kotlin.io.path.readLines
 
 val Config.outputDirectory: Path get() = getPathValue("kex", "outputDir")!!.normalize()
@@ -55,7 +57,14 @@ fun getJDKPath(): Path {
     return Paths.get(System.getProperty("java.home")).parent.toAbsolutePath()
 }
 
-fun getJavaPath(): Path = getJDKPath().resolve("jre", "bin", "java").toAbsolutePath()
+fun getJavaPath(): Path = Paths.get(System.getProperty("java.home"), "bin", "java").toAbsolutePath().also {
+    if (!it.exists()) {
+        System.err.println("'java' executable is not found, printing all info about jdk")
+        Files.walk(Paths.get(System.getProperty("java.home"))).forEach { path ->
+            System.err.println(path.toAbsolutePath().toString())
+        }
+    }
+}
 
 fun getRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useJavaRuntime", true)) return null
