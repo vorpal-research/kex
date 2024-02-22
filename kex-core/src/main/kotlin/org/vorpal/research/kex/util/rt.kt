@@ -11,6 +11,7 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.io.File
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.readLines
 
 val Config.outputDirectory: Path get() = getPathValue("kex", "outputDir")!!.normalize()
@@ -49,6 +50,12 @@ val Config.libPath: Path?
     get() = getStringValue("kex", "libPath")?.let {
         runtimeDepsPath?.resolve(it)?.normalize()
     }
+
+fun getJDKPath(): Path {
+    return Paths.get(System.getProperty("java.home")).parent.toAbsolutePath()
+}
+
+fun getJavaPath(): Path = getJDKPath().resolve("bin", "java").toAbsolutePath()
 
 fun getRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useJavaRuntime", true)) return null
