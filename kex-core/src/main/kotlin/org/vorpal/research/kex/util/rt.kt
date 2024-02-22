@@ -55,7 +55,7 @@ fun getJDKPath(): Path {
     return Paths.get(System.getProperty("java.home")).parent.toAbsolutePath()
 }
 
-fun getJavaPath(): Path = getJDKPath().resolve("bin", "java").toAbsolutePath()
+fun getJavaPath(): Path = getJDKPath().resolve("jre", "bin", "java").toAbsolutePath()
 
 fun getRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useJavaRuntime", true)) return null
