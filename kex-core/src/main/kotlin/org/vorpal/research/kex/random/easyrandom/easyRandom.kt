@@ -15,11 +15,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.GenerationException
 import org.vorpal.research.kex.random.Randomizer
 import org.vorpal.research.kex.random.UnknownTypeException
-import org.vorpal.research.kex.util.KfgTargetFilter
-import org.vorpal.research.kex.util.asmString
-import org.vorpal.research.kex.util.isAbstract
-import org.vorpal.research.kex.util.isPublic
-import org.vorpal.research.kex.util.isStatic
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -79,6 +75,11 @@ class EasyRandomDriver(
 
     private val Class<*>.shouldBeExcluded: Boolean
         get() {
+            if (kexConfig.isEasyRandomExcludeLambdas) {
+                if (isInterface && this.annotations.contains<Any?>(FunctionalInterface::class.java)) {
+                    return true
+                }
+            }
             return config.excludes.any { it.matches(name.asmString) }
         }
 

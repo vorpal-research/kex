@@ -82,6 +82,9 @@ val Config.logStackTraceTypeFix: Boolean
 val Config.isExpectMocks: Boolean
     get() = getBooleanValue("mock", "expectMocks", false)
 
+val Config.isEasyRandomExcludeLambdas: Boolean
+    get() = getBooleanValue("mock", "easyRandomExcludeLambdas", false)
+
 val Config.mockito: Container?
     get() {
         val libPath = libPath ?: return null
@@ -92,7 +95,7 @@ val Config.mockito: Container?
 
 // debug purposes, normally should be false
 val Config.isMockTest: Boolean
-    get() = getBooleanValue("mock", "test", false).also{if (it) println("Test feature invoked!")}
+    get() = getBooleanValue("mock", "test", false).also { if (it) println("Test feature invoked!") }
 
 
 fun getRuntime(): Container? {
@@ -105,7 +108,10 @@ fun getRuntime(): Container? {
 fun getIntrinsics(): Container? {
     val libPath = kexConfig.libPath ?: return null
     val intrinsicsVersion = kexConfig.getStringValue("kex", "intrinsicsVersion") ?: return null
-    return JarContainer(libPath.resolve("kex-intrinsics-${intrinsicsVersion}.jar"), Package.defaultPackage)
+    return JarContainer(
+        libPath.resolve("kex-intrinsics-${intrinsicsVersion}.jar"),
+        Package.defaultPackage
+    )
 }
 
 fun getPathSeparator(): String = File.pathSeparator
@@ -113,7 +119,10 @@ fun getPathSeparator(): String = File.pathSeparator
 fun getJunit(): Container? {
     val libPath = kexConfig.libPath ?: return null
     val junitVersion = kexConfig.getStringValue("kex", "junitVersion") ?: return null
-    return JarContainer(libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(), Package.defaultPackage)
+    return JarContainer(
+        libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(),
+        Package.defaultPackage
+    )
 }
 
 fun getKexRuntime(): Container? {
