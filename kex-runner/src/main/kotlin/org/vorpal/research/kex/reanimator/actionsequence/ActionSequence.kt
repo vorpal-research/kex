@@ -3,6 +3,7 @@ package org.vorpal.research.kex.reanimator.actionsequence
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorRtMapper
 import org.vorpal.research.kex.descriptor.MockedMethod
+import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexRtManager.rtUnmapped
@@ -601,12 +602,14 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
     private val MockedMethod.mapped
         get() = when (mode) {
             KexRtManager.Mode.MAP -> MockedMethod(
+                klass.rtMapped as KexClass,
                 name.rtMapped,
                 paramTypes.map { it.rtMapped },
                 returnType.rtMapped
             )
 
             KexRtManager.Mode.UNMAP -> MockedMethod(
+                klass.rtUnmapped as KexClass,
                 name.rtUnmapped,
                 paramTypes.map { it.rtUnmapped },
                 returnType.rtUnmapped

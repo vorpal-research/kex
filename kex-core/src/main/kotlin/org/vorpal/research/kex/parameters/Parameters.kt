@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.parameters
 
 import kotlinx.serialization.Serializable
+import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.config.kexConfig
@@ -8,13 +9,16 @@ import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kex.util.MockingMode
+import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kex.util.mockingMode
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.logging.debug
@@ -109,11 +113,10 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 fun createDescriptorToMock(
     allDescriptors: Collection<Descriptor>,
     types: TypeFactory
-): Map<Descriptor, MockDescriptor> {
-    val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
-    val visited = mutableSetOf<Descriptor>()
-    allDescriptors.map { it.replaceWithMock(types, descriptorToMock, visited) }
-    return descriptorToMock
+): Map<Descriptor, Descriptor> {
+    val map = mutableMapOf<Descriptor, Descriptor>()
+    allDescriptors.map { it.replaceWithMock(types, map) }
+    return map
 }
 
 private fun Descriptor.insertMocks(
@@ -159,6 +162,10 @@ fun Descriptor.isMockable(types: TypeFactory): Boolean {
     }
 }
 
+fun Descriptor.reqMocks2(
+    types: TypeFactory, visited: MutableSet<Descriptor> = mutableSetOf()
+): Boolean = any(visited) { descriptor -> descriptor.isMockable(types) }
+
 fun Descriptor.requireMocks(types: TypeFactory, visited: MutableSet<Descriptor>): Boolean {
     if (this in visited) return false
     if (this.isMockable(types)) return true
@@ -170,6 +177,58 @@ fun Descriptor.requireMocks(types: TypeFactory, visited: MutableSet<Descriptor>)
         is ObjectDescriptor -> fields.values.any { it.requireMocks() }
         is MockDescriptor -> (fields.values + allReturns).any { it.requireMocks() }
         is ArrayDescriptor -> elements.values.any { it.requireMocks() }
+    }
+}
+
+
+fun Descriptor.replaceWithMock(
+    types: TypeFactory,
+    map: MutableMap<Descriptor, Descriptor>
+): Descriptor {
+    return this.map(map) {
+        if (!this.isMockable(types)) {
+            return@map this
+        }
+        this as ObjectDescriptor
+        val klass = (this.type.getKfgType(types) as? ClassType)?.klass
+        klass ?: return@map this.also { log.error { "Got null class to mock. Descriptor: $this" } }
+
+        MockDescriptor(this).also { log.debug { "Created mock descriptor for ${it.term}" } }
+    }
+}
+
+
+fun Class.getFunctionalInterfaces(
+    ctx: ExecutionContext,
+    acc: MutableSet<Class> = mutableSetOf()
+): Set<Class> {
+    if (this.isInterface &&
+        ctx.loader.loadClass(this).getAnnotation(FunctionalInterface::class.java) != null
+    ) {
+        acc.add(this)
+        return acc
+    }
+    allAncestors.forEach { it.getFunctionalInterfaces(ctx, acc) }
+    return acc
+}
+
+fun Descriptor.filterConcreteLambdas(
+    ctx: ExecutionContext,
+    visited: MutableMap<Descriptor, Descriptor> = mutableMapOf()
+): Descriptor {
+    return this
+    return this.map(visited) {
+        if (this !is ObjectDescriptor) {
+            return@map this
+        }
+        val clazz = this.type as KexClass
+        val kfgClass = clazz.kfgClass(ctx.types)
+        val functionalInterfaces = kfgClass.getFunctionalInterfaces(ctx)
+        when (functionalInterfaces.size) {
+            0 -> this
+            1 -> descriptor { `object`(functionalInterfaces.first().kexType) }
+            else -> this
+        }
     }
 }
 
@@ -199,12 +258,15 @@ private fun Descriptor.replaceWithMock(
 fun setupMocks(
     methodCalls: List<CallPredicate>,
     termToDescriptor: Map<Term, Descriptor>,
-    descriptorToMock: Map<Descriptor, MockDescriptor>
+    descriptorToMock: Map<Descriptor, Descriptor>
 ) {
     for (callPredicate in methodCalls) {
+        if (!callPredicate.hasLhv) continue
         val call = callPredicate.call as CallTerm
+        if (call.method.name == "getClass") continue
 
-        val mock = termToDescriptor[call.owner]?.let { descriptorToMock[it] ?: it }
+        val mock =
+            termToDescriptor[call.owner]?.let { descriptorToMock[it] ?: it } as? MockDescriptor
         val value = termToDescriptor[callPredicate.lhvUnsafe]?.let { descriptorToMock[it] ?: it }
         mock ?: log.warn { "No mock for $call" }
 

@@ -18,6 +18,7 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.hashCombine
 import ru.spbstu.wheels.joinToString
 import kotlin.random.Random
 
@@ -476,7 +477,7 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
 }
 
 class ObjectDescriptor(klass: KexClass) :
-    FieldContainingDescriptor<ObjectDescriptor>(term { generate(klass) }, klass) {
+    FieldContainingDescriptor<ObjectDescriptor>(term{ generate(klass) }, klass) {
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
         if (this in copied) return copied[this]!!
         val copy = ObjectDescriptor(klass)
@@ -695,13 +696,24 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
 
 @Serializable
 data class MockedMethod(
+    val klass: KexClass, // excluded from hashCode and equals
     val name: String,
     val paramTypes: List<KexType>,
     val returnType: KexType
-)
+){
+    override fun equals(other: Any?): Boolean {
+        if (other !is MockedMethod) return false
+        return name == other.name && paramTypes == other.paramTypes &&
+                returnType == other.returnType
+    }
+
+    override fun hashCode(): Int {
+        return hashCombine(name, paramTypes, returnType)
+    }
+}
 
 
-private val Method.mocked: MockedMethod get() = MockedMethod(name, argTypes.map{it.kexType}, returnType.kexType)
+private val Method.mocked: MockedMethod get() = MockedMethod(klass.kexType, name, argTypes.map{it.kexType}, returnType.kexType)
 
 class MockDescriptor(term: Term, type: KexClass) :
     AbstractFieldContainingDescriptor(term, type) {
@@ -713,8 +725,8 @@ class MockDescriptor(term: Term, type: KexClass) :
 
     val methodReturns: MutableMap<MockedMethod, MutableList<Descriptor>> = mutableMapOf()
 
-    val allReturns: Iterable<Descriptor>
-        get() = methodReturns.values.asSequence().flatMap { it.asSequence() }.asIterable()
+    val allReturns: Sequence<Descriptor>
+        get() = methodReturns.values.asSequence().flatMap { it.asSequence() }
 
     val methods: Set<MockedMethod>
         get() = methodReturns.keys
@@ -957,12 +969,14 @@ class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilde
     private val MockedMethod.mapped
         get() = when (mode) {
             KexRtManager.Mode.MAP -> MockedMethod(
+                klass.rtMapped as KexClass,
                 name.rtMapped,
                 paramTypes.map { it.rtMapped },
                 returnType.rtMapped
             )
 
             KexRtManager.Mode.UNMAP -> MockedMethod(
+                klass.rtUnmapped as KexClass,
                 name.rtUnmapped,
                 paramTypes.map { it.rtUnmapped },
                 returnType.rtUnmapped

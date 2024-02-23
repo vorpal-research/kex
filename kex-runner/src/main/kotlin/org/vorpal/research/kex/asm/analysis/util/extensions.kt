@@ -103,7 +103,7 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
     fun Collection<Descriptor>.removeInstance() = this.filterNot { it == instance }
     val visited = mutableSetOf<Descriptor>()
 
-    if (kexConfig.isMockPessimizationEnabled) {
+    if (!kexConfig.isExpectMocks) {
         if (this.asList.removeInstance().none { it.requireMocks(ctx.types, visited) }) {
             return this
         }

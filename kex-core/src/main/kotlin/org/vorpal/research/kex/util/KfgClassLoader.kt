@@ -1,12 +1,8 @@
 package org.vorpal.research.kex.util
 
-import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.util.toByteArray
-import org.vorpal.research.kthelper.logging.info
-import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
 import java.nio.file.Path
 import java.util.jar.JarFile
@@ -20,28 +16,9 @@ class KfgClassLoader(
     private val includes: Set<KfgTargetFilter> = INCLUDES,
     private val excludes: Set<KfgTargetFilter> = EXCLUDES,
     val transformation: (ConcreteClass) -> Unit = {}
-) : ClassLoader() {
+) : HackedClassLoader() {
     private val cache = hashMapOf<String, Class<*>>()
     val fallback = PathClassLoader(paths)
-
-    init {
-        val isJava8 = tryOrNull { System.getProperty("java.version") }?.startsWith("1.8") != false
-        if (kexConfig.isMockingEnabled && kexConfig.isMockitoJava8WorkaroundEnabled && isJava8) {
-            log.info { "Applying workaround for mockito on java 8" }
-            if (applyJava8Workaround()) {
-                log.info { "Workaround successfully applied" }
-            } else {
-                log.warn { "Workaround failed" }
-            }
-        }
-    }
-
-    private fun applyJava8Workaround(): Boolean {
-        return tryOrNull {
-            definePackage("org.mockito.codegen", "", "", "", "", "", "", null)
-        } != null
-    }
-
 
     companion object {
         private val INCLUDES = setOf(

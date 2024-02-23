@@ -79,8 +79,8 @@ val Config.logTypeFix: Boolean
 val Config.logStackTraceTypeFix: Boolean
     get() = getBooleanValue("mock", "logStackTraceTypeFix", false)
 
-val Config.isMockPessimizationEnabled: Boolean
-    get() = getBooleanValue("mock", "mockPessimizationEnabled", true)
+val Config.isExpectMocks: Boolean
+    get() = getBooleanValue("mock", "expectMocks", false)
 
 val Config.mockito: Container?
     get() {
