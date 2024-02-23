@@ -11,6 +11,7 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.io.File
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.readLines
 
 val Config.outputDirectory: Path get() = getPathValue("kex", "outputDir")!!.normalize()
@@ -49,6 +50,12 @@ val Config.libPath: Path?
     get() = getStringValue("kex", "libPath")?.let {
         runtimeDepsPath?.resolve(it)?.normalize()
     }
+
+fun getJDKPath(): Path {
+    return Paths.get(System.getProperty("java.home")).parent.toAbsolutePath()
+}
+
+fun getJavaPath(): Path = Paths.get(System.getProperty("java.home"), "bin", "java").toAbsolutePath()
 
 val Config.isMockingEnabled: Boolean
     get() = getBooleanValue("mock", "enabled", false)
@@ -98,10 +105,7 @@ fun getRuntime(): Container? {
 fun getIntrinsics(): Container? {
     val libPath = kexConfig.libPath ?: return null
     val intrinsicsVersion = kexConfig.getStringValue("kex", "intrinsicsVersion") ?: return null
-    return JarContainer(
-        libPath.resolve("kex-intrinsics-${intrinsicsVersion}.jar"),
-        Package.defaultPackage
-    )
+    return JarContainer(libPath.resolve("kex-intrinsics-${intrinsicsVersion}.jar"), Package.defaultPackage)
 }
 
 fun getPathSeparator(): String = File.pathSeparator
@@ -109,10 +113,7 @@ fun getPathSeparator(): String = File.pathSeparator
 fun getJunit(): Container? {
     val libPath = kexConfig.libPath ?: return null
     val junitVersion = kexConfig.getStringValue("kex", "junitVersion") ?: return null
-    return JarContainer(
-        libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(),
-        Package.defaultPackage
-    )
+    return JarContainer(libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(), Package.defaultPackage)
 }
 
 fun getKexRuntime(): Container? {

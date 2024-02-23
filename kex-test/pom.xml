@@ -53,7 +53,7 @@
     <repositories>
         <repository>
             <id>github-vorpal-research-kotlin-maven</id>
-            <url>https://maven.vorpal-research.science</url>
+            <url>https://maven.apal-research.com</url>
         </repository>
     </repositories>
 

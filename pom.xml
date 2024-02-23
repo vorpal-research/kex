@@ -32,7 +32,7 @@
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
         <kt-helper.version>0.1.13</kt-helper.version>
-        <kfg.version>0.4.12</kfg.version>
+        <kfg.version>0.4.13</kfg.version>
 
         <logback.version>1.2.11</logback.version>
         <slf4j.version>1.7.36</slf4j.version>
@@ -52,8 +52,8 @@
 
     <repositories>
         <repository>
-            <id>github-vorpal-research-kotlin-maven</id>
-            <url>https://maven.vorpal-research.science</url>
+            <id>github-apal-research-kotlin-maven</id>
+            <url>https://maven.apal-research.com</url>
         </repository>
     </repositories>
 
