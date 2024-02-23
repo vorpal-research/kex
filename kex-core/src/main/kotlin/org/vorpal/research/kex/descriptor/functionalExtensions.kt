@@ -2,36 +2,44 @@ package org.vorpal.research.kex.descriptor
 
 
 fun Descriptor.map(
-    map: MutableMap<Descriptor, Descriptor>,
-    mapper: (Descriptor) -> Descriptor
+    mapped: MutableMap<Descriptor, Descriptor>,
+    transform: (Descriptor) -> Descriptor
 ): Descriptor {
-    if (map[this] != null) return map[this]!!
+    if (mapped[this] != null) return mapped[this]!!
 
-    val newDescriptor = mapper(this)
-    map[this] = newDescriptor
-    map[newDescriptor] = newDescriptor
+    val newDescriptor = transform(this)
+    mapped[this] = newDescriptor
+    mapped[newDescriptor] = newDescriptor
 
     when (newDescriptor) {
         is ConstantDescriptor -> Unit
-        is ClassDescriptor -> newDescriptor.fields.replaceAll { _, desc -> desc.map(map, mapper) }
-        is ObjectDescriptor -> newDescriptor.fields.replaceAll { _, desc -> desc.map(map, mapper) }
+        is ClassDescriptor -> newDescriptor.fields.replaceAll { _, desc ->
+            desc.map(mapped, transform)
+        }
+
+        is ObjectDescriptor -> newDescriptor.fields.replaceAll { _, desc ->
+            desc.map(
+                mapped,
+                transform
+            )
+        }
+
         is MockDescriptor -> {
-            newDescriptor.fields.replaceAll { _, desc -> desc.map(map, mapper) }
+            newDescriptor.fields.replaceAll { _, desc -> desc.map(mapped, transform) }
             newDescriptor.methodReturns.values.forEach { values ->
-                values.replaceAll { d -> d.map(map, mapper) }
+                values.replaceAll { d -> d.map(mapped, transform) }
             }
         }
 
-        is ArrayDescriptor -> newDescriptor.elements.replaceAll { _, u -> u.map(map, mapper) }
+        is ArrayDescriptor -> newDescriptor.elements.replaceAll { _, u -> u.map(mapped, transform) }
     }
 
     return newDescriptor
 }
 
 
-fun Descriptor.asSequence(): Sequence<Descriptor> = asSequence(mutableSetOf())
-fun Descriptor.asSequence(visited: MutableSet<Descriptor>): Sequence<Descriptor> {
-    if (this in visited) return emptySequence()
+fun Descriptor.asSequence(visited: MutableSet<Descriptor> = mutableSetOf()): Sequence<Descriptor> {
+    if (!visited.add(this)) return emptySequence()
 
     return sequenceOf(this) + when (this) {
         is ConstantDescriptor -> emptySequence()
@@ -40,16 +48,14 @@ fun Descriptor.asSequence(visited: MutableSet<Descriptor>): Sequence<Descriptor>
         is MockDescriptor ->
             fields.values.asSequence().flatMap { it.asSequence(visited) } + allReturns
 
-        is ArrayDescriptor -> elements.values.asSequence()
+        is ArrayDescriptor -> elements.values.asSequence().flatMap { it.asSequence(visited) }
     }
 }
 
 fun Descriptor.forEach(
     visited: MutableSet<Descriptor> = mutableSetOf(),
     block: (Descriptor) -> Unit
-) {
-    this.asSequence(visited).forEach(block)
-}
+) = asSequence(visited).forEach(block)
 
 fun Descriptor.any(
     visited: MutableSet<Descriptor> = mutableSetOf(),

@@ -22,7 +22,6 @@ import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.logging.debug
-import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import kotlin.random.Random
@@ -114,42 +113,9 @@ fun createDescriptorToMock(
     allDescriptors: Collection<Descriptor>,
     types: TypeFactory
 ): Map<Descriptor, Descriptor> {
-    val map = mutableMapOf<Descriptor, Descriptor>()
-    allDescriptors.map { it.replaceWithMock(types, map) }
-    return map
-}
-
-private fun Descriptor.insertMocks(
-    types: TypeFactory,
-    descriptorToMock: MutableMap<Descriptor, MockDescriptor>,
-    withMocksInserted: MutableSet<Descriptor>
-) {
-    fun Descriptor.replaceWithMock() = replaceWithMock(types, descriptorToMock, withMocksInserted)
-
-    if (this in withMocksInserted) return
-    withMocksInserted.add(this)
-
-    when (this) {
-        is ConstantDescriptor -> {}
-        is ClassDescriptor -> {
-            fields.mapValuesTo(fields) { (_, value) -> value.replaceWithMock() }
-        }
-
-        is ObjectDescriptor -> {
-            fields.mapValuesTo(fields) { (_, value) -> value.replaceWithMock() }
-        }
-
-        is MockDescriptor -> {
-            fields.mapValuesTo(fields) { (_, value) -> value.replaceWithMock() }
-            for ((_, returns) in methodReturns) {
-                returns.mapTo(returns) { value -> value.replaceWithMock() }
-            }
-        }
-
-        is ArrayDescriptor -> {
-            elements.mapValuesTo(elements) { (_, value) -> value.replaceWithMock() }
-        }
-    }
+    val mapped = mutableMapOf<Descriptor, Descriptor>()
+    allDescriptors.forEach { it.map(mapped) { it.replaceWithMock(types) } }
+    return mapped
 }
 
 fun Descriptor.isMockable(types: TypeFactory): Boolean {
@@ -162,38 +128,19 @@ fun Descriptor.isMockable(types: TypeFactory): Boolean {
     }
 }
 
-fun Descriptor.reqMocks2(
+fun Descriptor.requireMocks(
     types: TypeFactory, visited: MutableSet<Descriptor> = mutableSetOf()
 ): Boolean = any(visited) { descriptor -> descriptor.isMockable(types) }
 
-fun Descriptor.requireMocks(types: TypeFactory, visited: MutableSet<Descriptor>): Boolean {
-    if (this in visited) return false
-    if (this.isMockable(types)) return true
-    visited.add(this)
-    fun Descriptor.requireMocks() = requireMocks(types, visited)
-    return when (this) {
-        is ConstantDescriptor -> false
-        is ClassDescriptor -> fields.values.any { it.requireMocks() }
-        is ObjectDescriptor -> fields.values.any { it.requireMocks() }
-        is MockDescriptor -> (fields.values + allReturns).any { it.requireMocks() }
-        is ArrayDescriptor -> elements.values.any { it.requireMocks() }
+
+// TODO, predicate instead of TypeFactory
+fun Descriptor.replaceWithMock(types: TypeFactory): Descriptor {
+    if (!this.isMockable(types)) {
+        return this
     }
-}
-
-
-fun Descriptor.replaceWithMock(
-    types: TypeFactory,
-    map: MutableMap<Descriptor, Descriptor>
-): Descriptor {
-    return this.map(map) {
-        if (!this.isMockable(types)) {
-            return@map this
-        }
-        this as ObjectDescriptor
-        val klass = (this.type.getKfgType(types) as? ClassType)?.klass
-        klass ?: return@map this.also { log.error { "Got null class to mock. Descriptor: $this" } }
-
-        MockDescriptor(this).also { log.debug { "Created mock descriptor for ${it.term}" } }
+    return MockDescriptor(this as ObjectDescriptor).apply {
+        fields.putAll(this@replaceWithMock.fields)
+        log.debug { "Created mock descriptor for $term" }
     }
 }
 
@@ -216,7 +163,6 @@ fun Descriptor.filterConcreteLambdas(
     ctx: ExecutionContext,
     visited: MutableMap<Descriptor, Descriptor> = mutableMapOf()
 ): Descriptor {
-    return this
     return this.map(visited) {
         if (this !is ObjectDescriptor) {
             return@map this
@@ -227,32 +173,12 @@ fun Descriptor.filterConcreteLambdas(
         when (functionalInterfaces.size) {
             0 -> this
             1 -> descriptor { `object`(functionalInterfaces.first().kexType) }
-            else -> this
+            // TODO create mock with all interfaces
+            else -> descriptor { `object`(functionalInterfaces.random().kexType) }.also {
+                log.warn { "FIXME: Multiple functional interfaces, so chose random:)" }
+            }
         }
     }
-}
-
-private fun Descriptor.replaceWithMock(
-    types: TypeFactory,
-    descriptorToMock: MutableMap<Descriptor, MockDescriptor>,
-    withMocksInserted: MutableSet<Descriptor>
-): Descriptor {
-    if (descriptorToMock[this] != null) return descriptorToMock[this]!!
-    if (!this.isMockable(types)) {
-        this.insertMocks(types, descriptorToMock, withMocksInserted)
-        return this
-    }
-
-    this as ObjectDescriptor
-    val klass = (this.type.getKfgType(types) as? ClassType)?.klass
-    klass ?: return this.also { log.error { "Got null class to mock. Descriptor: $this" } }
-
-    val mock = MockDescriptor(this).also { log.debug { "Created mock descriptor for ${it.term}" } }
-    withMocksInserted.add(this)
-    descriptorToMock[this] = mock
-    descriptorToMock[mock] = mock
-    mock.insertMocks(types, descriptorToMock, withMocksInserted)
-    return mock
 }
 
 fun setupMocks(

@@ -101,14 +101,15 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
         return this
     }
     fun Collection<Descriptor>.removeInstance() = this.filterNot { it == instance }
-    val visited = mutableSetOf<Descriptor>()
 
     if (!kexConfig.isExpectMocks) {
+        val visited = mutableSetOf<Descriptor>()
         if (this.asList.removeInstance().none { it.requireMocks(ctx.types, visited) }) {
             return this
         }
     }
     generator.generateAll()
+    val visited = mutableSetOf<Descriptor>()
     if (generator.allValues.removeInstance().none { it.requireMocks(ctx.types, visited) }) {
         return this
     }

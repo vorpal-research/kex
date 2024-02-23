@@ -719,9 +719,7 @@ class MockDescriptor(term: Term, type: KexClass) :
     AbstractFieldContainingDescriptor(term, type) {
 
     constructor(type: KexClass) : this(term { generate(type) }, type)
-    constructor(original: ObjectDescriptor) : this(original.term, original.type as KexClass) {
-        fields.putAll(original.fields)
-    }
+    constructor(original: ObjectDescriptor) : this(original.term, original.type as KexClass)
 
     val methodReturns: MutableMap<MockedMethod, MutableList<Descriptor>> = mutableMapOf()
 
