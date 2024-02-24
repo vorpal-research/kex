@@ -1,7 +1,7 @@
 package org.vorpal.research.kex.descriptor
 
 
-fun Descriptor.map(
+fun Descriptor.transform(
     mapped: MutableMap<Descriptor, Descriptor>,
     transform: (Descriptor) -> Descriptor
 ): Descriptor {
@@ -14,27 +14,42 @@ fun Descriptor.map(
     when (newDescriptor) {
         is ConstantDescriptor -> Unit
         is ClassDescriptor -> newDescriptor.fields.replaceAll { _, desc ->
-            desc.map(mapped, transform)
+            desc.transform(mapped, transform)
         }
 
         is ObjectDescriptor -> newDescriptor.fields.replaceAll { _, desc ->
-            desc.map(
+            desc.transform(
                 mapped,
                 transform
             )
         }
 
         is MockDescriptor -> {
-            newDescriptor.fields.replaceAll { _, desc -> desc.map(mapped, transform) }
+            newDescriptor.fields.replaceAll { _, desc -> desc.transform(mapped, transform) }
             newDescriptor.methodReturns.values.forEach { values ->
-                values.replaceAll { d -> d.map(mapped, transform) }
+                values.replaceAll { d -> d.transform(mapped, transform) }
             }
         }
 
-        is ArrayDescriptor -> newDescriptor.elements.replaceAll { _, u -> u.map(mapped, transform) }
+        is ArrayDescriptor -> newDescriptor.elements.replaceAll { _, u ->
+            u.transform(
+                mapped,
+                transform
+            )
+        }
     }
 
     return newDescriptor
+}
+
+private fun Descriptor.mapImpl(
+    mapped: MutableMap<Descriptor, Descriptor>,
+    mappedToSelf: MutableSet<Descriptor>,
+    transform: (Descriptor) -> Descriptor,
+): Descriptor {
+    if (mapped[this] != null) return mapped[this]!!
+    if (this in mappedToSelf) return this
+    TODO()
 }
 
 

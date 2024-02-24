@@ -114,7 +114,7 @@ fun createDescriptorToMock(
     types: TypeFactory
 ): Map<Descriptor, Descriptor> {
     val mapped = mutableMapOf<Descriptor, Descriptor>()
-    allDescriptors.forEach { it.map(mapped) { it.replaceWithMock(types) } }
+    allDescriptors.forEach { it.transform(mapped) { it.replaceWithMock(types) } }
     return mapped
 }
 
@@ -133,7 +133,7 @@ fun Descriptor.requireMocks(
 ): Boolean = any(visited) { descriptor -> descriptor.isMockable(types) }
 
 
-// TODO, predicate instead of TypeFactory
+// TODO, pass predicate in argument instead of TypeFactory
 fun Descriptor.replaceWithMock(types: TypeFactory): Descriptor {
     if (!this.isMockable(types)) {
         return this
@@ -159,13 +159,14 @@ fun Class.getFunctionalInterfaces(
     return acc
 }
 
-fun Descriptor.filterConcreteLambdas(
+
+fun Descriptor.fixConcreteLambdas(
     ctx: ExecutionContext,
     visited: MutableMap<Descriptor, Descriptor> = mutableMapOf()
 ): Descriptor {
-    return this.map(visited) {
+    return this.transform(visited) {
         if (this !is ObjectDescriptor) {
-            return@map this
+            return@transform this
         }
         val clazz = this.type as KexClass
         val kfgClass = clazz.kfgClass(ctx.types)
@@ -175,7 +176,7 @@ fun Descriptor.filterConcreteLambdas(
             1 -> descriptor { `object`(functionalInterfaces.first().kexType) }
             // TODO create mock with all interfaces
             else -> descriptor { `object`(functionalInterfaces.random().kexType) }.also {
-                log.warn { "FIXME: Multiple functional interfaces, so chose random:)" }
+                log.warn { "FIXME: Multiple functional interfaces, so chosen random one :D" }
             }
         }
     }
