@@ -1,55 +1,55 @@
 package org.vorpal.research.kex.descriptor
 
 
-fun Descriptor.transform(
-    mapped: MutableMap<Descriptor, Descriptor>,
-    transform: (Descriptor) -> Descriptor
+fun <T : Descriptor> Descriptor.transform(
+    mapped: MutableMap<Descriptor, T>,
+    failureMappings: MutableSet<Descriptor> = mutableSetOf(),
+    transformOrNull: (Descriptor) -> T?
 ): Descriptor {
     if (mapped[this] != null) return mapped[this]!!
+    if (this in failureMappings) return this
 
-    val newDescriptor = transform(this)
-    mapped[this] = newDescriptor
-    mapped[newDescriptor] = newDescriptor
-
-    when (newDescriptor) {
-        is ConstantDescriptor -> Unit
-        is ClassDescriptor -> newDescriptor.fields.replaceAll { _, desc ->
-            desc.transform(mapped, transform)
-        }
-
-        is ObjectDescriptor -> newDescriptor.fields.replaceAll { _, desc ->
-            desc.transform(
-                mapped,
-                transform
-            )
-        }
-
-        is MockDescriptor -> {
-            newDescriptor.fields.replaceAll { _, desc -> desc.transform(mapped, transform) }
-            newDescriptor.methodReturns.values.forEach { values ->
-                values.replaceAll { d -> d.transform(mapped, transform) }
-            }
-        }
-
-        is ArrayDescriptor -> newDescriptor.elements.replaceAll { _, u ->
-            u.transform(
-                mapped,
-                transform
-            )
-        }
+    val newDescriptor = transformOrNull(this) ?: return this.also {
+        failureMappings.add(this)
+        this.transformChildren(mapped, failureMappings, transformOrNull)
     }
 
+    mapped[this] = newDescriptor
+    mapped[newDescriptor] = newDescriptor
+    newDescriptor.transformChildren(mapped, failureMappings, transformOrNull)
     return newDescriptor
 }
 
-private fun Descriptor.mapImpl(
-    mapped: MutableMap<Descriptor, Descriptor>,
-    mappedToSelf: MutableSet<Descriptor>,
-    transform: (Descriptor) -> Descriptor,
-): Descriptor {
-    if (mapped[this] != null) return mapped[this]!!
-    if (this in mappedToSelf) return this
-    TODO()
+private fun <T : Descriptor> Descriptor.transformChildren(
+    mapped: MutableMap<Descriptor, T>,
+    failureMappings: MutableSet<Descriptor>,
+    transformOrNull: (Descriptor) -> T?
+) {
+    when (this) {
+        is ConstantDescriptor -> Unit
+        is ClassDescriptor -> fields.replaceAll { _, descriptor ->
+            descriptor.transform(mapped, failureMappings, transformOrNull)
+        }
+
+        is ObjectDescriptor -> fields.replaceAll { _, descriptor ->
+            descriptor.transform(mapped, failureMappings, transformOrNull)
+        }
+
+        is MockDescriptor -> {
+            fields.replaceAll { _, descriptor ->
+                descriptor.transform(mapped, failureMappings, transformOrNull)
+            }
+            methodReturns.values.forEach { values ->
+                values.replaceAll { descriptor ->
+                    descriptor.transform(mapped, failureMappings, transformOrNull)
+                }
+            }
+        }
+
+        is ArrayDescriptor -> elements.replaceAll { _, descriptor ->
+            descriptor.transform(mapped, failureMappings, transformOrNull)
+        }
+    }
 }
 
 

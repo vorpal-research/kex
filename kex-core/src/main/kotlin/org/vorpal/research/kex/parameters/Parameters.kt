@@ -112,8 +112,8 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 fun createDescriptorToMock(
     allDescriptors: Collection<Descriptor>,
     types: TypeFactory
-): Map<Descriptor, Descriptor> {
-    val mapped = mutableMapOf<Descriptor, Descriptor>()
+): Map<Descriptor, MockDescriptor> {
+    val mapped = mutableMapOf<Descriptor, MockDescriptor>()
     allDescriptors.forEach { it.transform(mapped) { it.replaceWithMock(types) } }
     return mapped
 }
@@ -134,9 +134,9 @@ fun Descriptor.requireMocks(
 
 
 // TODO, pass predicate in argument instead of TypeFactory
-fun Descriptor.replaceWithMock(types: TypeFactory): Descriptor {
+fun Descriptor.replaceWithMock(types: TypeFactory): MockDescriptor? {
     if (!this.isMockable(types)) {
-        return this
+        return null
     }
     return MockDescriptor(this as ObjectDescriptor).apply {
         fields.putAll(this@replaceWithMock.fields)
@@ -185,7 +185,7 @@ fun Descriptor.fixConcreteLambdas(
 fun setupMocks(
     methodCalls: List<CallPredicate>,
     termToDescriptor: Map<Term, Descriptor>,
-    descriptorToMock: Map<Descriptor, Descriptor>
+    descriptorToMock: Map<Descriptor, MockDescriptor>
 ) {
     for (callPredicate in methodCalls) {
         if (!callPredicate.hasLhv) continue
