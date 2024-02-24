@@ -82,6 +82,9 @@ val Config.logStackTraceTypeFix: Boolean
 val Config.isExpectMocks: Boolean
     get() = getBooleanValue("mock", "expectMocks", false)
 
+val Config.isFixConcreteLambdas: Boolean
+    get() = getBooleanValue("mock", "concreteLambdasPassEnabled", false)
+
 val Config.isEasyRandomExcludeLambdas: Boolean
     get() = getBooleanValue("mock", "easyRandomExcludeLambdas", false)
 
