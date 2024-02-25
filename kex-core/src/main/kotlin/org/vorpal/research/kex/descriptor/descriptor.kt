@@ -477,7 +477,7 @@ sealed class FieldContainingDescriptor<T : FieldContainingDescriptor<T>>(
 }
 
 class ObjectDescriptor(klass: KexClass) :
-    FieldContainingDescriptor<ObjectDescriptor>(term{ generate(klass) }, klass) {
+    FieldContainingDescriptor<ObjectDescriptor>(term { generate(klass) }, klass) {
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {
         if (this in copied) return copied[this]!!
         val copy = ObjectDescriptor(klass)
@@ -700,7 +700,7 @@ data class MockedMethod(
     val name: String,
     val paramTypes: List<KexType>,
     val returnType: KexType
-){
+) {
     override fun equals(other: Any?): Boolean {
         if (other !is MockedMethod) return false
         return name == other.name && paramTypes == other.paramTypes &&
@@ -720,6 +720,7 @@ class MockDescriptor(term: Term, type: KexClass) :
 
     constructor(type: KexClass) : this(term { generate(type) }, type)
     constructor(original: ObjectDescriptor) : this(original.term, original.type as KexClass)
+    constructor(original: ObjectDescriptor, type: KexClass) : this(original.term, type)
 
     val methodReturns: MutableMap<MockedMethod, MutableList<Descriptor>> = mutableMapOf()
 
@@ -906,6 +907,8 @@ open class DescriptorBuilder : StringInfoContext() {
         ArrayDescriptor(elementType, length)
 
     fun mock(type: KexClass) = MockDescriptor(type)
+    fun mock(original: ObjectDescriptor) = MockDescriptor(original)
+    fun mock(original: ObjectDescriptor, type: KexClass) = MockDescriptor(original, type)
 
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
         when (type) {
@@ -954,6 +957,9 @@ private object DescriptorBuilderImpl : DescriptorBuilder()
 
 fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
     DescriptorBuilderImpl.body()
+
+//fun <T : Descriptor> descriptor(body: DescriptorBuilder.() -> T): T =
+//    DescriptorBuilderImpl.body()
 
 class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilder() {
     private val cache = mutableMapOf<Descriptor, Descriptor>()
