@@ -510,11 +510,8 @@ class ExecutorAS2JavaPrinter(
         return listOf("${setElementMethod.name}(${owner.name}, ${call.index.stackName}, ${call.value.stackName})")
     }
 
-    // FIXME: remove that map
-    private val mockType: MutableMap<ActionSequence, Class> = mutableMapOf()
     override fun printMockNewInstance(owner: ActionSequence, call: MockNewInstance): List<String> {
         builder.import("org.mockito.Mockito")
-        mockType[owner] = call.klass
         val actualType = ASClass(ctx.types.objectType)
         val kfgClass = call.klass
         return listOf(
@@ -571,7 +568,7 @@ class ExecutorAS2JavaPrinter(
         }
 
         val methodName = call.method.name
-        val instance = "(${owner.cast(mockType[owner]!!.asType.asType)})"
+        val instance = "(${owner.cast(call.method.klass.asType.asType)})"
         return listOf("Mockito.when($instance.$methodName($anys)).thenReturn($returns)")
     }
 }
