@@ -2,10 +2,10 @@ package org.vorpal.research.kex.mocking
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.instantiationManager
-import org.vorpal.research.kex.config.Config
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.MockDescriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.util.loadClass
@@ -21,7 +21,7 @@ sealed class MockMaker(protected val ctx: ExecutionContext) {
     abstract fun canMock(descriptor: Descriptor): Boolean
     abstract fun mockOrNull(descriptor: Descriptor): MockDescriptor?
 
-    protected fun necessaryConditions(descriptor: Descriptor): Boolean {
+    protected fun satisfiesNecessaryConditions(descriptor: Descriptor): Boolean {
         val klass = getKlass(descriptor) ?: return false
         return !klass.isFinal && !descriptor.type.isKexRt && descriptor is ObjectDescriptor
     }
@@ -32,7 +32,7 @@ sealed class MockMaker(protected val ctx: ExecutionContext) {
 
 private class AllMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
     override fun canMock(descriptor: Descriptor): Boolean {
-        return necessaryConditions(descriptor)
+        return satisfiesNecessaryConditions(descriptor)
     }
 
     override fun mockOrNull(descriptor: Descriptor): MockDescriptor? {
@@ -45,7 +45,8 @@ private class AllMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
 private class UnimplementedMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
     override fun canMock(descriptor: Descriptor): Boolean {
         val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass ?: return false
-        return necessaryConditions(descriptor) && !instantiationManager.isInstantiable(klass)
+        return satisfiesNecessaryConditions(descriptor) &&
+                !instantiationManager.isInstantiable(klass)
     }
 
     override fun mockOrNull(descriptor: Descriptor): MockDescriptor? {
@@ -53,7 +54,6 @@ private class UnimplementedMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
         descriptor as ObjectDescriptor
         return MockDescriptor(descriptor).also { it.fields.putAll(descriptor.fields) }
     }
-
 }
 
 private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
@@ -72,8 +72,8 @@ private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
     }
 
     override fun canMock(descriptor: Descriptor): Boolean {
-        val klass = getKlass(descriptor) ?: return false
-        return necessaryConditions(descriptor) && klass.getFunctionalInterfaces().isNotEmpty()
+        val functionalInterfaces = getKlass(descriptor)?.getFunctionalInterfaces() ?: emptySet()
+        return satisfiesNecessaryConditions(descriptor) && functionalInterfaces.isNotEmpty()
     }
 
     override fun mockOrNull(descriptor: Descriptor): MockDescriptor? {
@@ -83,28 +83,13 @@ private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
         val functionalInterfaces = klass.getFunctionalInterfaces()
         return when (functionalInterfaces.size) {
             0 -> null
-            1 -> org.vorpal.research.kex.descriptor.descriptor {
-                mock(
-                    descriptor,
-                    functionalInterfaces.first().kexType
-                )
-            }
+            1 -> descriptor { mock(descriptor, functionalInterfaces.first().kexType) }
             // TODO create mock with all interfaces
-            else -> org.vorpal.research.kex.descriptor.descriptor {
-                mock(
-                    descriptor,
-                    functionalInterfaces.random().kexType
-                )
-            }.also {
+            else -> descriptor { mock(descriptor, functionalInterfaces.random().kexType) }.also {
                 log.warn { "FIXME: Multiple functional interfaces, so chosen the random one :D" }
             }
         } as? MockDescriptor
     }
-}
-
-enum class MockingRule {
-    // Order is important! First rule applies first
-    LAMBDA, ANY, UNIMPLEMENTED
 }
 
 fun createMocker(rule: MockingRule, ctx: ExecutionContext): MockMaker = when (rule) {
@@ -112,9 +97,3 @@ fun createMocker(rule: MockingRule, ctx: ExecutionContext): MockMaker = when (ru
     MockingRule.ANY -> AllMockMaker(ctx)
     MockingRule.UNIMPLEMENTED -> UnimplementedMockMaker(ctx)
 }
-
-fun Config.getMockMakers(ctx: ExecutionContext): List<MockMaker> =
-    getMultipleStringValue("mock", "rule")
-        .map { enumName -> MockingRule.valueOf(enumName.uppercase()) }
-        .sortedBy { rule -> rule.ordinal }
-        .map { rule -> createMocker(rule, ctx) }
