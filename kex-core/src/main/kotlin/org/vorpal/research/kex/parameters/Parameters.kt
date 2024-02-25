@@ -10,6 +10,7 @@ import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.mocking.MockMaker
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
@@ -111,76 +112,23 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 
 fun createDescriptorToMock(
     allDescriptors: Collection<Descriptor>,
-    types: TypeFactory
+    mockMakers: List<MockMaker>
 ): Map<Descriptor, MockDescriptor> {
-    val mapped = mutableMapOf<Descriptor, MockDescriptor>()
-    allDescriptors.forEach { it.transform(mapped) { it.replaceWithMock(types) } }
-    return mapped
+    val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
+    allDescriptors.forEach {
+        it.transform(descriptorToMock) { descriptor ->
+            mockMakers.firstNotNullOfOrNull { mockMaker -> mockMaker.mockOrNull(descriptor) }
+        }
+    }
+    return descriptorToMock
 }
 
-fun Descriptor.isMockable(types: TypeFactory): Boolean {
-    val klass = (type.getKfgType(types) as? ClassType)?.klass ?: return false
-    val necessaryConditions = !klass.isFinal && !type.isKexRt && this is ObjectDescriptor
-    return necessaryConditions && when (kexConfig.mockingMode) {
-        MockingMode.FULL -> true
-        MockingMode.BASIC -> !instantiationManager.isInstantiable(klass)
-        null -> false
-    }
-}
 
 fun Descriptor.requireMocks(
-    types: TypeFactory, visited: MutableSet<Descriptor> = mutableSetOf()
-): Boolean = any(visited) { descriptor -> descriptor.isMockable(types) }
+    mockMakers: List<MockMaker>, visited: MutableSet<Descriptor> = mutableSetOf()
+): Boolean =
+    any(visited) { descriptor -> mockMakers.any { mockMaker -> mockMaker.canMock(descriptor) } }
 
-
-// TODO, pass predicate in argument instead of TypeFactory
-fun Descriptor.replaceWithMock(types: TypeFactory): MockDescriptor? {
-    if (!this.isMockable(types)) {
-        return null
-    }
-    return MockDescriptor(this as ObjectDescriptor).apply {
-        fields.putAll(this@replaceWithMock.fields)
-        log.debug { "Created mock descriptor for $term" }
-    }
-}
-
-
-fun Class.getFunctionalInterfaces(
-    ctx: ExecutionContext,
-    acc: MutableSet<Class> = mutableSetOf()
-): Set<Class> {
-    if (this.isInterface &&
-        ctx.loader.loadClass(this).getAnnotation(FunctionalInterface::class.java) != null
-    ) {
-        acc.add(this)
-        return acc
-    }
-    allAncestors.forEach { it.getFunctionalInterfaces(ctx, acc) }
-    return acc
-}
-
-
-fun Descriptor.fixConcreteLambdas(
-    ctx: ExecutionContext,
-    visited: MutableMap<Descriptor, Descriptor> = mutableMapOf()
-): Descriptor {
-    return this.transform(visited) {
-        if (this !is ObjectDescriptor) {
-            return@transform this
-        }
-        val clazz = this.type as KexClass
-        val kfgClass = clazz.kfgClass(ctx.types)
-        val functionalInterfaces = kfgClass.getFunctionalInterfaces(ctx)
-        when (functionalInterfaces.size) {
-            0 -> this
-            1 -> descriptor { `object`(functionalInterfaces.first().kexType) }
-            // TODO create mock with all interfaces
-            else -> descriptor { `object`(functionalInterfaces.random().kexType) }.also {
-                log.warn { "FIXME: Multiple functional interfaces, so chosen random one :D" }
-            }
-        }
-    }
-}
 
 fun setupMocks(
     methodCalls: List<CallPredicate>,
