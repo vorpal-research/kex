@@ -75,7 +75,7 @@ class EasyRandomDriver(
 
     private val Class<*>.shouldBeExcluded: Boolean
         get() {
-            if (kexConfig.isEasyRandomExcludeLambdas) {
+            if (kexConfig.isMockingEnabled && kexConfig.isEasyRandomExcludeLambdas) {
                 if (isInterface && this.annotations.contains<Any?>(FunctionalInterface::class.java)) {
                     return true
                 }
