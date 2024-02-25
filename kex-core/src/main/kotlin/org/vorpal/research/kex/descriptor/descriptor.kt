@@ -15,9 +15,13 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.util.StringInfoContext
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.logging.warn
+import org.vorpal.research.kthelper.tryOrNull
 import ru.spbstu.wheels.hashCombine
 import ru.spbstu.wheels.joinToString
 import kotlin.random.Random
@@ -713,7 +717,45 @@ data class MockedMethod(
 }
 
 
-private val Method.mocked: MockedMethod get() = MockedMethod(klass.kexType, name, argTypes.map{it.kexType}, returnType.kexType)
+private val Method.mocked: MockedMethod
+    get() = MockedMethod(
+        klass.kexType,
+        name,
+        argTypes.map { it.kexType },
+        returnType.kexType
+    )
+
+fun Class.isOverride(method: Method): Boolean =
+    tryOrNull { this.getMethod(method.name, method.desc) } != null
+
+fun Class.hasAncestorOverrides(method: Method): Boolean =
+    allAncestors.any { klass -> klass.isOverride(method) }
+
+fun Method.general(): Method {
+    var ancestors = this.klass.allAncestors.filter { it.isOverride(this) }
+    val possibleGeneralizations = mutableSetOf<Method>()
+    while (ancestors.isNotEmpty()) {
+        possibleGeneralizations.addAll(ancestors
+            .filterNot { it.hasAncestorOverrides(this) }
+            .map { it.getMethod(this.name, this.desc) })
+
+        ancestors = ancestors.flatMap { it.allAncestors }.filter { it.isOverride(this) }
+    }
+    return when (possibleGeneralizations.size) {
+        0 -> this
+        1 -> possibleGeneralizations.first()
+
+        else -> {
+            log.warn {
+                "Got multiple general version of method $this. Versions:\n ${
+                    possibleGeneralizations.joinToString(separator = "\n")
+                }\nPlease check your code."
+            }
+            possibleGeneralizations.first()
+        }
+    }
+}
+
 
 class MockDescriptor(term: Term, type: KexClass) :
     AbstractFieldContainingDescriptor(term, type) {
