@@ -19,6 +19,7 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.predicate.CallPredicate
+import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
@@ -119,6 +120,11 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
     val descriptorToMock = createDescriptorToMock(generator.allValues.removeInstance(), mockMakers)
     val withMocks = this.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
     val methodCalls = state.methodCalls()
+    val methods = methodCalls.map { (it.call as CallTerm).method }
+    val mapped = methods.map{it.general() }
+    if (methods != mapped){
+        42
+    }
     setupMocks(methodCalls, generator.memory, descriptorToMock)
     return withMocks
 }

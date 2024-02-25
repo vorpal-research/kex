@@ -563,11 +563,11 @@ class ExecutorAS2JavaPrinter(
 
         call.returnValues.forEach { it.printAsJava() }
         val returns = call.returnValues.joinToString(separator = ", ") { value ->
-            value.forceCastIfNull(call.method.returnType.getKfgType(ctx.types).asType)
+            value.forceCastIfNull(call.method.returnType.asType)
         }
 
-        val anys = call.method.paramTypes.joinToString(separator = ", ") { type ->
-            mockitoAnyFromType(type.getKfgType(ctx.types))
+        val anys = call.method.argTypes.joinToString(separator = ", ") { type ->
+            mockitoAnyFromType(type)
         }
 
         val methodName = call.method.name

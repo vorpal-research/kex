@@ -2,7 +2,6 @@
 
 package org.vorpal.research.kex.descriptor
 
-import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.ktype.*
@@ -18,11 +17,9 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
-import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
-import ru.spbstu.wheels.hashCombine
 import ru.spbstu.wheels.joinToString
 import kotlin.random.Random
 
@@ -698,33 +695,6 @@ class ArrayDescriptor(val elementType: KexType, val length: Int) :
 }
 
 
-@Serializable
-data class MockedMethod(
-    val klass: KexClass, // excluded from hashCode and equals
-    val name: String,
-    val paramTypes: List<KexType>,
-    val returnType: KexType
-) {
-    override fun equals(other: Any?): Boolean {
-        if (other !is MockedMethod) return false
-        return name == other.name && paramTypes == other.paramTypes &&
-                returnType == other.returnType
-    }
-
-    override fun hashCode(): Int {
-        return hashCombine(name, paramTypes, returnType)
-    }
-}
-
-
-private val Method.mocked: MockedMethod
-    get() = MockedMethod(
-        klass.kexType,
-        name,
-        argTypes.map { it.kexType },
-        returnType.kexType
-    )
-
 fun Class.isOverride(method: Method): Boolean =
     tryOrNull { this.getMethod(method.name, method.desc) } != null
 
@@ -764,25 +734,21 @@ class MockDescriptor(term: Term, type: KexClass) :
     constructor(original: ObjectDescriptor) : this(original.term, original.type as KexClass)
     constructor(original: ObjectDescriptor, type: KexClass) : this(original.term, type)
 
-    val methodReturns: MutableMap<MockedMethod, MutableList<Descriptor>> = mutableMapOf()
+    val methodReturns: MutableMap<Method, MutableList<Descriptor>> = mutableMapOf()
 
     val allReturns: Sequence<Descriptor>
         get() = methodReturns.values.asSequence().flatMap { it.asSequence() }
 
-    val methods: Set<MockedMethod>
+    val methods: Set<Method>
         get() = methodReturns.keys
 
-    operator fun get(mockedMethod: MockedMethod) = methodReturns[mockedMethod]
-    operator fun set(mockedMethod: MockedMethod, values: List<Descriptor>) {
-        methodReturns[mockedMethod] = values.toMutableList()
+    operator fun get(mockedMethod: Method) = methodReturns[mockedMethod.general()]
+    operator fun set(mockedMethod: Method, values: List<Descriptor>) {
+        methodReturns[mockedMethod.general()] = values.toMutableList()
     }
 
-    fun addReturnValue(method: Method, value: Descriptor) {
-        addReturnValue(method.mocked, value)
-    }
-
-    fun addReturnValue(mockedMethod: MockedMethod, value: Descriptor) {
-        methodReturns.getOrPut(mockedMethod) { mutableListOf() }.add(value)
+    fun addReturnValue(mockedMethod: Method, value: Descriptor) {
+        methodReturns.getOrPut(mockedMethod.general()) { mutableListOf() }.add(value)
     }
 
     override fun concretize(
@@ -813,7 +779,7 @@ class MockDescriptor(term: Term, type: KexClass) :
         reduceFields(visited)
         for ((method, list) in methodReturns) {
             val type = method.returnType
-            while (list.isNotEmpty() && list.last() eq descriptor { default(type) }) {
+            while (list.isNotEmpty() && list.last() eq descriptor { default(type.kexType) }) {
                 list.removeLast()
             }
         }
@@ -1012,21 +978,10 @@ class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilde
             KexRtManager.Mode.UNMAP -> rtUnmapped
         }
 
-    private val MockedMethod.mapped
+    private val Method.mapped
         get() = when (mode) {
-            KexRtManager.Mode.MAP -> MockedMethod(
-                klass.rtMapped as KexClass,
-                name.rtMapped,
-                paramTypes.map { it.rtMapped },
-                returnType.rtMapped
-            )
-
-            KexRtManager.Mode.UNMAP -> MockedMethod(
-                klass.rtUnmapped as KexClass,
-                name.rtUnmapped,
-                paramTypes.map { it.rtUnmapped },
-                returnType.rtUnmapped
-            )
+            KexRtManager.Mode.MAP -> rtMapped
+            KexRtManager.Mode.UNMAP -> rtUnmapped
         }
 
     fun map(descriptor: Descriptor): Descriptor = cache.getOrElse(descriptor) {

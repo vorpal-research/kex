@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.serialization
 
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -14,6 +15,7 @@ import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kfg.ir.Method
 
 @JvmInline
 @Serializable
@@ -33,7 +35,10 @@ internal sealed class DescriptorWrapper {
         return context.getValue(id)
     }
 
-    protected abstract fun convert(map: Map<Id, DescriptorWrapper>, output: MutableMap<Id, Descriptor>)
+    protected abstract fun convert(
+        map: Map<Id, DescriptorWrapper>,
+        output: MutableMap<Id, Descriptor>
+    )
 
     @Serializable
     class Constant(
@@ -70,7 +75,7 @@ internal sealed class DescriptorWrapper {
         override val id: Id,
         override val type: KexType,
         val fields: MutableList<Pair<Pair<String, KexType>, Id>>,
-        val methodReturns: MutableList<Pair<MockedMethod, MutableList<Id>>>
+        val methodReturns: MutableList<Pair<@Contextual Method, MutableList<Id>>>
     ) : DescriptorWrapper() {
         override fun convert(map: Map<Id, DescriptorWrapper>, output: MutableMap<Id, Descriptor>) {
             if (id in output) return
@@ -146,14 +151,30 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
     if (id in visited) return
     when (this) {
         ConstantDescriptor.Null -> visited[id] = DescriptorWrapper.Constant(id, this.type, "null")
-        is ConstantDescriptor.Bool -> visited[id] = DescriptorWrapper.Constant(id, this.type, "${this.value}")
-        is ConstantDescriptor.Byte -> visited[id] = DescriptorWrapper.Constant(id, this.type, "${this.value}")
-        is ConstantDescriptor.Char -> visited[id] = DescriptorWrapper.Constant(id, this.type, "${this.value}")
-        is ConstantDescriptor.Short -> visited[id] = DescriptorWrapper.Constant(id, this.type, "${this.value}")
-        is ConstantDescriptor.Int -> visited[id] = DescriptorWrapper.Constant(id, this.type, "${this.value}")
-        is ConstantDescriptor.Long -> visited[id] = DescriptorWrapper.Constant(id, this.type, "${this.value}")
-        is ConstantDescriptor.Float -> visited[id] = DescriptorWrapper.Constant(id, this.type, "${this.value}")
-        is ConstantDescriptor.Double -> visited[id] = DescriptorWrapper.Constant(id, this.type, "${this.value}")
+        is ConstantDescriptor.Bool -> visited[id] =
+            DescriptorWrapper.Constant(id, this.type, "${this.value}")
+
+        is ConstantDescriptor.Byte -> visited[id] =
+            DescriptorWrapper.Constant(id, this.type, "${this.value}")
+
+        is ConstantDescriptor.Char -> visited[id] =
+            DescriptorWrapper.Constant(id, this.type, "${this.value}")
+
+        is ConstantDescriptor.Short -> visited[id] =
+            DescriptorWrapper.Constant(id, this.type, "${this.value}")
+
+        is ConstantDescriptor.Int -> visited[id] =
+            DescriptorWrapper.Constant(id, this.type, "${this.value}")
+
+        is ConstantDescriptor.Long -> visited[id] =
+            DescriptorWrapper.Constant(id, this.type, "${this.value}")
+
+        is ConstantDescriptor.Float -> visited[id] =
+            DescriptorWrapper.Constant(id, this.type, "${this.value}")
+
+        is ConstantDescriptor.Double -> visited[id] =
+            DescriptorWrapper.Constant(id, this.type, "${this.value}")
+
         is ArrayDescriptor -> {
             val array = DescriptorWrapper.Array(id, this.type, this.length, mutableMapOf()).also {
                 visited[id] = it
@@ -191,9 +212,10 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
         }
 
         is MockDescriptor -> {
-            val instance = DescriptorWrapper.Mock(id, this.type, mutableListOf(), mutableListOf()).also {
-                visited[id] = it
-            }
+            val instance =
+                DescriptorWrapper.Mock(id, this.type, mutableListOf(), mutableListOf()).also {
+                    visited[id] = it
+                }
             for ((field, value) in this.fields) {
                 instance.fields += field to value.id
             }
