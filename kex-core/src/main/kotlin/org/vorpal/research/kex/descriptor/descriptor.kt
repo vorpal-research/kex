@@ -731,10 +731,10 @@ class MockDescriptor(term: Term, type: KexClass, additionalInterfaces: Set<KexCl
     AbstractFieldContainingDescriptor(term, type) {
 
     constructor(type: KexClass) : this(term { generate(type) }, type)
-    constructor(original: ObjectDescriptor) : this(original.term, original.type as KexClass)
-    constructor(original: ObjectDescriptor, type: KexClass) : this(original.term, type)
     constructor(
-        original: ObjectDescriptor, type: KexClass, additionalInterfaces: Set<KexClass>
+        original: ObjectDescriptor,
+        type: KexClass = original.type as KexClass,
+        additionalInterfaces: Set<KexClass> = emptySet()
     ) : this(original.term, type, additionalInterfaces)
 
     val methodReturns: MutableMap<Method, MutableList<Descriptor>> = mutableMapOf()
@@ -919,9 +919,7 @@ open class DescriptorBuilder : StringInfoContext() {
         ArrayDescriptor(elementType, length)
 
     fun mock(type: KexClass) = MockDescriptor(type)
-    fun mock(original: ObjectDescriptor) = MockDescriptor(original)
-    fun mock(original: ObjectDescriptor, type: KexClass) = MockDescriptor(original, type)
-    fun mock(original: ObjectDescriptor, type: KexClass, additionalInterfaces: Set<KexClass>) =
+    fun mock(original: ObjectDescriptor, type: KexClass = original.type as KexClass, additionalInterfaces: Set<KexClass> = emptySet()) =
         MockDescriptor(original, type, additionalInterfaces)
 
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
