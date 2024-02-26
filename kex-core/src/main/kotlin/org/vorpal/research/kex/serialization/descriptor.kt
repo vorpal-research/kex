@@ -75,13 +75,15 @@ internal sealed class DescriptorWrapper {
         override val id: Id,
         override val type: KexType,
         val fields: MutableList<Pair<Pair<String, KexType>, Id>>,
-        val methodReturns: MutableList<Pair<@Contextual Method, MutableList<Id>>>
+        val methodReturns: MutableList<Pair<@Contextual Method, MutableList<Id>>>,
+        val extraInterfaces: MutableSet<KexClass>
     ) : DescriptorWrapper() {
         override fun convert(map: Map<Id, DescriptorWrapper>, output: MutableMap<Id, Descriptor>) {
             if (id in output) return
             val instance = descriptor { mock(type as KexClass) }.also {
                 output[id] = it
             } as MockDescriptor
+            instance.extraInterfaces.addAll(extraInterfaces)
 
             for ((field, fieldId) in fields) {
                 map.getValue(fieldId).toDescriptor(map, output)
@@ -213,7 +215,9 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
 
         is MockDescriptor -> {
             val instance =
-                DescriptorWrapper.Mock(id, this.type, mutableListOf(), mutableListOf()).also {
+                DescriptorWrapper.Mock(
+                    id, this.type, mutableListOf(), mutableListOf(), this.extraInterfaces
+                ).also {
                     visited[id] = it
                 }
             for ((field, value) in this.fields) {

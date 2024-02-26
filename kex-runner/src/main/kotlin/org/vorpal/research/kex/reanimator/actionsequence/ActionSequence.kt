@@ -221,7 +221,7 @@ sealed interface MockCall {
     fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>)
 }
 
-data class MockNewInstance(val klass: Class) : MockCall {
+data class MockNewInstance(val klass: Class, val extraInterfaces: Set<Class>) : MockCall {
     override val parameters: List<ActionSequence>
         get() = listOf()
 
@@ -727,7 +727,7 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
     }
 
     fun map(api: MockCall): MockCall = when (api) {
-        is MockNewInstance -> MockNewInstance(api.klass.mapped)
+        is MockNewInstance -> MockNewInstance(api.klass.mapped, api.extraInterfaces.map{it.mapped}.toSet())
         is MockSetupMethod -> MockSetupMethod(api.method.mapped, api.returnValues.map { value -> map(value) })
     }
 }

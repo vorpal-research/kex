@@ -6,14 +6,14 @@ import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.MockDescriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
-import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.logging.warn
+import org.vorpal.research.kfg.type.objectType
 
 sealed class MockMaker(protected val ctx: ExecutionContext) {
     protected val types: TypeFactory = ctx.types
@@ -57,7 +57,6 @@ private class UnimplementedMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
 }
 
 private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
-
     private fun Class.getFunctionalInterfaces(
         interfaces: MutableSet<Class> = mutableSetOf()
     ): Set<Class> {
@@ -65,7 +64,6 @@ private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
             ctx.loader.loadClass(this).getAnnotation(FunctionalInterface::class.java) != null
         ) {
             interfaces.add(this)
-            return interfaces
         }
         allAncestors.forEach { it.getFunctionalInterfaces(interfaces) }
         return interfaces
@@ -73,7 +71,7 @@ private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
 
     override fun canMock(descriptor: Descriptor): Boolean {
         val functionalInterfaces = getKlass(descriptor)?.getFunctionalInterfaces() ?: emptySet()
-        return satisfiesNecessaryConditions(descriptor) && functionalInterfaces.isNotEmpty()
+        return !descriptor.type.isKexRt && descriptor is ObjectDescriptor && functionalInterfaces.isNotEmpty()
     }
 
     override fun mockOrNull(descriptor: Descriptor): MockDescriptor? {
@@ -84,9 +82,12 @@ private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
         return when (functionalInterfaces.size) {
             0 -> null
             1 -> descriptor { mock(descriptor, functionalInterfaces.first().kexType) }
-            // TODO create mock with all interfaces
-            else -> descriptor { mock(descriptor, functionalInterfaces.random().kexType) }.also {
-                log.warn { "FIXME: Multiple functional interfaces, so chosen the random one :D" }
+            else -> descriptor {
+                mock(
+                    descriptor,
+                    ctx.types.objectType.kexType as KexClass,
+                    functionalInterfaces.map { it.kexType }.toSet()
+                )
             }
         } as? MockDescriptor
     }

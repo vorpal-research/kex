@@ -513,6 +513,9 @@ class ExecutorAS2JavaPrinter(
         builder.import("org.mockito.Mockito")
         val actualType = ASClass(ctx.types.objectType)
         val kfgClass = call.klass
+        val extraInterfaces = if (call.extraInterfaces.isEmpty()) "" else call.extraInterfaces.joinToString(prefix=", Mockito.withSettings().extraInterfaces(", postfix=")", separator = ", "){
+            "Class.forName(\"${it.canonicalDesc}\")"
+        }
         return listOf(
             if (resolvedTypes[owner] != null) {
                 val rest = resolvedTypes[owner]!!
@@ -523,7 +526,7 @@ class ExecutorAS2JavaPrinter(
                         owner.name,
                         type
                     )
-                } = Mockito.mock(Class.forName(\"${kfgClass.canonicalDesc}\"))"
+                } = Mockito.mock(Class.forName(\"${kfgClass.canonicalDesc}\")$extraInterfaces)"
             } else {
                 actualTypes[owner] = actualType
                 "${
@@ -531,7 +534,7 @@ class ExecutorAS2JavaPrinter(
                         owner.name,
                         actualType
                     )
-                } = Mockito.mock(Class.forName(\"${kfgClass.canonicalDesc}\"))"
+                } = Mockito.mock(Class.forName(\"${kfgClass.canonicalDesc}\")$extraInterfaces)"
             }
         )
     }

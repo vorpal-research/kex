@@ -6,7 +6,6 @@ import kotlinx.serialization.InternalSerializationApi
 import org.junit.Test
 import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.util.mockingMode
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -66,14 +65,16 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
 
     @Test
     fun mockInheritanceTests() {
-        val oldMockingMode = kexConfig.mockingMode
-        RuntimeConfig.setValue("mock", "mode", "full");
+        // todo: enable mocking rule "any"
+//        val oldMockingMode = kexConfig.mockingMode
+//        RuntimeConfig.setValue("mock", "mode", "full");
         assertCoverage(cm[prefix + "MockInheritanceTests"], 1.0)
-        RuntimeConfig.setValue("mock", "mode", oldMockingMode.toString());
+//        RuntimeConfig.setValue("mock", "mode", oldMockingMode.toString());
     }
 
     @Test
     fun mockLambdaTests() {
+        // todo: enable mocking rule "lambda"
         assertCoverage(cm[prefix + "MockLambdaTests"], 1.0)
     }
 }

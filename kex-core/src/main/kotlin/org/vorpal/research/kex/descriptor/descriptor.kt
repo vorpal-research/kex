@@ -727,14 +727,18 @@ fun Method.general(): Method {
 }
 
 
-class MockDescriptor(term: Term, type: KexClass) :
+class MockDescriptor(term: Term, type: KexClass, additionalInterfaces: Set<KexClass> = setOf()) :
     AbstractFieldContainingDescriptor(term, type) {
 
     constructor(type: KexClass) : this(term { generate(type) }, type)
     constructor(original: ObjectDescriptor) : this(original.term, original.type as KexClass)
     constructor(original: ObjectDescriptor, type: KexClass) : this(original.term, type)
+    constructor(
+        original: ObjectDescriptor, type: KexClass, additionalInterfaces: Set<KexClass>
+    ) : this(original.term, type, additionalInterfaces)
 
     val methodReturns: MutableMap<Method, MutableList<Descriptor>> = mutableMapOf()
+    val extraInterfaces: MutableSet<KexClass> = additionalInterfaces.toMutableSet()
 
     val allReturns: Sequence<Descriptor>
         get() = methodReturns.values.asSequence().flatMap { it.asSequence() }
@@ -917,6 +921,8 @@ open class DescriptorBuilder : StringInfoContext() {
     fun mock(type: KexClass) = MockDescriptor(type)
     fun mock(original: ObjectDescriptor) = MockDescriptor(original)
     fun mock(original: ObjectDescriptor, type: KexClass) = MockDescriptor(original, type)
+    fun mock(original: ObjectDescriptor, type: KexClass, additionalInterfaces: Set<KexClass>) =
+        MockDescriptor(original, type, additionalInterfaces)
 
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
         when (type) {
@@ -1018,7 +1024,8 @@ class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilde
                 val mockMapped =
                     MockDescriptor(
                         descriptor.term,
-                        descriptor.type.mapped as KexClass
+                        descriptor.type.mapped as KexClass,
+                        descriptor.extraInterfaces.map { it.mapped as KexClass }.toSet()
                     )
                 cache[descriptor] = mockMapped
                 for ((field, value) in descriptor.fields) {

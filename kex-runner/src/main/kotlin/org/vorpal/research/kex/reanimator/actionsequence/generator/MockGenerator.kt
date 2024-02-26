@@ -16,25 +16,35 @@ class MockGenerator(private val fallback: Generator) : Generator {
 
     override fun supports(descriptor: Descriptor): Boolean = descriptor is MockDescriptor
 
-    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
-        descriptor as? MockDescriptor ?: throw IllegalArgumentException("Expected MockDescriptor. Got: $descriptor")
-        descriptor as MockDescriptor // helps autocompletion
+    override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence =
+        with(context) {
+            descriptor as? MockDescriptor
+                ?: throw IllegalArgumentException("Expected MockDescriptor. Got: $descriptor")
+            descriptor as MockDescriptor // helps autocompletion
 
-        val name = "${descriptor.term}"
-        val actionSequence = MockSequence(name)
-        saveToCache(descriptor, actionSequence)
-        val kfgClass = (descriptor.type.getKfgType(types) as ClassType).klass
-        actionSequence.mockCalls.add(MockNewInstance(kfgClass))
+            val name = "${descriptor.term}"
+            val actionSequence = MockSequence(name)
+            saveToCache(descriptor, actionSequence)
+            val kfgClass = (descriptor.type.getKfgType(types) as ClassType).klass
+            val extraInterfaces = descriptor.extraInterfaces
+                .map { (it.getKfgType(types) as ClassType).klass }
+                .toSet()
+            actionSequence.mockCalls.add(MockNewInstance(kfgClass, extraInterfaces))
 
-        for ((method, returnValuesDesc) in descriptor.methodReturns) {
-            val returnValues = returnValuesDesc.map { value -> fallback.generate(value) }
-            actionSequence.mockCalls += MockSetupMethod(method, returnValues)
+            for ((method, returnValuesDesc) in descriptor.methodReturns) {
+                val returnValues = returnValuesDesc.map { value -> fallback.generate(value) }
+                actionSequence.mockCalls += MockSetupMethod(method, returnValues)
+            }
+
+            actionSequence.reflectionCalls.addSetupFieldsCalls(
+                descriptor.fields,
+                kfgClass,
+                types,
+                fallback
+            )
+
+            getFromCache(descriptor)!!
         }
-
-        actionSequence.reflectionCalls.addSetupFieldsCalls(descriptor.fields, kfgClass, types, fallback)
-
-        getFromCache(descriptor)!!
-    }
 
 
 }

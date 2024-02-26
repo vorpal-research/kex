@@ -19,7 +19,6 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.predicate.CallPredicate
-import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
@@ -99,7 +98,7 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
     generator: DescriptorGenerator,
     state: SymbolicState
 ): Parameters<Descriptor> {
-    if (!kexConfig.isMockingEnabled || kexConfig.mockingMode == null) {
+    if (!kexConfig.isMockingEnabled) {
         return this
     }
     fun Collection<Descriptor>.removeInstance() = this.filterNot { it == instance }

@@ -60,13 +60,6 @@ fun getJavaPath(): Path = Paths.get(System.getProperty("java.home"), "bin", "jav
 val Config.isMockingEnabled: Boolean
     get() = getBooleanValue("mock", "enabled", false)
 
-enum class MockingMode {
-    BASIC, FULL
-}
-
-val Config.mockingMode: MockingMode?
-    get() = getEnumValue<MockingMode>("mock", "mode", ignoreCase = true)
-
 val Config.isMockitoClassesWorkaroundEnabled: Boolean
     get() = getBooleanValue("mock", "mockitoClassesWorkaround", true)
 
