@@ -17,8 +17,8 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
 import ru.spbstu.wheels.joinToString
 import kotlin.random.Random
@@ -716,7 +716,7 @@ fun Method.general(): Method {
         1 -> possibleGeneralizations.first()
 
         else -> {
-            log.warn {
+            log.error {
                 "Got multiple general version of method $this. Versions:\n ${
                     possibleGeneralizations.joinToString(separator = "\n")
                 }\nPlease check your code."
