@@ -20,7 +20,7 @@ import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executePackagePipeline
 import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.wheels.mapToArray
 import java.nio.file.Paths
@@ -95,7 +95,7 @@ class CrashReproductionLauncher(
     }
 
     override fun launch() {
-        executePipeline(context.cm, Package.defaultPackage) {
+        executePackagePipeline(context.cm, Package.defaultPackage) {
             +ClassInstantiationDetector(context, context.accessLevel)
         }
         val testCases = CrashReproductionChecker.runWithDescriptorPreconditions(context, stackTrace)

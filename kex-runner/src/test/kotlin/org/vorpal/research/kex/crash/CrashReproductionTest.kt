@@ -11,7 +11,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.PathClassLoader
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kfg.Package
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executePackagePipeline
 import org.vorpal.research.kthelper.assert.unreachable
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -35,7 +35,7 @@ abstract class CrashReproductionTest(
     }
 
     fun assertCrash(expectedStackTrace: StackTrace) = withConfigOption("testGen", "surroundInTryCatch", "false") {
-        executePipeline(analysisContext.cm, Package.defaultPackage) {
+        executePackagePipeline(analysisContext.cm, Package.defaultPackage) {
             +ClassInstantiationDetector(analysisContext)
         }
 

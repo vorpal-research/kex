@@ -24,7 +24,7 @@ import org.vorpal.research.kfg.ir.value.instruction.EnterMonitorInst
 import org.vorpal.research.kfg.ir.value.instruction.ExitMonitorInst
 import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
 import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
-import org.vorpal.research.kfg.ir.value.instruction.Handle
+import org.vorpal.research.kfg.ir.value.instruction.HandleBsmArgument
 import org.vorpal.research.kfg.ir.value.instruction.InstanceOfInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
@@ -180,9 +180,9 @@ class PredicateBuilder(override val cm: ClassManager) : MethodVisitor {
     }
 
     override fun visitInvokeDynamicInst(inst: InvokeDynamicInst) {
-        val lambdaBases = inst.bootstrapMethodArgs.filterIsInstance<Handle>()
+        val lambdaBases = inst.bootstrapMethodArgs.filterIsInstance<HandleBsmArgument>()
         ktassert(lambdaBases.size == 1) { log.error("Unknown number of bases of ${inst.print()}") }
-        val lambdaBase = lambdaBases.first()
+        val lambdaBase = lambdaBases.first().handle
 
         val argParameters = lambdaBase.method.argTypes.mapIndexed { index, type -> term { arg(type.kexType, index) } }
         val lambdaParameters = lambdaBase.method.argTypes.mapIndexed { index, type ->
