@@ -10,7 +10,7 @@ import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kfg.visitor.LoopAnalysis
 import org.vorpal.research.kfg.visitor.MethodVisitor
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executePackagePipeline
 import kotlin.io.path.Path
 
 class MethodPrinter(override val cm: ClassManager) : MethodVisitor {
@@ -41,7 +41,7 @@ fun main() {
 
     val classManager = ClassManager(KfgConfig(Flags.readAll, true, verifyIR = false))
     classManager.initialize(jar)
-    executePipeline(classManager, jar.pkg) {
+    executePackagePipeline(classManager, jar.pkg) {
         +LoopAnalysis(classManager)
         +LoopSimplifier(classManager)
         +MethodPrinter(classManager)

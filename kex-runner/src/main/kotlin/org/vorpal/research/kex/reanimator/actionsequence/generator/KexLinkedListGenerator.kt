@@ -19,6 +19,7 @@ import org.vorpal.research.kfg.arrayListClass
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.linkedListClass
 import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.objectType
 
 class KexLinkedListGenerator(val fallback: Generator) : Generator {
@@ -57,7 +58,7 @@ class KexLinkedListGenerator(val fallback: Generator) : Generator {
         val outerListDescriptor = descriptor[outerListFieldKey]!!
         val outerListAS = fallback.generate(outerListDescriptor, generationDepth)
 
-        val iteratorMethod = outerListClass.getMethod("listIterator", cm["java/util/ListIterator"].asType)
+        val iteratorMethod = outerListClass.getMethod("listIterator", cm[SystemTypeNames.listIteratorClass].asType)
         actionSequence += ExternalMethodCall(iteratorMethod, outerListAS, emptyList())
 
         val cursorValue =

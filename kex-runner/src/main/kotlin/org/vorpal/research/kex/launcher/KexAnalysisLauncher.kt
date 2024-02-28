@@ -15,7 +15,9 @@ import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kfg.visitor.Pipeline
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executeClassPipeline
+import org.vorpal.research.kfg.visitor.executeMethodPipeline
+import org.vorpal.research.kfg.visitor.executePackagePipeline
 import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.wheels.mapToArray
@@ -46,7 +48,7 @@ internal fun prepareInstrumentedClasspath(
         cm.initialize(jar)
         val context = ExecutionContext(cm, classLoader, random, klassPath)
 
-        executePipeline(cm, target) {
+        executePackagePipeline(cm, target) {
             +ClassInstantiationDetector(context)
             val initializerBody = prepareClassPath(context)
             initializerBody()
@@ -56,9 +58,9 @@ internal fun prepareInstrumentedClasspath(
 
 internal fun runPipeline(context: ExecutionContext, analysisLevel: AnalysisLevel, init: Pipeline.() -> Unit) =
     when (analysisLevel) {
-        is MethodLevel -> executePipeline(context.cm, setOf(analysisLevel.method), init)
-        is ClassLevel -> executePipeline(context.cm, analysisLevel.klass, init)
-        is PackageLevel -> executePipeline(context.cm, analysisLevel.pkg, init)
+        is MethodLevel -> executeMethodPipeline(context.cm, setOf(analysisLevel.method), init)
+        is ClassLevel -> executeClassPipeline(context.cm, analysisLevel.klass, init)
+        is PackageLevel -> executePackagePipeline(context.cm, analysisLevel.pkg, init)
     }
 
 

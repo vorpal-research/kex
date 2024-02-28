@@ -94,7 +94,7 @@ class KexHashMapGenerator(val fallback: Generator) : Generator {
         }
         outerSetAS += ExternalMethodCall(creationMethod, outerMapAS, emptyList())
 
-        val iteratorMethod = creationMethod.klass.getMethod("iterator", cm["java/util/Iterator"].asType)
+        val iteratorMethod = creationMethod.klass.getMethod("iterator", cm[SystemTypeNames.iteratorClass].asType)
         actionSequence += ExternalMethodCall(iteratorMethod, outerSetAS, emptyList())
 
         actionSequence

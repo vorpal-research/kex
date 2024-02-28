@@ -2,17 +2,21 @@
 
 package org.vorpal.research.kex.asm.util
 
+import org.vorpal.research.kex.util.getCtor
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.classClass
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.value.UsageContext
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.ir.value.instruction.InstructionBuilder
 import org.vorpal.research.kfg.ir.value.instruction.InstructionFactory
+import org.vorpal.research.kfg.stringBuilderClass
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.CharType
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.NullType
+import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kfg.type.stringType
@@ -20,7 +24,7 @@ import org.vorpal.research.kfg.type.stringType
 interface Wrapper : InstructionBuilder
 
 abstract class PrintStreamWrapper(final override val cm: ClassManager, override val ctx: UsageContext) : Wrapper {
-    protected val printStreamClass = cm["java/io/PrintStream"]
+    protected val printStreamClass = cm[SystemTypeNames.printStreamClass]
     abstract val stream: Value
 
     abstract fun open(): List<Instruction>
@@ -57,13 +61,13 @@ abstract class PrintStreamWrapper(final override val cm: ClassManager, override 
 }
 
 class StringBuilderWrapper(override val cm: ClassManager, override val ctx: UsageContext, val name: String) : Wrapper {
-    val klass = cm["java/lang/StringBuilder"]
+    val klass = cm.stringBuilderClass
     private val stringBuilderType = types.getRefType(klass)
     private val builder = stringBuilderType.new(name)
     val insns = arrayListOf(builder)
 
     init {
-        val initMethod = klass.getMethod("<init>", types.voidType)
+        val initMethod = klass.getCtor()
         insns.add(initMethod.specialCall(klass, builder, listOf()))
     }
 
@@ -108,8 +112,8 @@ abstract class SystemOutputWrapper(cm: ClassManager, ctx: UsageContext, name: St
     final override val instructions: InstructionFactory
         get() = super.instructions
 
-    private val printStream = cm["java/io/PrintStream"]
-    val klass = cm["java/lang/System"]
+    private val printStream = cm[SystemTypeNames.printStreamClass]
+    val klass = cm[SystemTypeNames.systemClass]
     val field = klass.getField(streamType.name, types.getRefType(printStream))
     override val stream by lazy { field.load(name) }
 
@@ -125,8 +129,8 @@ class SystemOutWrapper(cm: ClassManager, ctx: UsageContext, name: String) :
     SystemOutputWrapper(cm, ctx, name, SystemStream.Output())
 
 class ReflectionWrapper(override val cm: ClassManager, override val ctx: UsageContext) : Wrapper {
-    private val classClass = cm["java/lang/Class"]
-    private val fieldClass = cm["java/lang/reflect/Field"]
+    private val classClass = cm.classClass
+    private val fieldClass = cm[SystemTypeNames.fieldClass]
 
     fun getClass(value: Value): Instruction {
         val type = types.objectType as ClassType
@@ -156,7 +160,7 @@ class ReflectionWrapper(override val cm: ClassManager, override val ctx: UsageCo
 
 class ValuePrinter(override val cm: ClassManager, override val ctx: UsageContext) : Wrapper {
     private val reflection = ReflectionWrapper(cm, ctx)
-    private val system = cm["java/lang/System"]
+    private val system = cm[SystemTypeNames.systemClass]
     val insns = arrayListOf<Instruction>()
 
     private fun getIdentityHashCode(value: Value): Instruction {
@@ -241,15 +245,15 @@ class FileOutputStreamWrapper(
     val append: Boolean = false,
     val autoFlush: Boolean = false
 ) : PrintStreamWrapper(cm, ctx) {
-    private val fileClass = cm["java/io/File"]
-    private val fileOutputStreamClass = cm["java/io/FileOutputStream"]
+    private val fileClass = cm[SystemTypeNames.fileClass]
+    private val fileOutputStreamClass = cm[SystemTypeNames.fileOutputStreamClass]
     override val stream = printStreamClass.new(streamName)
 
     override fun open(): List<Instruction> = buildList {
         val file = fileClass.new()
         add(file)
 
-        val initMethod = fileClass.getMethod("<init>", types.voidType, types.stringType)
+        val initMethod = fileClass.getCtor(types.stringType)
         add(initMethod.specialCall(fileClass, file, listOf(values.getString(fileName))))
 
         val createMethod = fileClass.getMethod("createNewFile", types.boolType)
@@ -257,15 +261,12 @@ class FileOutputStreamWrapper(
 
         val fos = fileOutputStreamClass.new()
         add(fos)
-        val fosInitMethod = fileOutputStreamClass.getMethod(
-            "<init>",
-            types.voidType, types.getRefType(fileClass), types.boolType
-        )
+        val fosInitMethod = fileOutputStreamClass.getCtor(types.getRefType(fileClass), types.boolType)
         add(fosInitMethod.specialCall(fileOutputStreamClass, fos, listOf(file, values.getBool(append))))
 
         add(stream)
-        val outputStreamClass = types.getRefType("java/io/OutputStream")
-        val psInitMethod = printStreamClass.getMethod("<init>", types.voidType, outputStreamClass, types.boolType)
+        val outputStreamClass = types.getRefType(SystemTypeNames.outputStreamClass)
+        val psInitMethod = printStreamClass.getCtor(outputStreamClass, types.boolType)
         add(psInitMethod.specialCall(printStreamClass, stream, listOf(fos, values.getBool(autoFlush))))
     }
 

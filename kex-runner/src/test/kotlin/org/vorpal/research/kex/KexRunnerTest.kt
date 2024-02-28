@@ -23,7 +23,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executeClassPipeline
 import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Paths
 import kotlin.test.BeforeTest
@@ -129,7 +129,7 @@ abstract class KexRunnerTest(
         val traceManager = ObjectTraceManager()
         val psa = PredicateStateAnalysis(analysisContext.cm)
 
-        executePipeline(analysisContext.cm, klass) {
+        executeClassPipeline(analysisContext.cm, klass) {
             +LoopSimplifier(analysisContext.cm)
             +LoopDeroller(analysisContext.cm)
             +psa

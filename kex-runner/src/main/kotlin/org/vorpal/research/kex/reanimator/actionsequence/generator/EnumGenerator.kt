@@ -216,7 +216,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
     override val context: GeneratorContext
         get() = fallback.context
 
-    private val kfgFieldClass = context.cm[SystemTypeNames.field]
+    private val kfgFieldClass = context.cm[SystemTypeNames.fieldClass]
 
     private fun getEnumName() = "enum${enumCounter++}"
 
