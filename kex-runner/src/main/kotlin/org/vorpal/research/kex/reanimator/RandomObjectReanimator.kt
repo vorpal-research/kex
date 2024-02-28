@@ -21,6 +21,8 @@ import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.ConcreteClass
+import org.vorpal.research.kfg.mapClass
+import org.vorpal.research.kfg.setClass
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.logging.info
 import org.vorpal.research.kthelper.logging.log
@@ -57,8 +59,8 @@ class RandomObjectReanimator(
         is ConstantDescriptor -> true
         is ObjectDescriptor -> when {
             this.klass.kfgClass(cm.type) !is ConcreteClass -> false
-            this.klass.kfgClass(cm.type).isInheritorOf(cm["java/util/Map"]) -> false
-            this.klass.kfgClass(cm.type).isInheritorOf(cm["java/util/Set"]) -> false
+            this.klass.kfgClass(cm.type).isInheritorOf(cm.mapClass) -> false
+            this.klass.kfgClass(cm.type).isInheritorOf(cm.setClass) -> false
             else -> {
                 val set = visited + this
                 this.fields.all { it.value.isValid(set) }

@@ -11,7 +11,7 @@ import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kex.trace.runner.ExecutorMasterController
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executePackagePipeline
 import org.vorpal.research.kthelper.logging.log
 import kotlin.test.assertEquals
 import kotlin.time.ExperimentalTime
@@ -25,7 +25,7 @@ abstract class ConcolicTest(testDirectoryName: String) : KexRunnerTest(testDirec
     fun assertCoverage(klass: Class, expectedCoverage: Double = 1.0, eps: Double = 0.0) {
         ExecutorMasterController.use {
             it.start(analysisContext)
-            executePipeline(analysisContext.cm, Package.defaultPackage) {
+            executePackagePipeline(analysisContext.cm, Package.defaultPackage) {
                 +ClassInstantiationDetector(analysisContext)
             }
 

@@ -25,6 +25,7 @@ import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.numberFormatClass
 import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.stringIndexOOB
+import org.vorpal.research.kfg.type.SystemTypeNames
 
 
 class ExceptionPreconditionManager<T>(
@@ -336,8 +337,8 @@ class ExceptionPreconditionManager<T>(
             contracts
         }
 
-        val nioFilesClass = cm["java/nio/file/Files"]
-        val pathClass = cm["java/nio/file/Path"]
+        val nioFilesClass = cm[SystemTypeNames.filesClass]
+        val pathClass = cm[SystemTypeNames.pathClass]
         conditions.getOrPut(
             nioFilesClass.getMethod(
                 "createDirectory",

@@ -13,13 +13,13 @@ import org.vorpal.research.kex.reanimator.collector.SetterCollector
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.analysis.LoopSimplifier
 import org.vorpal.research.kfg.visitor.Pipeline
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executePackagePipeline
 
 internal fun preparePackage(
     ctx: ExecutionContext,
     psa: PredicateStateAnalysis,
     pkg: Package
-) = executePipeline(ctx.cm, pkg) {
+) = executePackagePipeline(ctx.cm, pkg) {
     +MethodWrapperInitializer(ctx.cm)
     +LoopSimplifier(ctx.cm)
     +LoopDeroller(ctx.cm)

@@ -21,11 +21,13 @@ import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
 import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
+import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kfg.visitor.MethodVisitor
 
+@Suppress("unused")
 class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, InstructionBuilder {
     override val ctx: UsageContext = EmptyUsageContext
     private val collectorClass = cm[TraceCollector::class.java.canonicalName.asmString]
@@ -158,7 +160,7 @@ class RuntimeTraceInstrumenter(override val cm: ClassManager) : MethodVisitor, I
         else -> buildList {
             val throwMethod = collectorClass.getMethod(
                 "methodThrow",
-                types.voidType, stringType, types.getRefType("java/lang/Throwable")
+                types.voidType, stringType, types.getRefType(SystemTypeNames.throwableClass)
             )
             add(
                 throwMethod.interfaceCall(
