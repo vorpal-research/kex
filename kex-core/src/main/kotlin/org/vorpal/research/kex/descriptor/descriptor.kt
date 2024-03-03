@@ -967,11 +967,8 @@ open class DescriptorBuilder : StringInfoContext() {
 
 private object DescriptorBuilderImpl : DescriptorBuilder()
 
-fun descriptor(body: DescriptorBuilder.() -> Descriptor): Descriptor =
+fun <T : Descriptor> descriptor(body: DescriptorBuilder.() -> T): T =
     DescriptorBuilderImpl.body()
-
-//fun <T : Descriptor> descriptor(body: DescriptorBuilder.() -> T): T =
-//    DescriptorBuilderImpl.body()
 
 class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilder() {
     private val cache = mutableMapOf<Descriptor, Descriptor>()
