@@ -39,6 +39,7 @@
         <commons-cli.version>1.5.0</commons-cli.version>
 
         <mockito.version>4.11.0</mockito.version>
+        <mockito.id>core</mockito.id>
 
         <test.jvm.params>
             -XX:+IgnoreUnrecognizedVMOptions

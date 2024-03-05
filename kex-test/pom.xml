@@ -18,7 +18,9 @@
         <kotlin.version>1.6.21</kotlin.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
         <kex-intrinsics.version>0.1.0</kex-intrinsics.version>
+
         <mockito.version>4.11.0</mockito.version>
+        <mockito.id>core</mockito.id>
     </properties>
 
     <dependencies>
@@ -40,7 +42,7 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
+            <artifactId>mockito-${mockito.id}</artifactId>
             <version>${mockito.version}</version>
         </dependency>
 <!--        <dependency>-->
