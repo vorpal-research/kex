@@ -52,11 +52,6 @@
             <artifactId>kotlinx-coroutines-core</artifactId>
             <version>${coroutines.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
