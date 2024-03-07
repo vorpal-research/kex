@@ -86,6 +86,7 @@ class UnsafeGenerator(
 
     private val Parameters<Descriptor>.actionSequences: Parameters<ActionSequence>
         get() {
+            asGenerator.initializeStaticFinals(statics)
             val thisSequence = instance?.actionSequence
             val argSequences = arguments.map { it.actionSequence }
             val staticFields = statics.mapTo(mutableSetOf()) { it.actionSequence }

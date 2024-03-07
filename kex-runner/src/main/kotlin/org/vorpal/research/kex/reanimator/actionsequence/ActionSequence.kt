@@ -455,6 +455,17 @@ data class ReflectionSetField(val field: Field, val value: ActionSequence) : Ref
     }
 }
 
+data class ReflectionGetField(val field: Field, val owner: ActionSequence) : ReflectionCall {
+    override val parameters: List<ActionSequence> get() = listOf(owner)
+
+
+    override fun toString() = "getField(${owner.name}, ${field.name})"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        builder.appendLine("${owner.name} = (${field.type}) getField(${this.owner.name}, ${field.name}")
+    }
+}
+
 data class ReflectionSetStaticField(val field: Field, val value: ActionSequence) : ReflectionCall {
     override val parameters: List<ActionSequence> get() = listOf(value)
 
@@ -464,6 +475,17 @@ data class ReflectionSetStaticField(val field: Field, val value: ActionSequence)
     override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
         value.print(builder, visited)
         builder.appendLine("setStaticField(${owner.name}, ${field.name}, $value")
+    }
+}
+
+data class ReflectionGetStaticField(val field: Field) : ReflectionCall {
+    override val parameters: List<ActionSequence> get() = emptyList()
+
+
+    override fun toString() = "getStaticField(${field.name})"
+
+    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+        builder.appendLine("${owner.name} = (${field.type}) getStaticField(${field.name}")
     }
 }
 
@@ -549,10 +571,22 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             ReflectionSetField(unmappedField, map(api.value))
         }
 
+        is ReflectionGetField -> {
+            val unmappedKlass = api.field.klass.mapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
+            ReflectionSetField(unmappedField, map(api.owner))
+        }
+
         is ReflectionSetStaticField -> {
             val unmappedKlass = api.field.klass.mapped
             val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
             ReflectionSetStaticField(unmappedField, map(api.value))
+        }
+
+        is ReflectionGetStaticField -> {
+            val unmappedKlass = api.field.klass.mapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
+            ReflectionGetStaticField(unmappedField)
         }
     }
 
