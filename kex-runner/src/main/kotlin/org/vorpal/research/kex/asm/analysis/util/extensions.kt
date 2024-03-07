@@ -13,7 +13,6 @@ import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.parameters.filterIgnoredStatic
-import org.vorpal.research.kex.parameters.filterStaticFinals
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.AsyncIncrementalChecker
 import org.vorpal.research.kex.smt.Result
@@ -68,10 +67,8 @@ suspend fun Method.checkAsync(
 
     return try {
         generateInitialDescriptors(this, ctx, result.model, checker.state)
-            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
-                log.debug { "Generated params:\n$it" }
-            }
-            .filterStaticFinals(ctx.cm)
+            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+            .also { log.debug { "Generated params:\n$it" } }
             .filterIgnoredStatic()
     } catch (e: Throwable) {
         log.error("Error during descriptor generation: ", e)
@@ -99,10 +96,8 @@ suspend fun Method.checkAsyncAndSlice(
 
     return try {
         val (params, aa) = generateInitialDescriptorsAndAA(this, ctx, result.model, checker.state)
-        val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
-            log.debug { "Generated params:\n$it" }
-        }
-            .filterStaticFinals(ctx.cm)
+        val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+            .also { log.debug { "Generated params:\n$it" } }
             .filterIgnoredStatic()
 
         val (thisTerm, argTerms) = collectArguments(checker.state)
@@ -153,7 +148,6 @@ suspend fun Method.checkAsyncIncremental(
                     .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                         log.debug { "Generated params:\n$it" }
                     }
-                    .filterStaticFinals(ctx.cm)
                     .filterIgnoredStatic()
             } catch (e: Throwable) {
                 log.error("Error during descriptor generation: ", e)
@@ -198,7 +192,6 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
                 val (params, aa) = generateInitialDescriptorsAndAA(this, ctx, result.model, fullPS)
                 val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
                     .also { log.debug { "Generated params:\n$it" } }
-                    .filterStaticFinals(ctx.cm)
                     .filterIgnoredStatic()
 
                 val (thisTerm, argTerms) = collectArguments(fullPS)

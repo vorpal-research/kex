@@ -22,6 +22,8 @@ import org.vorpal.research.kex.reanimator.actionsequence.NewArrayWithInitializer
 import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionArrayWrite
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionCall
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetField
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetStaticField
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewArray
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewInstance
@@ -440,6 +442,8 @@ open class ActionSequence2KotlinPrinter(
             is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
             is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
             is ReflectionSetStaticField -> printReflectionSetStaticField(owner, reflectionCall)
+            is ReflectionGetField -> printReflectionGetField(owner, reflectionCall)
+            is ReflectionGetStaticField -> printReflectionGetStaticField(owner, reflectionCall)
         }
 
     private val <T> PrimaryValue<T>.asConstant: String
@@ -660,6 +664,15 @@ open class ActionSequence2KotlinPrinter(
         owner: ActionSequence,
         call: ReflectionSetStaticField
     ): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionGetStaticField(
+        owner: ActionSequence,
+        call: ReflectionGetStaticField
+    ): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionGetField(owner: ActionSequence, call: ReflectionGetField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =
