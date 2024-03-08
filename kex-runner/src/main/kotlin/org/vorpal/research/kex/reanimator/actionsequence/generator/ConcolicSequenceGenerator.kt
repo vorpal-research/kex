@@ -11,6 +11,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.ReflectionCall
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetField
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetStaticField
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
+import org.vorpal.research.kex.util.getFieldSafe
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.collection.queueOf
@@ -54,7 +55,8 @@ class ConcolicSequenceGenerator(override val context: GeneratorContext) : Genera
             if (descriptor is FieldContainingDescriptor<*>) {
                 val valueClass = (descriptor.type as KexClass).kfgClass(cm.type)
                 for ((valueKey, valueValue) in descriptor.fields) {
-                    val valueField = valueClass.getField(valueKey.first, valueKey.second.getKfgType(cm.type))
+                    val valueField = valueClass.getFieldSafe(valueKey.first, valueKey.second.getKfgType(cm.type))
+                        ?: continue
                     queue += Triple(valueField, actionSequence, valueValue)
                 }
             }
@@ -66,7 +68,7 @@ class ConcolicSequenceGenerator(override val context: GeneratorContext) : Genera
             for ((key, descriptor) in klass.fields) {
                 if (getFromCache(descriptor) != null) continue
 
-                val field = kfgClass.getField(key.first, key.second.getKfgType(cm.type))
+                val field = kfgClass.getFieldSafe(key.first, key.second.getKfgType(cm.type)) ?: continue
                 if (field.isFinal) {
                     processDescriptor(descriptor) { ReflectionGetStaticField(field) }
                 }
