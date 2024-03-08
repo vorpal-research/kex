@@ -5,6 +5,7 @@ package org.vorpal.research.kex.util
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kfg.Package
+import org.vorpal.research.kfg.UnknownInstanceException
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.value.NameMapper
@@ -191,4 +192,11 @@ fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, 
 
 fun Field.isOuterThis(): Boolean {
     return klass.outerClass != null && name.matches("this\\$\\d+".toRegex()) && type == klass.outerClass!!.asType
+}
+
+fun Class.getFieldSafe(name: String, type: Type): Field? = try {
+    this.getField(name, type)
+} catch (e: UnknownInstanceException) {
+    log.error("Could not find field ${name to type} in $this", e)
+    null
 }
