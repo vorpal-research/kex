@@ -14,6 +14,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionTimedOutResult
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2ClientConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.Master2WorkerConnection
 import org.vorpal.research.kex.trace.symbolic.protocol.MasterProtocolHandler
+import org.vorpal.research.kex.util.getJavaPath
 import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
@@ -84,7 +85,7 @@ class ExecutorMaster(
 
         private fun createProcess(): Process {
             val pb = ProcessBuilder(
-                "java",
+                getJavaPath().toString(),
                 *workerJvmParams,
                 "-Djava.security.manager",
                 "-Djava.security.policy==${executorPolicyPath}",

@@ -5,6 +5,7 @@ package org.vorpal.research.kex.util
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kfg.Package
+import org.vorpal.research.kfg.UnknownInstanceException
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.value.NameMapper
@@ -129,7 +130,13 @@ fun NameMapper.parseValueOrNull(valueName: String): Value? {
         valueName.matches(Regex("-?\\d+")) -> values.getInt(valueName.toInt())
         valueName.matches(Regex("-?\\d+.\\d+f")) -> values.getFloat(valueName.toFloat())
         valueName.matches(Regex("-?\\d+.\\d+")) -> values.getDouble(valueName.toDouble())
-        valueName.matches(Regex("\".*\"", RegexOption.DOT_MATCHES_ALL)) -> values.getString(valueName.substring(1, valueName.lastIndex))
+        valueName.matches(Regex("\".*\"", RegexOption.DOT_MATCHES_ALL)) -> values.getString(
+            valueName.substring(
+                1,
+                valueName.lastIndex
+            )
+        )
+
         valueName.matches(Regex(".*(/.*)+.class")) -> values.getClass("L${valueName.removeSuffix(".class")};")
         valueName == "null" -> values.nullConstant
         valueName == "true" -> values.trueConstant
@@ -184,5 +191,12 @@ private object SubTypeInfoCache {
 fun Type.isSubtypeOfCached(other: Type): Boolean = SubTypeInfoCache.check(this, other)
 
 fun Field.isOuterThis(): Boolean {
-    return klass.outerClass != null && name.matches("this\\$\\d+".toRegex())  && type == klass.outerClass!!.asType
+    return klass.outerClass != null && name.matches("this\\$\\d+".toRegex()) && type == klass.outerClass!!.asType
+}
+
+fun Class.getFieldSafe(name: String, type: Type): Field? = try {
+    this.getField(name, type)
+} catch (e: UnknownInstanceException) {
+    log.error("Could not find field ${name to type} in $this", e)
+    null
 }

@@ -74,14 +74,17 @@ data class FileTrace(
                         infos.peek()?.subInfos?.add(action.method to newInfo)
                         infos.push(newInfo)
                     }
+
                     is MethodInstance -> {
                         val info = infos.peek()
                         info.instance = action.instance.rhv
                     }
+
                     is MethodArgs -> {
                         val info = infos.peek()
                         info.args = action.args.mapToArray { it.rhv }
                     }
+
                     is MethodReturn -> {
                         val info = infos.peek()
                         info.retval = action.`return`?.rhv
@@ -89,6 +92,7 @@ data class FileTrace(
                         result.add(methodStack.pop() to info)
                         infos.pop()
                     }
+
                     is MethodThrow -> {
                         val info = infos.peek()
                         info.throwValue = action.throwable.rhv
@@ -96,6 +100,7 @@ data class FileTrace(
                         result.add(methodStack.pop() to info)
                         infos.pop()
                     }
+
                     is BlockEntryAction -> {
                         val bb = action.bb
                         val info = infos.peek()
@@ -104,6 +109,7 @@ data class FileTrace(
                         previousBlock = bInfo
                         info.blocks.getOrPut(bb, ::arrayListOf).add(bInfo)
                     }
+
                     is BlockExitAction -> {
                         requireNotNull(previousBlock) {
                             log.error("Incorrect action format: Block exit without entering")

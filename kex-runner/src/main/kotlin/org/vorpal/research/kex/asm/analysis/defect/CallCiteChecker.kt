@@ -62,7 +62,7 @@ import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.Instruction
 import org.vorpal.research.kfg.visitor.MethodVisitor
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executePackagePipeline
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.runIf
@@ -188,7 +188,7 @@ class CallCiteChecker(
 
     private fun getAllCallCites(method: Method): Set<Instruction> {
         val result = mutableSetOf<Instruction>()
-        executePipeline(cm, callCiteTarget) {
+        executePackagePipeline(cm, callCiteTarget) {
             +object : MethodVisitor {
                 override val cm: ClassManager
                     get() = this@CallCiteChecker.cm

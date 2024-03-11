@@ -6,19 +6,20 @@ import org.vorpal.research.kex.ktype.KexString
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
+import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.logging.log
 
 class CharsetGenerator(private val fallback: Generator) : Generator {
     companion object {
-        private const val CHARSET_CLASS = "java/nio/charset/Charset"
-        private const val CHARSETS_CLASS = "java/nio/charset/StandardCharsets"
         private const val DEFAULT_CHARSET = "US_ASCII"
         private val existingCharsets = setOf("US_ASCII", "ISO_8859_1", "UTF_8", "UTF_16BE", "UTF_16LE", "UTF_16")
     }
+
     override val context: GeneratorContext
         get() = fallback.context
 
-    override fun supports(descriptor: Descriptor) = descriptor.type.toString() == CHARSET_CLASS && descriptor is ObjectDescriptor
+    override fun supports(descriptor: Descriptor) =
+        descriptor.type.toString() == SystemTypeNames.charsetClass && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as? ObjectDescriptor ?: throw IllegalArgumentException()
@@ -28,8 +29,8 @@ class CharsetGenerator(private val fallback: Generator) : Generator {
         val actionSequence = ActionList(name)
         saveToCache(descriptor, actionSequence)
 
-        val charsetClass = context.cm[CHARSET_CLASS]
-        val charsetsClass = context.cm[CHARSETS_CLASS]
+        val charsetClass = context.cm[SystemTypeNames.charsetClass]
+        val charsetsClass = context.cm[SystemTypeNames.standardCharsetsClass]
 
         val nameDescriptor = descriptor["name", KexString()] as? ObjectDescriptor
         val actualName = nameDescriptor?.asStringValue ?: DEFAULT_CHARSET

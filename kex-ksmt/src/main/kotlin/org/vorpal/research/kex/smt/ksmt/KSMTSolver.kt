@@ -178,12 +178,12 @@ class KSMTSolver(
 
 
     @Suppress("unused")
-    private suspend fun reduce(state: Bool_, query: Bool_, errorCondition: (KSolverException) -> Boolean) {
+    private suspend fun reduceException(state: Bool_, query: Bool_, errorCondition: (KSolverException) -> Boolean) {
         var actualState = state
         var actualQuery = query
         var currentState = actualState
         var currentQuery = actualQuery
-        repeat(1000) {
+        for (index in 0..1000) {
             currentState = reduce(actualState)
             currentQuery = reduce(actualQuery)
             val reproduced = try {
@@ -191,6 +191,36 @@ class KSMTSolver(
                 false
             } catch (e: KSolverException) {
                 errorCondition(e)
+            }
+            if (reproduced) {
+                actualState = currentState
+                actualQuery = currentQuery
+            } else {
+                currentState = actualState
+                currentQuery = actualQuery
+            }
+        }
+
+        check(currentState, currentQuery)
+    }
+
+
+    @Suppress("unused")
+    private suspend fun reduceResult(state: Bool_, query: Bool_, resultChecker: (Pair<KSolverStatus, Any>) -> Boolean) {
+        var actualState = state
+        var actualQuery = query
+        var currentState = actualState
+        var currentQuery = actualQuery
+        for (index in 0..10000) {
+            currentState = reduce(actualState)
+            currentQuery = reduce(actualQuery)
+            if (currentState == actualState && currentQuery == actualQuery) {
+                continue
+            }
+            val reproduced = try {
+                resultChecker(check(currentState, currentQuery))
+            } catch (e: KSolverException) {
+                false
             }
             if (reproduced) {
                 actualState = currentState
@@ -218,9 +248,12 @@ class KSMTSolver(
         } as KExpr<T>
 
         state is KAndNaryExpr -> when (executionContext.random.nextInt(100)) {
-            in 0..2 -> {
-                val nth = executionContext.random.nextInt(state.args.size)
-                ef.ctx.mkAnd(state.args.filterIndexed { index, _ -> index != nth })
+            in 0..2 -> when (state.args.size) {
+                0 -> ef.ctx.trueExpr
+                else -> {
+                    val nth = executionContext.random.nextInt(state.args.size)
+                    ef.ctx.mkAnd(state.args.filterIndexed { index, _ -> index != nth })
+                }
             }
 
             else -> ef.ctx.mkAnd(state.args.map { reduce(it) })
@@ -239,20 +272,21 @@ class KSMTSolver(
         else -> state
     }
 
-    private fun stringify(state: Bool_, query: Bool_, softConstraints: List<Bool_> = emptyList()): String = KZ3Solver(ef.ctx).use {
-        it.assert(state.asAxiom() as KExpr<KBoolSort>)
-        it.assert(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
-        it.assert(query.axiom as KExpr<KBoolSort>)
-        it.assert(query.expr as KExpr<KBoolSort>)
-        for (softConstraint in softConstraints) {
-            it.assert(softConstraint.asAxiom() as KExpr<KBoolSort>)
-        }
+    private fun stringify(state: Bool_, query: Bool_, softConstraints: List<Bool_> = emptyList()): String =
+        KZ3Solver(ef.ctx).use {
+            it.assert(state.asAxiom() as KExpr<KBoolSort>)
+            it.assert(ef.buildConstClassAxioms().asAxiom() as KExpr<KBoolSort>)
+            it.assert(query.axiom as KExpr<KBoolSort>)
+            it.assert(query.expr as KExpr<KBoolSort>)
+            for (softConstraint in softConstraints) {
+                it.assert(softConstraint.asAxiom() as KExpr<KBoolSort>)
+            }
 
-        val solverProp = KZ3Solver::class.declaredMemberProperties.first { prop -> prop.name == "solver" }
-        solverProp.isAccessible = true
-        val z3SolverInternal = solverProp.get(it) as com.microsoft.z3.Solver
-        z3SolverInternal.toString()
-    }
+            val solverProp = KZ3Solver::class.declaredMemberProperties.first { prop -> prop.name == "solver" }
+            solverProp.isAccessible = true
+            val z3SolverInternal = solverProp.get(it) as com.microsoft.z3.Solver
+            z3SolverInternal.toString()
+        }
 
     private suspend fun check(state: Bool_, query: Bool_): Pair<KSolverStatus, Any> = runSolver { solver ->
         if (logFormulae) {
@@ -431,6 +465,7 @@ class KSMTSolver(
         }
 
         val indices = hashSetOf<Term>()
+        val coveredArrays = hashSetOf<Term>()
         for (ptr in ptrs) {
             val memspace = ptr.memspace
 
@@ -537,12 +572,12 @@ class KSMTSolver(
                             "length"
                         )
                         var (initialLength, finalLength) = (startLength.numericValue.toInt() to endLength.numericValue.toInt())
-                        // this is fucked up
+                        // this is bad, but we need it for safety
                         if (initialLength > maxArrayLength) {
                             log.warn("Reanimated length of an array is too big: $initialLength")
                             initialLength = maxArrayLength
                         }
-                        // this is fucked up
+                        // this is bad, but we need it for safety
                         if (finalLength > maxArrayLength) {
                             log.warn("Reanimated length of an array is too big: $finalLength")
                             finalLength = maxArrayLength
@@ -550,10 +585,13 @@ class KSMTSolver(
                         val maxLen = maxOf(initialLength, finalLength)
                         properties[memspace]!!["length"]!!.first[modelPtr] = term { const(initialLength) }
                         properties[memspace]!!["length"]!!.second[modelPtr] = term { const(finalLength) }
-                        for (i in 0 until maxLen) {
-                            val indexTerm = term { ptr[i] }
-                            if (indexTerm !in ptrs)
-                                indices += indexTerm
+                        if (modelPtr !in coveredArrays) {
+                            coveredArrays += modelPtr
+                            for (i in 0 until maxLen) {
+                                val indexTerm = term { ptr[i] }
+                                if (indexTerm !in ptrs)
+                                    indices += indexTerm
+                            }
                         }
                     } else if (ptr is ConstClassTerm || ptr is ClassAccessTerm) {
                         properties.recoverBitvectorProperty(

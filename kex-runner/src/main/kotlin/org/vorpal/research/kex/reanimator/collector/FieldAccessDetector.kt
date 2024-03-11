@@ -13,9 +13,9 @@ import org.vorpal.research.kex.state.transformer.ConstStringAdapter
 import org.vorpal.research.kex.state.transformer.KexRtAdapter
 import org.vorpal.research.kex.state.transformer.MethodInliner
 import org.vorpal.research.kex.state.transformer.StringMethodAdapter
-import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
 import org.vorpal.research.kex.state.transformer.collectFieldAccesses
+import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
@@ -26,6 +26,7 @@ val Method.fieldAccesses get() = MethodFieldAccessCollector.fieldAccessMap.getOr
 
 class MethodFieldAccessCollector(val ctx: ExecutionContext, val psa: PredicateStateAnalysis) : MethodVisitor {
     override val cm: ClassManager get() = ctx.cm
+
     companion object {
         val fieldAccessMap: Map<Method, Set<Field>> get() = methodAccessMap
 

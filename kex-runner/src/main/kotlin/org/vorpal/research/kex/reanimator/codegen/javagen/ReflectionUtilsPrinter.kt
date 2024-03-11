@@ -8,6 +8,7 @@ import org.vorpal.research.kex.util.kapitalize
 import org.vorpal.research.kex.util.testcaseDirectory
 import java.nio.file.Path
 
+@Suppress("MemberVisibilityCanBePrivate")
 class ReflectionUtilsPrinter(
     val packageName: String
 ) {
@@ -17,15 +18,18 @@ class ReflectionUtilsPrinter(
     val newArray: JavaBuilder.JavaFunction
     val newObjectArray: JavaBuilder.JavaFunction
     val newPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
-    @Suppress("MemberVisibilityCanBePrivate")
+
+    val accessField: JavaBuilder.JavaFunction
+
     val getField: JavaBuilder.JavaFunction
     val setField: JavaBuilder.JavaFunction
     val setPrimitiveFieldMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
+    val getPrimitiveFieldMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
     val setElement: JavaBuilder.JavaFunction
     val setPrimitiveElementMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
     val callConstructor: JavaBuilder.JavaFunction
     val callMethod: JavaBuilder.JavaFunction
-    val getModifiersField: JavaBuilder.JavaFunction
+    val getModifierField: JavaBuilder.JavaFunction
 
     companion object {
         const val REFLECTION_UTILS_CLASS = "ReflectionUtils"
@@ -44,6 +48,8 @@ class ReflectionUtilsPrinter(
                 utils
             }
         }
+
+        fun reflectionUtilsClasses(): Set<Path> = reflectionUtilsInstances.mapTo(mutableSetOf()) { it.key.first }
 
         @Suppress("unused")
         fun invalidateAll() {
@@ -79,7 +85,7 @@ class ReflectionUtilsPrinter(
                     }
                 }
 
-                getModifiersField = method("getModifiersField") {
+                getModifierField = method("getModifiersField") {
                     returnType = type("Field")
                     visibility = Visibility.PUBLIC
                     modifiers += "static"
@@ -98,6 +104,7 @@ class ReflectionUtilsPrinter(
                             +"}"
                             +"return mods"
                         }
+
                         else -> {
                             +"return Field.class.getDeclaredField(\"modifiers\")"
                         }
@@ -162,7 +169,7 @@ class ReflectionUtilsPrinter(
                     }
                 }
 
-                getField = method("getField") {
+                accessField = method("accessField") {
                     arguments += arg("klass", type("Class<?>"))
                     arguments += arg("name", type("String"))
                     returnType = type("Field")
@@ -186,6 +193,24 @@ class ReflectionUtilsPrinter(
                     +"return result"
                 }
 
+                getField = method("getField") {
+                    arguments += arg("instance", type("Object"))
+                    arguments += arg("klass", type("Class<?>"))
+                    arguments += arg("name", type("String"))
+                    returnType = type("Object")
+                    visibility = Visibility.PUBLIC
+                    modifiers += "static"
+                    exceptions += "Throwable"
+
+                    +"Field field = ${accessField.name}(klass, name)"
+                    +"Field mods = ${getModifierField.name}()"
+                    +"mods.setAccessible(true)"
+                    +"int modifiers = mods.getInt(field)"
+                    +"mods.setInt(field, modifiers & ~Modifier.FINAL)"
+                    +"field.setAccessible(true)"
+                    +"return field.get(instance)"
+                }
+
                 setField = method("setField") {
                     arguments += arg("instance", type("Object"))
                     arguments += arg("klass", type("Class<?>"))
@@ -196,8 +221,8 @@ class ReflectionUtilsPrinter(
                     modifiers += "static"
                     exceptions += "Throwable"
 
-                    +"Field field = ${getField.name}(klass, name)"
-                    +"Field mods = ${getModifiersField.name}()"
+                    +"Field field = ${accessField.name}(klass, name)"
+                    +"Field mods = ${getModifierField.name}()"
                     +"mods.setAccessible(true)"
                     +"int modifiers = mods.getInt(field)"
                     +"mods.setInt(field, modifiers & ~Modifier.FINAL)"
@@ -216,13 +241,30 @@ class ReflectionUtilsPrinter(
                         modifiers += "static"
                         exceptions += "Throwable"
 
-                        +"Field field = ${getField.name}(klass, name)"
-                        +"Field mods = ${getModifiersField.name}()"
+                        +"Field field = ${accessField.name}(klass, name)"
+                        +"Field mods = ${getModifierField.name}()"
                         +"mods.setAccessible(true)"
                         +"int modifiers = mods.getInt(field)"
                         +"mods.setInt(field, modifiers & ~Modifier.FINAL)"
                         +"field.setAccessible(true)"
                         +"field.set${type.kapitalize()}(instance, value)"
+                    }
+                    getPrimitiveFieldMap[type] = method("get${type.kapitalize()}Field") {
+                        arguments += arg("instance", type("Object"))
+                        arguments += arg("klass", type("Class<?>"))
+                        arguments += arg("name", type("String"))
+                        returnType = type(type)
+                        visibility = Visibility.PUBLIC
+                        modifiers += "static"
+                        exceptions += "Throwable"
+
+                        +"Field field = ${accessField.name}(klass, name)"
+                        +"Field mods = ${getModifierField.name}()"
+                        +"mods.setAccessible(true)"
+                        +"int modifiers = mods.getInt(field)"
+                        +"mods.setInt(field, modifiers & ~Modifier.FINAL)"
+                        +"field.setAccessible(true)"
+                        +"return field.get${type.kapitalize()}(instance)"
                     }
                 }
 

@@ -6,7 +6,7 @@ import org.vorpal.research.kthelper.`try`
 import java.io.ByteArrayOutputStream
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.Collections
+import java.util.*
 import javax.tools.JavaFileObject
 import javax.tools.StandardLocation
 import javax.tools.ToolProvider
@@ -18,6 +18,7 @@ abstract class CompilerDriver(val classPath: List<Path>, val outputDir: Path) {
 
 class CompilationException : KtException {
     constructor(message: String = "") : super(message)
+
     @Suppress("unused")
     constructor(message: String = "", throwable: Throwable) : super(message, throwable)
 }

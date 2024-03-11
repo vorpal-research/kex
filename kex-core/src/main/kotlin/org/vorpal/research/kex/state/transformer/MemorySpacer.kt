@@ -66,7 +66,7 @@ fun Term.dropMemspace(): Term = this.withMemspace(KexPointer.defaultMemspace)
 
 val Term.memspace: Int
     get() = (this.type as? KexPointer)?.memspace
-            ?: unreachable { log.error("Trying to get memspace of primary type: $type") }
+        ?: unreachable { log.error("Trying to get memspace of primary type: $type") }
 
 class MemorySpacer(ps: PredicateState) : Transformer<MemorySpacer> {
     private val aa = StensgaardAA().apply { apply(ps) }

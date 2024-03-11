@@ -7,7 +7,7 @@ import org.vorpal.research.kex.state.transformer.Transformer
 
 @InheritorOf("Term")
 @Serializable
-class LambdaTerm (
+class LambdaTerm(
     override val type: KexType,
     val parameters: List<Term>,
     val body: Term
@@ -17,7 +17,7 @@ class LambdaTerm (
     override val subTerms: List<Term>
         get() = parameters
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
         val tParams = parameters.map { t.transform(it) }
         return when (parameters) {
             tParams -> this

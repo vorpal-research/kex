@@ -22,6 +22,7 @@ class TermRemapper(
         return term { lambda(term.type, term.parameters, body) }
     }
 }
+
 class SymbolicStateTermRemapper(
     mapping: Map<Term, Term>
 ) {
@@ -55,6 +56,7 @@ class TermRenamer(
                 "${term.name}.$suffix"
             )
         }
+
         else -> term
     }
 

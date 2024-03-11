@@ -33,7 +33,7 @@ abstract class KSMTSMTMemory
     solver = "KSMT",
     importPackages = ["io.ksmt", "io.ksmt.decl", "io.ksmt.sort", "io.ksmt.expr"],
     context = "KContext",
-    contextInitializer = "simplificationMode = KContext.SimplificationMode.SIMPLIFY",
+    contextInitializer = "simplificationMode = KContext.SimplificationMode.NO_SIMPLIFY",
     generateString = generateStrings
 )
 abstract class KSMTSMTExprFactory

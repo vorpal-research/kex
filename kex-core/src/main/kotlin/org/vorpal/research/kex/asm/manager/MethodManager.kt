@@ -7,6 +7,7 @@ import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kthelper.assert.ktassert
@@ -55,9 +56,10 @@ object MethodManager {
         }
     }
 
+    @Suppress("ConstPropertyName")
     object IntrinsicManager {
         private const val intrinsicsClass = "kotlin/jvm/internal/Intrinsics"
-        private const val objectsClass = "java/util/Objects"
+        private const val objectsClass = SystemTypeNames.objectsClass
 
         fun checkParameterIsNotNull(cm: ClassManager) = synchronized(KexIntrinsicManager) {
             cm[intrinsicsClass].getMethod(

@@ -97,6 +97,7 @@ class ConstStringAdapter(
                 predicate.type,
                 predicate.location
             ) { predicate.lhv.map.call(predicate.callTerm) }
+
             else -> predicate(predicate.type, predicate.location) { call(predicate.callTerm) }
         }
     }

@@ -16,14 +16,11 @@ import kotlin.time.ExperimentalTime
 @InternalSerializationApi
 @DelicateCoroutinesApi
 class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalysisLauncher(classPaths, targetName) {
-    override fun prepareClassPath(ctx: ExecutionContext): Pipeline.() -> Unit = {
-//        +SymbolicTraceInstrumenter(ctx.cm)
-//        +ClassWriter(ctx, kexConfig.instrumentedCodeDirectory)
-    }
+    override fun prepareClassPath(ctx: ExecutionContext): Pipeline.() -> Unit = {}
 
     private val batchedTargets: Set<Set<Method>>
         get() = when (analysisLevel) {
-            is ClassLevel -> setOf(analysisLevel.klass.allMethods) //analysisLevel.klass.allMethods.mapTo(mutableSetOf()) { setOf(it) } //
+            is ClassLevel -> setOf(analysisLevel.klass.allMethods)
             is MethodLevel -> setOf(setOf(analysisLevel.method))
             is PackageLevel -> context.cm.getByPackage(analysisLevel.pkg).mapTo(mutableSetOf()) { it.allMethods }
         }
@@ -36,6 +33,7 @@ class ConcolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
                 InstructionConcolicChecker.run(context, setOfTargets)
             }
         }
-        reportCoverage(containers, context.cm, analysisLevel, "concolic")
+
+        reportCoverage(context.cm, containers, analysisLevel, "concolic")
     }
 }

@@ -69,6 +69,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
                 pointsTo[res] = newPts
                 res
             }
+
         lhv != null -> {
             val res = relations.findUnsafe(lhv)
             val pres = relations.findUnsafe(pointsTo(lhv))
@@ -76,6 +77,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
             pointsTo[lhv] = pres
             res
         }
+
         rhv != null -> {
             val res = relations.findUnsafe(rhv)
             val pres = relations.findUnsafe(pointsTo(rhv))
@@ -83,6 +85,7 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
             pointsTo[rhv] = pres
             res
         }
+
         else -> quasi()
     }
 

@@ -31,18 +31,27 @@
         <collections.version>0.3.5</collections.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
 
-        <kt-helper.version>0.1.13</kt-helper.version>
-        <kfg.version>0.4.12</kfg.version>
+        <kt-helper.version>0.1.14</kt-helper.version>
+        <kfg.version>0.4.15</kfg.version>
 
         <logback.version>1.2.11</logback.version>
         <slf4j.version>1.7.36</slf4j.version>
         <commons-cli.version>1.5.0</commons-cli.version>
+
+        <test.jvm.params>
+            -XX:+IgnoreUnrecognizedVMOptions
+            --add-opens=java.base/java.lang=ALL-UNNAMED
+            --add-opens=java.base/java.util=ALL-UNNAMED
+            --add-opens=java.base/java.math=ALL-UNNAMED
+            --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+            --illegal-access=warn
+        </test.jvm.params>
     </properties>
 
     <repositories>
         <repository>
-            <id>github-vorpal-research-kotlin-maven</id>
-            <url>https://maven.vorpal-research.science</url>
+            <id>github-apal-research-kotlin-maven</id>
+            <url>https://maven.apal-research.com</url>
         </repository>
     </repositories>
 

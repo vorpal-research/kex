@@ -182,6 +182,7 @@ class ObjectReanimator(
                         ?: return@memory fallback()
                     loader.loadClass(context.types, klassType)
                 }
+
                 else -> fallback()
             }
         }
@@ -231,6 +232,7 @@ class ObjectReanimator(
                 Array.set(array, index.numericValue.toInt(), reanimatedValue)
                 array
             }
+
             is FieldTerm -> {
                 val (instance, klass) = when {
                     term.isStatic -> {
@@ -239,6 +241,7 @@ class ObjectReanimator(
                         if (`class`.isSynthetic) return null
                         null to `class`
                     }
+
                     else -> {
                         val objectRef = term.owner
                         val objectAddr = (reanimateFromAssignment(objectRef) as ConstIntTerm).value
@@ -282,6 +285,7 @@ class ObjectReanimator(
                 }
                 instance
             }
+
             else -> unreachable { log.error("Unknown reference term: $term with address $addr") }
         }
     }
@@ -325,6 +329,7 @@ class ObjectReanimator(
                     )
                 )
             }
+
             is KexArray -> {
                 val memspace = term.memspace//referencedType.memspace
                 val instance = newArrayInstance(referencedType, addr)
@@ -343,6 +348,7 @@ class ObjectReanimator(
                 }
                 memory(memspace, address, instance)
             }
+
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }
     }
@@ -417,6 +423,7 @@ abstract class DescriptorReanimator(
                                         (reanimateString(term.memspace, addr) as? ConstStringTerm)?.value ?: ""
                                     string(strValue)
                                 }
+
                                 term.type.isJavaClass -> {
                                     val typeIndex =
                                         reanimateFromProperties(term.memspace, ConstClassTerm.TYPE_INDEX_PROPERTY, addr)
@@ -425,6 +432,7 @@ abstract class DescriptorReanimator(
                                         ?: return@memory default(term.type, nullable = false)
                                     klass(klassType)
                                 }
+
                                 else -> `object`(reanimatedType)
                             }
                         }.also {
@@ -440,6 +448,7 @@ abstract class DescriptorReanimator(
                             }
                         }
                     }
+
                     is KexArray -> {
                         val res = memory(term.memspace, address) {
                             newArrayInstance(
@@ -464,6 +473,7 @@ abstract class DescriptorReanimator(
                         }
                         res
                     }
+
                     else -> unreachable {
                         log.error("Type resolving failed: actual type: ${term.type}, resolved type: $reanimatedType")
                     }
@@ -538,6 +548,7 @@ abstract class DescriptorReanimator(
                 array[index.numericValue.toInt()] = reanimatedValue
                 array
             }
+
             is FieldTerm -> {
                 val ownerRef = term.owner
                 val ownerAddress = (reanimateFromAssignment(ownerRef) as ConstIntTerm).value
@@ -556,12 +567,14 @@ abstract class DescriptorReanimator(
                         instance[fieldName, fieldType] = reanimatedValue
                         instance
                     }
+
                     else -> {
                         reanimate(ownerRef)
                         unreachable { log.error("Unknown type of field owner") }
                     }
                 }
             }
+
             else -> unreachable { log.error("Unknown reference term: $term with address $addr") }
         }
     }
@@ -619,6 +632,7 @@ abstract class DescriptorReanimator(
                 }
                 res
             }
+
             else -> unreachable { log.error("Trying to recover reference pointer that is not pointer") }
         }
     }

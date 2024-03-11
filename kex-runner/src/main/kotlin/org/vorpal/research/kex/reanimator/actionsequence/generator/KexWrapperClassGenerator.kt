@@ -35,7 +35,8 @@ class KexWrapperClassGenerator(val fallback: Generator) : Generator {
         context.cm.doubleWrapper.rtMapped.kexType
     )
 
-    override fun supports(descriptor: Descriptor): Boolean = descriptor.type in supportedTypes && descriptor is ObjectDescriptor
+    override fun supports(descriptor: Descriptor): Boolean =
+        descriptor.type in supportedTypes && descriptor is ObjectDescriptor
 
     override fun generate(descriptor: Descriptor, generationDepth: Int): ActionSequence = with(context) {
         descriptor as ObjectDescriptor

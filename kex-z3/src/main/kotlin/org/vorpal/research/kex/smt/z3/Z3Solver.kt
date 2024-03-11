@@ -269,8 +269,9 @@ class Z3Solver(
             when (ptr) {
                 is ArrayLoadTerm -> {}
                 is ArrayIndexTerm -> {
-                    val arrayPtrExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
-                        ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
+                    val arrayPtrExpr =
+                        Z3Converter(executionContext, noAxioms = true).convert(ptr.arrayRef, ef, ctx) as? Ptr_
+                            ?: unreachable { log.error("Non-ptr expr for pointer $ptr") }
                     val indexExpr = Z3Converter(executionContext, noAxioms = true).convert(ptr.index, ef, ctx) as? Int_
                         ?: unreachable { log.error("Non integer expr for index in $ptr") }
 

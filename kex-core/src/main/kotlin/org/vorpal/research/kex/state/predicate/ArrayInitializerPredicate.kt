@@ -11,10 +11,11 @@ import org.vorpal.research.kfg.ir.Location
 @InheritorOf("Predicate")
 @Serializable
 class ArrayInitializerPredicate(
-        val arrayRef: Term,
-        val value: Term,
-        @Required override val type: PredicateType = PredicateType.State(),
-        @Required @Contextual override val location: Location = Location()) : Predicate() {
+    val arrayRef: Term,
+    val value: Term,
+    @Required override val type: PredicateType = PredicateType.State(),
+    @Required @Contextual override val location: Location = Location()
+) : Predicate() {
     override val operands by lazy { listOf(arrayRef, value) }
 
     override fun print() = "init *($arrayRef) = $value"

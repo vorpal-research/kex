@@ -18,9 +18,10 @@ abstract class AnnotationInfo {
     internal lateinit var mutableCall: AnnotatedCall
 
     val name: String by lazy {
-        val annotation = this::class.findAnnotation<AnnotationFunctionality>() ?:
-            throw IllegalStateException("functionality class not annotated with " +
-                    "\"${AnnotationFunctionality::class.qualifiedName}\"")
+        val annotation = this::class.findAnnotation<AnnotationFunctionality>() ?: throw IllegalStateException(
+            "functionality class not annotated with " +
+                    "\"${AnnotationFunctionality::class.qualifiedName}\""
+        )
         annotation.name
     }
 

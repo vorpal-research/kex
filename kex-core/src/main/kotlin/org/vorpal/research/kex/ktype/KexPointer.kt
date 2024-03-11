@@ -52,8 +52,9 @@ class KexClass(val klass: String, override val memspace: Int = defaultMemspace) 
 @InheritorOf("KexType")
 @Serializable
 class KexArray(
-        val element: KexType,
-        override val memspace: Int = defaultMemspace) : KexPointer() {
+    val element: KexType,
+    override val memspace: Int = defaultMemspace
+) : KexPointer() {
     override val name: String
         get() = "$element[]"
 
@@ -76,8 +77,9 @@ class KexArray(
 @InheritorOf("KexType")
 @Serializable
 class KexReference(
-        val reference: KexType,
-        override val memspace: Int = defaultMemspace) : KexPointer() {
+    val reference: KexType,
+    override val memspace: Int = defaultMemspace
+) : KexPointer() {
     override val name: String
         get() = "&($reference)"
 
@@ -123,9 +125,11 @@ fun KexType.unreferenced(): KexType = when (this) {
 
 fun KexType.asArray() = KexArray(this)
 val KexType.isArray get() = this is KexArray
+
 @Suppress("FunctionName")
 fun KexString() = KexClass(SystemTypeNames.stringClass)
 val KexType.isString get() = this is KexClass && this.klass == SystemTypeNames.stringClass
+
 @Suppress("FunctionName")
 fun KexJavaClass() = KexClass(SystemTypeNames.classClass)
 

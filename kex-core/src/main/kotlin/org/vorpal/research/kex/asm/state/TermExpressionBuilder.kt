@@ -133,15 +133,17 @@ class TermExpressionBuilder(override val cm: ClassManager) : TermBuilder, Method
         type: Type,
         index: Int,
         incomings: List<Pair<BasicBlock, Value>>,
-        default: Term): Term = when {
-            index < incomings.size -> ite(
-                type.kexType,
-                incomings[index].first.condition,
-                incomings[index].second.term,
-                mkIte(type, index + 1, incomings, default)
-            )
-            else -> default
-        }
+        default: Term
+    ): Term = when {
+        index < incomings.size -> ite(
+            type.kexType,
+            incomings[index].first.condition,
+            incomings[index].second.term,
+            mkIte(type, index + 1, incomings, default)
+        )
+
+        else -> default
+    }
 
     override fun visitPhiInst(inst: PhiInst) {
         termMap[inst] = mkIte(inst.type, 0, inst.incomings.toList(), default(inst.type.kexType))

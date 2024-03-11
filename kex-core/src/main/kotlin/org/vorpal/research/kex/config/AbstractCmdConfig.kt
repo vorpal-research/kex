@@ -22,6 +22,7 @@ abstract class AbstractCmdConfig(
     protected val options = Options()
     protected val commandLineOptions = hashMapOf<String, MutableMap<String, String>>()
     protected val cmd: CommandLine
+
     @Suppress("unused")
     val argList: List<String> get() = cmd.argList
 

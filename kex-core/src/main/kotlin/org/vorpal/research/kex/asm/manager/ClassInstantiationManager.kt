@@ -39,6 +39,18 @@ interface ClassInstantiationManager {
             else -> type
         }
 
+    fun getAll(type: Type, accessLevel: AccessModifier, excludes: Set<Class>): Set<Type> =
+        when (type) {
+            is ClassType -> getAllConcreteSubtypes(type.klass, accessLevel)
+                .filter { it !in excludes }
+                .mapTo(mutableSetOf()) { it.asType }
+
+            is ArrayType -> getAll(type.component, accessLevel, excludes)
+                .mapTo(mutableSetOf()) { it.asArray }
+
+            else -> setOf(type)
+        }
+
     fun getAllConcreteSubtypes(klass: Class, accessLevel: AccessModifier): Set<Class>
 
     fun getConcreteClass(klass: KexClass, cm: ClassManager, accessLevel: AccessModifier, random: Random): KexClass =

@@ -58,6 +58,7 @@ class Checker(
     private val builder get() = psa.builder(method)
     lateinit var state: PredicateState
         private set
+
     @Suppress("MemberVisibilityCanBePrivate")
     lateinit var query: PredicateState
         private set

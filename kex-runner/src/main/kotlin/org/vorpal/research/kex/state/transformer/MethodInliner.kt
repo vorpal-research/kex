@@ -60,6 +60,7 @@ interface Inliner<T> : RecollectingTransformer<Inliner<T>> {
                     }
                     casts += casted
                 }
+
                 else -> {
                     mappings[argTerm] = calledArg
                 }

@@ -13,7 +13,8 @@ class ObjectTraceManager : TraceManager<ActionTrace>() {
     private val methodInfos = mutableMapOf<MethodWrapper, MutableSet<ActionTrace>>()
     private val fullTraces = mutableSetOf<ActionTrace>()
 
-    override fun getTraces(method: Method): List<ActionTrace> = methodInfos.getOrDefault(method.wrapper, mutableSetOf()).toList()
+    override fun getTraces(method: Method): List<ActionTrace> =
+        methodInfos.getOrDefault(method.wrapper, mutableSetOf()).toList()
 
     override fun addTrace(method: Method, trace: ActionTrace) {
         fullTraces += trace
@@ -25,16 +26,21 @@ class ObjectTraceManager : TraceManager<ActionTrace>() {
                     traceStack.push(mutableListOf(action))
                     methodStack.push(action.method)
                 }
+
                 is StaticInitEntry -> {
                     traceStack.push(mutableListOf(action))
                     methodStack.push(action.method)
                 }
+
                 is MethodReturn, is MethodThrow, is StaticInitExit -> {
                     val methodTrace = traceStack.pop()
                     methodTrace += action
                     methodInfos.getOrPut(methodStack.pop(), ::mutableSetOf) += ActionTrace(methodTrace)
                 }
-                is MethodCall -> { /* do nothing */ }
+
+                is MethodCall -> { /* do nothing */
+                }
+
                 is MethodAction -> unreachable { log.error("Unknown method action: $action") }
                 else -> {
                     traceStack.peek() += action
@@ -50,7 +56,7 @@ class ObjectTraceManager : TraceManager<ActionTrace>() {
     }
 
     override fun isCovered(bb: BasicBlock): Boolean =
-            bb.wrapper?.let {
-                methodInfos[bb.method.wrapper]?.any { trace -> trace.isCovered(it) }
-            } ?: false
+        bb.wrapper?.let {
+            methodInfos[bb.method.wrapper]?.any { trace -> trace.isCovered(it) }
+        } ?: false
 }

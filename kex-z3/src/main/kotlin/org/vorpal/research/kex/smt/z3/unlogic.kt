@@ -31,6 +31,7 @@ object Z3Unlogic {
                 }
             }
         }
+
         expr.isBVExtract -> undo(expr.args[0])
         expr.isBVNOT -> {
             when (val value = undo(expr.args[0])) {
@@ -39,6 +40,7 @@ object Z3Unlogic {
                 else -> TODO()
             }
         }
+
         expr.isApp -> when {
             expr.funcDecl.name.toString() == "fp.to_ieee_bv" -> {
                 when (val fp = undo(expr.args[0])) {
@@ -47,54 +49,65 @@ object Z3Unlogic {
                     else -> TODO()
                 }
             }
+
             expr.isBVAdd -> {
                 val arg1 = undo(expr.args[0])
                 val arg2 = undo(expr.args[1])
                 term { const(arg1.numericValue + arg2.numericValue) }
             }
+
             expr.isBVSub -> {
                 val arg1 = undo(expr.args[0])
                 val arg2 = undo(expr.args[1])
                 term { const(arg1.numericValue - arg2.numericValue) }
             }
+
             expr.isBVMul -> {
                 val arg1 = undo(expr.args[0])
                 val arg2 = undo(expr.args[1])
                 term { const(arg1.numericValue * arg2.numericValue) }
             }
+
             expr.isBVSDiv -> {
                 val arg1 = undo(expr.args[0])
                 val arg2 = undo(expr.args[1])
                 term { const(arg1.numericValue / arg2.numericValue) }
             }
+
             expr.isITE -> {
                 val cond = undo(expr.args[0]) as ConstBoolTerm
                 if (cond.value) undo(expr.args[1]) else undo(expr.args[2])
             }
+
             expr.isBVConcat -> {
                 val first = undo(expr.args[0]).numericValue
                 val second = undo(expr.args[1]).numericValue
                 term { const(first * (10.0.pow(second.toString().length)) + second) }
             }
+
             expr.isBVOR -> {
                 val first = undo(expr.args[0]).numericValue
                 val second = undo(expr.args[1]).numericValue
                 term { const(first or second) }
             }
+
             expr.isBVAND -> {
                 val first = undo(expr.args[0]).numericValue
                 val second = undo(expr.args[1]).numericValue
                 term { const(first and second) }
             }
+
             expr.isBVXOR -> {
                 val first = undo(expr.args[0]).numericValue
                 val second = undo(expr.args[1]).numericValue
                 term { const(first xor second) }
             }
+
             expr.isConst -> {
                 val value = expr.toString().replace("|", "")
                 term { const(value) }
             }
+
             else -> unreachable { log.error("Not implemented unlogic SMT operation: $expr") }
         }
         // todo: support more bv expressions
@@ -126,6 +139,7 @@ object Z3Unlogic {
             }
             term { const(value) }
         }
+
         else -> term { const(expr.long.toInt()) }
     }
 

@@ -28,6 +28,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 
+@Suppress("unused")
 @ExperimentalSerializationApi
 @InternalSerializationApi
 class DescriptorChecker(
@@ -67,6 +68,7 @@ class DescriptorChecker(
                     throw KexRunnerException(e, Parameters(instance, args, setOf()))
                 }
             }
+
             is Result.UnsatResult -> log.debug("Instruction ${block.terminator.print()} is unreachable")
             is Result.UnknownResult -> log.debug(
                 "Can't decide on reachability of " +
@@ -112,15 +114,26 @@ class DescriptorChecker(
                     null
                 }
             }
+
             is Result.UnsatResult -> null
             is Result.UnknownResult -> null
         }
     }
 
 
-    private fun Set<TypeInfo>.concretize(): Set<TypeInfo> = this.mapTo(mutableSetOf()) { tryOrNull { it.concretize() } ?: it }
+    private fun Set<TypeInfo>.concretize(): Set<TypeInfo> =
+        this.mapTo(mutableSetOf()) { tryOrNull { it.concretize() } ?: it }
+
     private fun TypeInfo.concretize(): TypeInfo = when (this) {
-        is CastTypeInfo -> CastTypeInfo(instantiationManager.getConcreteType(this.type, cm, ctx.accessLevel, ctx.random))
+        is CastTypeInfo -> CastTypeInfo(
+            instantiationManager.getConcreteType(
+                this.type,
+                cm,
+                ctx.accessLevel,
+                ctx.random
+            )
+        )
+
         else -> this
     }
 }

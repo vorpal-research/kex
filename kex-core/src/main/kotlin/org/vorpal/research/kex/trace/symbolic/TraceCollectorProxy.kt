@@ -39,7 +39,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         retType: String,
         instance: Any?,
         args: List<Any?>
-    ) {}
+    ) {
+    }
 
     override fun arrayLoad(
         value: String,
@@ -48,7 +49,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         concreteValue: Any?,
         concreteRef: Any?,
         concreteIndex: Any?
-    ) {}
+    ) {
+    }
 
     override fun arrayStore(
         inst: String,
@@ -58,7 +60,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         concreteRef: Any?,
         concreteIndex: Any?,
         concreteValue: Any?
-    ) {}
+    ) {
+    }
 
     override fun binary(
         value: String,
@@ -67,7 +70,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         concreteValue: Any?,
         concreteLhv: Any?,
         concreteRhv: Any?
-    ) {}
+    ) {
+    }
 
     override fun branch(inst: String, condition: String) {}
 
@@ -81,7 +85,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         callee: String?,
         arguments: List<String>,
         concreteArguments: List<Any?>
-    ) {}
+    ) {
+    }
 
     override fun cast(value: String, operand: String, concreteValue: Any?, concreteOperand: Any?) {}
 
@@ -93,7 +98,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         rhv: String,
         concreteLhv: Any?,
         concreteRhv: Any?
-    ) {}
+    ) {
+    }
 
     override fun enterMonitor(inst: String, operand: String, concreteOperand: Any?) {}
 
@@ -107,7 +113,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         type: String,
         concreteValue: Any?,
         concreteOwner: Any?
-    ) {}
+    ) {
+    }
 
     override fun fieldStore(
         inst: String,
@@ -118,7 +125,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         value: String,
         concreteValue: Any?,
         concreteOwner: Any?
-    ) {}
+    ) {
+    }
 
     override fun instanceOf(value: String, operand: String, concreteValue: Any?, concreteOperand: Any?) {}
 
@@ -127,7 +135,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         operands: List<String>,
         concreteValue: Any?,
         concreteOperands: List<Any?>
-    ) {}
+    ) {
+    }
 
     override fun jump(inst: String) {}
 
@@ -136,7 +145,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         dimensions: List<String>,
         concreteValue: Any?,
         concreteDimensions: List<Any?>
-    ) {}
+    ) {
+    }
 
     override fun new(value: String) {}
 
@@ -164,7 +174,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
         index: String,
         concreteArray: Any?,
         concreteIndex: Any?
-    ) {}
+    ) {
+    }
 
     override fun addArrayLengthConstraints(inst: String, length: String, concreteLength: Any?) {}
 }

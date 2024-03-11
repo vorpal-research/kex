@@ -13,13 +13,13 @@ import org.vorpal.research.kex.reanimator.collector.SetterCollector
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.analysis.LoopSimplifier
 import org.vorpal.research.kfg.visitor.Pipeline
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executePackagePipeline
 
 internal fun preparePackage(
     ctx: ExecutionContext,
     psa: PredicateStateAnalysis,
     pkg: Package
-) = executePipeline(ctx.cm, pkg) {
+) = executePackagePipeline(ctx.cm, pkg) {
     +MethodWrapperInitializer(ctx.cm)
     +LoopSimplifier(ctx.cm)
     +LoopDeroller(ctx.cm)
@@ -30,12 +30,13 @@ internal fun preparePackage(
 }
 
 @ExperimentalSerializationApi
-class DefectCheckerLauncher(classPaths: List<String>, targetName: String) : KexAnalysisLauncher(classPaths, targetName) {
+class DefectCheckerLauncher(classPaths: List<String>, targetName: String) :
+    KexAnalysisLauncher(classPaths, targetName) {
     override fun launch() {
         val psa = PredicateStateAnalysis(context.cm)
 
         preparePackage(context, psa, Package.defaultPackage)
-        runPipeline(context ,analysisLevel) {
+        runPipeline(context, analysisLevel) {
             +DefectChecker(context, psa)
         }
 

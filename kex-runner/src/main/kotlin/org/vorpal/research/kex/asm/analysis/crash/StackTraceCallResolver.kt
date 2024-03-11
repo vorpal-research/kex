@@ -29,7 +29,7 @@ class StackTraceCallResolver(
             currentTrace.size < stackTraceLines.lastIndex
                     && currentTrace.withIndex().all { (index, it) -> it eq stackTraceLines[index] }
                     && (inst.method.name == stackTraceLines[currentTrace.size].methodName
-                    && inst.method.klass.fullName.javaString == stackTraceLines[currentTrace.size].className)-> {
+                    && inst.method.klass.fullName.javaString == stackTraceLines[currentTrace.size].className) -> {
                 val res = listOf(inst.method.cm[stackTraceLines[currentTrace.size]].rtMapped)
                 res
             }

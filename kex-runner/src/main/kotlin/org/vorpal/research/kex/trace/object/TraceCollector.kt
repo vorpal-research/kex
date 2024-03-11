@@ -41,11 +41,17 @@ interface TraceCollector {
     fun blockSwitch(blockName: String, key: Any?)
 }
 
+@Suppress("unused")
 private class ActualTraceCollector(val cm: ClassManager, val ctx: NameMapperContext) : TraceCollector {
     override val trace = arrayListOf<Action>()
     private val stack = stackOf<MethodWrapper>()
 
-    private fun parseMethod(className: String, methodName: String, args: Array<String>, retType: String): MethodWrapper {
+    private fun parseMethod(
+        className: String,
+        methodName: String,
+        args: Array<String>,
+        retType: String
+    ): MethodWrapper {
         return MethodWrapper(className, methodName, args.toList(), retType)
     }
 
@@ -135,7 +141,8 @@ private object TraceCollectorStub : TraceCollector {
     override fun methodEnter(
         className: String, methodName: String, argTypes: Array<String>, retType: String,
         instance: Any?, args: Array<Any?>
-    ) {}
+    ) {
+    }
 
     override fun methodReturn(blockName: String) {}
     override fun methodReturn(blockName: String, value: Any) {}
@@ -143,7 +150,8 @@ private object TraceCollectorStub : TraceCollector {
     override fun methodCall(
         className: String, methodName: String, argTypes: Array<String>, retType: String,
         returnValueName: String?, instanceName: String?, argNames: Array<String>
-    ) {}
+    ) {
+    }
 
     override fun staticEntry(className: String) {}
     override fun staticExit() {}
@@ -155,6 +163,7 @@ private object TraceCollectorStub : TraceCollector {
 }
 
 
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 object TraceCollectorProxy {
     var collector: TraceCollector = TraceCollectorStub
         private set

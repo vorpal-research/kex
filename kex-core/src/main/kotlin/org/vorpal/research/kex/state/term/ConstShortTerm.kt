@@ -13,5 +13,5 @@ class ConstShortTerm(val value: Short) : Term() {
     override val type: KexType = KexShort
     override val subTerms by lazy { listOf<Term>() }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
+    override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
 }

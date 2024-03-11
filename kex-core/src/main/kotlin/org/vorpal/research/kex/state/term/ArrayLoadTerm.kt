@@ -11,9 +11,9 @@ class ArrayLoadTerm(override val type: KexType, val arrayRef: Term) : Term() {
     override val name = "*($arrayRef)"
     override val subTerms by lazy { listOf(arrayRef) }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term =
-            when (val tArrayRef = t.transform(arrayRef)) {
-                arrayRef -> this
-                else -> term { termFactory.getArrayLoad(type, tArrayRef) }
-            }
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
+        when (val tArrayRef = t.transform(arrayRef)) {
+            arrayRef -> this
+            else -> term { termFactory.getArrayLoad(type, tArrayRef) }
+        }
 }

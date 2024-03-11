@@ -100,6 +100,8 @@ sealed class ClauseList : Iterable<Clause> {
 
     abstract fun subState(startInclusive: Int, endExclusive: Int): ClauseList
 
+    open fun subState(endExclusive: Int): ClauseList = subState(0, endExclusive)
+
     abstract operator fun plus(other: ClauseList): ClauseList
     abstract operator fun plus(other: Clause): ClauseList
     override fun toString(): String {
@@ -171,14 +173,27 @@ data class PersistentClauseList(
 
     override fun lastIndexOf(element: Clause): Int = state.lastIndexOf(element)
 
-    override fun subState(startInclusive: Int, endExclusive: Int): PersistentClauseList =
-        PersistentClauseList(state.subList(startInclusive, endExclusive).toPersistentList())
+    override fun subState(startInclusive: Int, endExclusive: Int): PersistentClauseList = when (startInclusive) {
+        0 -> subState(endExclusive)
+        else -> PersistentClauseList(state.subList(startInclusive, endExclusive).toPersistentList())
+    }
+
+    override fun subState(endExclusive: Int): PersistentClauseList {
+        var newClauses = state
+        var index = size - 1
+        repeat(size - endExclusive) {
+            newClauses = newClauses.removeAt(index--)
+        }
+        return PersistentClauseList(newClauses)
+    }
 
     override fun subList(fromIndex: Int, toIndex: Int): PersistentList<Clause> =
         state.subList(fromIndex, toIndex).toPersistentList()
 
     override fun plus(other: ClauseList): PersistentClauseList = PersistentClauseList(state.addAll(other.state))
     override fun plus(other: Clause): PersistentClauseList = PersistentClauseList(state.add(other))
+
+    fun dropLast(n: Int): PersistentClauseList = subState(maxOf(0, size - n))
 }
 
 @Serializable
@@ -186,6 +201,7 @@ sealed class PathCondition : Iterable<PathClause> {
     abstract val path: List<PathClause>
     override fun iterator(): Iterator<PathClause> = path.iterator()
     abstract fun subPath(startInclusive: Int, endExclusive: Int): PathCondition
+    open fun subPath(endExclusive: Int): PathCondition = subPath(0, endExclusive)
     fun asState() = BasicState(path.map { it.predicate })
 
     abstract operator fun plus(other: PathCondition): PathCondition
@@ -263,11 +279,22 @@ data class PersistentPathCondition(
         subList(startInclusive, endExclusive).toPersistentList()
     )
 
+    override fun subPath(endExclusive: Int): PersistentPathCondition {
+        var newPath = path
+        var index = size - 1
+        repeat(size - endExclusive) {
+            newPath = newPath.removeAt(index--)
+        }
+        return PersistentPathCondition(newPath)
+    }
+
     override fun subList(fromIndex: Int, toIndex: Int): PersistentList<PathClause> =
         path.subList(fromIndex, toIndex).toPersistentList()
 
     override fun plus(other: PathCondition): PersistentPathCondition = PersistentPathCondition(path.addAll(other.path))
     override fun plus(other: PathClause): PersistentPathCondition = PersistentPathCondition(path.add(other))
+
+    fun dropLast(n: Int): PersistentPathCondition = subPath(maxOf(0, size - n))
 }
 
 @Serializable
@@ -297,11 +324,29 @@ abstract class SymbolicState {
     abstract operator fun plus(other: PathClause): SymbolicState
     abstract operator fun plus(other: ClauseList): SymbolicState
     abstract operator fun plus(other: PathCondition): SymbolicState
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SymbolicState
+
+        if (clauses != other.clauses) return false
+        if (path != other.path) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = clauses.hashCode()
+        result = 31 * result + path.hashCode()
+        return result
+    }
 }
 
 @Serializable
 @SerialName("SymbolicStateImpl")
-internal data class SymbolicStateImpl(
+internal class SymbolicStateImpl(
     override val clauses: ClauseList,
     override val path: PathCondition,
     override val concreteTypes: @Contextual Map<Term, KexType>,
@@ -315,15 +360,19 @@ internal data class SymbolicStateImpl(
         concreteValues = concreteValues + other.concreteValues,
         termMap = termMap + other.termMap
     )
+
     override fun plus(other: StateClause): SymbolicState = copy(
         clauses = clauses + other
     )
+
     override fun plus(other: PathClause): SymbolicState = copy(
         path = path + other,
     )
+
     override fun plus(other: ClauseList): SymbolicState = copy(
         clauses = clauses + other
     )
+
     override fun plus(other: PathCondition): SymbolicState = copy(
         path = path + other,
     )
@@ -331,17 +380,28 @@ internal data class SymbolicStateImpl(
     override fun toString(): String {
         return "SymbolicStateImpl(clauses=$clauses, path=$path)"
     }
+
+    fun copy(
+        clauses: ClauseList = this.clauses,
+        path: PathCondition = this.path,
+        concreteTypes: Map<Term, KexType> = this.concreteTypes,
+        concreteValues: Map<Term, Descriptor> = this.concreteValues,
+        termMap: Map<Term, WrappedValue> = this.termMap,
+    ): SymbolicState = SymbolicStateImpl(
+        clauses, path, concreteTypes, concreteValues, termMap
+    )
 }
 
 @Serializable
 @SerialName("PersistentSymbolicState")
-data class PersistentSymbolicState(
+class PersistentSymbolicState(
     override val clauses: PersistentClauseList,
     override val path: PersistentPathCondition,
     override val concreteTypes: @Contextual PersistentMap<Term, KexType>,
     override val concreteValues: @Contextual PersistentMap<Term, @Contextual Descriptor>,
     override val termMap: @Contextual PersistentMap<Term, @Contextual WrappedValue>,
 ) : SymbolicState() {
+
     override fun toString() = clauses.joinToString("\n") { it.predicate.toString() }
 
     override fun plus(other: SymbolicState): PersistentSymbolicState = PersistentSymbolicState(
@@ -351,17 +411,31 @@ data class PersistentSymbolicState(
         concreteValues = concreteValues.putAll(other.concreteValues),
         termMap = termMap.putAll(other.termMap)
     )
+
     override fun plus(other: StateClause): PersistentSymbolicState = copy(
         clauses = clauses + other
     )
+
     override fun plus(other: PathClause): PersistentSymbolicState = copy(
         path = path + other,
     )
+
     override fun plus(other: ClauseList): PersistentSymbolicState = copy(
         clauses = clauses + other
     )
+
     override fun plus(other: PathCondition): PersistentSymbolicState = copy(
         path = path + other,
+    )
+
+    fun copy(
+        clauses: PersistentClauseList = this.clauses,
+        path: PersistentPathCondition = this.path,
+        concreteTypes: PersistentMap<Term, KexType> = this.concreteTypes,
+        concreteValues: PersistentMap<Term, Descriptor> = this.concreteValues,
+        termMap: PersistentMap<Term, WrappedValue> = this.termMap,
+    ): PersistentSymbolicState = PersistentSymbolicState(
+        clauses, path, concreteTypes, concreteValues, termMap
     )
 }
 

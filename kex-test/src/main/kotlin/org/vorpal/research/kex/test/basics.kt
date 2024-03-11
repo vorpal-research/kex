@@ -1,4 +1,5 @@
-@file:Suppress("UNUSED_VARIABLE", "KotlinConstantConditions", "unused", "ConvertTwoComparisonsToRangeCheck",
+@file:Suppress(
+    "UNUSED_VARIABLE", "KotlinConstantConditions", "unused", "ConvertTwoComparisonsToRangeCheck",
     "MemberVisibilityCanBePrivate", "SpellCheckingInspection"
 )
 

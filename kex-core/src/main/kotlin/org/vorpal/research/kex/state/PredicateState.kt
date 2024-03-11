@@ -78,6 +78,7 @@ open class StateBuilder() : PredicateBuilder {
     inline fun assume(body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.Assume().body()
     }
+
     inline fun assume(location: Location, body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.Assume(location).body()
     }
@@ -85,6 +86,7 @@ open class StateBuilder() : PredicateBuilder {
     inline fun axiom(body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.Axiom().body()
     }
+
     inline fun axiom(location: Location, body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.Axiom(location).body()
     }
@@ -92,6 +94,7 @@ open class StateBuilder() : PredicateBuilder {
     inline fun state(body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.State().body()
     }
+
     inline fun state(location: Location, body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.State(location).body()
     }
@@ -99,6 +102,7 @@ open class StateBuilder() : PredicateBuilder {
     inline fun path(body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.Path().body()
     }
+
     inline fun path(location: Location, body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.Path(location).body()
     }
@@ -106,6 +110,7 @@ open class StateBuilder() : PredicateBuilder {
     inline fun require(body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.Require().body()
     }
+
     inline fun require(location: Location, body: PredicateBuilder.() -> Predicate) {
         this += PredicateBuilder.Require(location).body()
     }
@@ -119,14 +124,15 @@ open class StateBuilder() : PredicateBuilder {
         else -> fail { log.error("Unknown predicate type $type") }
     }
 
-    inline fun predicate(type: PredicateType, location: Location, body: PredicateBuilder.() -> Predicate) = when (type) {
-        is PredicateType.Assume -> assume(location, body)
-        is PredicateType.Axiom -> axiom(location, body)
-        is PredicateType.Require -> require(location, body)
-        is PredicateType.State -> state(location, body)
-        is PredicateType.Path -> path(location, body)
-        else -> fail { log.error("Unknown predicate type $type") }
-    }
+    inline fun predicate(type: PredicateType, location: Location, body: PredicateBuilder.() -> Predicate) =
+        when (type) {
+            is PredicateType.Assume -> assume(location, body)
+            is PredicateType.Axiom -> axiom(location, body)
+            is PredicateType.Require -> require(location, body)
+            is PredicateType.State -> state(location, body)
+            is PredicateType.Path -> path(location, body)
+            else -> fail { log.error("Unknown predicate type $type") }
+        }
 }
 
 inline fun basic(body: StateBuilder.() -> Unit): PredicateState {
@@ -182,7 +188,7 @@ abstract class PredicateState : InheritanceTypeInfo {
         val states = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("PredicateState.json")
-                    ?: unreachable { log.error("No info about PS inheritors") }
+                ?: unreachable { log.error("No info about PS inheritors") }
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
@@ -221,7 +227,7 @@ abstract class PredicateState : InheritanceTypeInfo {
 
     fun take(n: Int): PredicateState {
         var counter = 0
-        return this.filter { counter++ < n  }
+        return this.filter { counter++ < n }
     }
 
     fun takeLast(n: Int): PredicateState = reverse().take(n).reverse()
@@ -242,6 +248,7 @@ abstract class PredicateState : InheritanceTypeInfo {
                     found = true
                     false
                 }
+
                 else -> true
             }
         }
@@ -258,6 +265,7 @@ abstract class PredicateState : InheritanceTypeInfo {
                     found = true
                     true
                 }
+
                 else -> false
             }
         }

@@ -12,11 +12,12 @@ import javax.lang.model.element.TypeElement
 import kotlin.reflect.KClass
 
 @SupportedAnnotationTypes(
-        "org.vorpal.research.kex.smt.SMTExpr",
-        "org.vorpal.research.kex.smt.SMTMemory",
-        "org.vorpal.research.kex.smt.SMTExprFactory",
-        "org.vorpal.research.kex.smt.SMTContext",
-        "org.vorpal.research.kex.smt.SMTConverter")
+    "org.vorpal.research.kex.smt.SMTExpr",
+    "org.vorpal.research.kex.smt.SMTMemory",
+    "org.vorpal.research.kex.smt.SMTExprFactory",
+    "org.vorpal.research.kex.smt.SMTContext",
+    "org.vorpal.research.kex.smt.SMTConverter"
+)
 @SupportedOptions(SMTProcessor.KAPT_GENERATED_SOURCES)
 class SMTProcessor : KexProcessor() {
     companion object {
@@ -52,7 +53,7 @@ class SMTProcessor : KexProcessor() {
     private fun <T : Annotation> processAnnotation(element: Element, annotationClass: KClass<T>, nameTemplate: String) {
         val `package` = processingEnv.elementUtils.getPackageOf(element).toString()
         val annotation = element.getAnnotation(annotationClass.java)
-                ?: unreachable { error("Element $element have no annotation $annotationClass") }
+            ?: unreachable { error("Element $element have no annotation $annotationClass") }
 
         val parameters = getAnnotationProperties(annotation, annotationClass).toMutableMap()
         val solver = parameters.getValue("solver") as String

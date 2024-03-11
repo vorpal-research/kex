@@ -237,6 +237,7 @@ class StringMethodAdapter(
             valueArrayType -> state {
                 term.valueArray().store(arg)
             }
+
             else -> {
                 state {
                     generateArray(valueArray, arg.length()) {
