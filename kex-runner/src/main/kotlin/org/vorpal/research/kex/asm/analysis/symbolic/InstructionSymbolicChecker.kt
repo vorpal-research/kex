@@ -17,10 +17,21 @@ class InstructionSymbolicChecker(
     ctx: ExecutionContext,
     rootMethod: Method,
 ) : SymbolicTraverser(ctx, rootMethod) {
-    override val pathSelector: SymbolicPathSelector = NSubpathPathSelector(2)
-//    override val pathSelector: SymbolicPathSelector = DequePathSelector()
+    override val pathSelector: SymbolicPathSelector
     override val callResolver: SymbolicCallResolver = DefaultCallResolver(ctx)
     override val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
+
+    init {
+        val pathSelectorName: String = kexConfig.getStringValue("kex", "pathSelector", "NSubpathPathSelector")
+        val n: Int = kexConfig.getIntValue("kex", "nPathSelectorArg", 2)
+        pathSelector = when (pathSelectorName) {
+            "DequePathSelector" -> DequePathSelector()
+            "NSubpathPathSelector" -> NSubpathPathSelector(n)
+            "PriorityDequePathSelector" -> PriorityDequePathSelector(n)
+            else -> throw IllegalArgumentException("PathSelector '$pathSelectorName' doesn't exist. " +
+                    "Check InstructionSymbolicChecker to see available path selectors")
+        }
+    }
 
     companion object {
         @ExperimentalTime
