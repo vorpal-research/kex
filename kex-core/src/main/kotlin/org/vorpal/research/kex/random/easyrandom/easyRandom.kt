@@ -75,11 +75,6 @@ class EasyRandomDriver(
 
     private val Class<*>.shouldBeExcluded: Boolean
         get() {
-            if (kexConfig.isMockingEnabled && kexConfig.isEasyRandomExcludeLambdas) {
-                if (isInterface && this.annotations.contains<Any?>(FunctionalInterface::class.java)) {
-                    return true
-                }
-            }
             return config.excludes.any { it.matches(name.asmString) }
         }
 
@@ -286,6 +281,11 @@ class EasyRandomDriver(
         if (depth > config.depth) {
             log.warn("Reached maximum depth of generation $depth")
             return null
+        }
+        if (kexConfig.isMockingEnabled && kexConfig.isEasyRandomExcludeLambdas && type is Class<*>) {
+            if (type.isInterface && type.getAnnotation(FunctionalInterface::class.java) != null) {
+                return null
+            }
         }
         repeat(config.attempts) {
             tryOrNull<Unit> {

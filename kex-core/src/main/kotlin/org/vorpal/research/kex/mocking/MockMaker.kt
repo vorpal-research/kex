@@ -6,14 +6,11 @@ import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.MockDescriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.descriptor.descriptor
-import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
-import org.vorpal.research.kfg.type.objectType
 
 sealed class MockMaker(protected val ctx: ExecutionContext) {
     protected val types: TypeFactory = ctx.types
@@ -56,13 +53,15 @@ private class UnimplementedMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
     }
 }
 
+private const val FUNCTIONAL_INTERFACE_CLASS_NAME = "java/lang/FunctionalInterface"
+private val Class.isLambda: Boolean
+    get() = isInterface && annotations.any { it.type.name == FUNCTIONAL_INTERFACE_CLASS_NAME }
+
 private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
     private fun Class.getFunctionalInterfaces(
         interfaces: MutableSet<Class> = mutableSetOf()
     ): Set<Class> {
-        if (this.isInterface &&
-            ctx.loader.loadClass(this).getAnnotation(FunctionalInterface::class.java) != null
-        ) {
+        if (isLambda) {
             interfaces.add(this)
         }
         allAncestors.forEach { it.getFunctionalInterfaces(interfaces) }
@@ -78,18 +77,16 @@ private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
         if (!canMock(descriptor)) return null
         descriptor as ObjectDescriptor
         val klass = getKlass(descriptor) ?: return null
+        if (klass.isLambda) {
+            return descriptor { mock(klass.kexType) }
+        }
+        val mockKlass = (if (klass.isFinal) klass.superClass else klass) ?: return null
         val functionalInterfaces = klass.getFunctionalInterfaces()
-        return when (functionalInterfaces.size) {
-            0 -> null
-            1 -> descriptor { mock(descriptor, functionalInterfaces.first().kexType) }
-            else -> descriptor {
-                mock(
-                    descriptor,
-                    ctx.types.objectType.kexType as KexClass,
-                    functionalInterfaces.map { it.kexType }.toSet()
-                )
-            }
-        } as? MockDescriptor
+
+        if (functionalInterfaces.isEmpty()) return null
+        return descriptor {
+            mock(descriptor, mockKlass.kexType, functionalInterfaces.map { it.kexType }.toSet())
+        }
     }
 }
 
