@@ -6,14 +6,14 @@ import org.vorpal.research.kex.intrinsics.AssertIntrinsics;
 @SuppressWarnings("ALL")
 public class MockInheritanceTests {
 
-    static class Base {
+    static abstract class Base {
 
         int foo(boolean b) {
             return 248;
         }
     }
 
-    static class Derived extends Base {
+    static abstract class Derived extends Base {
 
         @Override
         int foo(boolean b) {

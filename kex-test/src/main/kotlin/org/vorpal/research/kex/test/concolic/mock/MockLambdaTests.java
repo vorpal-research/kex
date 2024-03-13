@@ -25,11 +25,27 @@ public class MockLambdaTests {
         }
     }
 
+
     public void testFunction(Function<Object, Long> a) {
         if (a.apply(null) == 909L) {
             AssertIntrinsics.kexAssert(true);
         } else {
             AssertIntrinsics.kexAssert(true);
+        }
+    }
+
+    @FunctionalInterface
+    interface CustomLambda {
+
+        Object whatever();
+    }
+
+    public void testCustomLambda(CustomLambda a) {
+        Object b = a.whatever();
+        if (b instanceof CustomLambda) {
+            if (b != a) {
+                AssertIntrinsics.kexAssert(true);
+            }
         }
     }
 }

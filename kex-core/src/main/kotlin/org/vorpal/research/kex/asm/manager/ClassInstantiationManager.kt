@@ -308,7 +308,8 @@ class ClassInstantiationDetector(
 
     override fun visit(klass: Class) {
         if (ignoredInstantiations.any { it.matches(klass) }) {
-            return // todo maybe super.visit(klass)  ???
+            super.visit(klass)
+            return
         }
 
         if (StringClassInstantiationManagerImpl.isDirectlyInstantiable(klass, baseAccessLevel))
