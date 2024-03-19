@@ -12,22 +12,22 @@ import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
 
-sealed class MockMaker(protected val ctx: ExecutionContext) {
+interface MockMaker {
+    fun canMock(descriptor: Descriptor): Boolean
+    fun mockOrNull(descriptor: Descriptor): MockDescriptor?
+}
+
+sealed class AbstractMockMaker(protected val ctx: ExecutionContext) : MockMaker {
     protected val types: TypeFactory = ctx.types
-
-    abstract fun canMock(descriptor: Descriptor): Boolean
-    abstract fun mockOrNull(descriptor: Descriptor): MockDescriptor?
-
     protected fun satisfiesNecessaryConditions(descriptor: Descriptor): Boolean {
         val klass = getKlass(descriptor) ?: return false
         return !klass.isFinal && !descriptor.type.isKexRt && descriptor is ObjectDescriptor
     }
-
     protected fun getKlass(descriptor: Descriptor): Class? =
         (descriptor.type.getKfgType(types) as? ClassType)?.klass
 }
 
-private class AllMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
+private class AllMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
     override fun canMock(descriptor: Descriptor): Boolean {
         return satisfiesNecessaryConditions(descriptor)
     }
@@ -39,7 +39,7 @@ private class AllMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
     }
 }
 
-private class UnimplementedMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
+private class UnimplementedMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
     override fun canMock(descriptor: Descriptor): Boolean {
         val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass ?: return false
         return satisfiesNecessaryConditions(descriptor) &&
@@ -57,7 +57,7 @@ private const val FUNCTIONAL_INTERFACE_CLASS_NAME = "java/lang/FunctionalInterfa
 private val Class.isLambda: Boolean
     get() = isInterface && annotations.any { it.type.name == FUNCTIONAL_INTERFACE_CLASS_NAME }
 
-private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
+private class LambdaMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
     private fun Class.getFunctionalInterfaces(
         interfaces: MutableSet<Class> = mutableSetOf()
     ): Set<Class> {
@@ -90,7 +90,7 @@ private class LambdaMockMaker(ctx: ExecutionContext) : MockMaker(ctx) {
     }
 }
 
-fun createMocker(rule: MockingRule, ctx: ExecutionContext): MockMaker = when (rule) {
+fun createMockMaker(rule: MockingRule, ctx: ExecutionContext): MockMaker = when (rule) {
     MockingRule.LAMBDA -> LambdaMockMaker(ctx)
     MockingRule.ANY -> AllMockMaker(ctx)
     MockingRule.UNIMPLEMENTED -> UnimplementedMockMaker(ctx)
