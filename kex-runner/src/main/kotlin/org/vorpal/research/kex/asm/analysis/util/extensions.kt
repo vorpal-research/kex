@@ -25,6 +25,7 @@ import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
@@ -105,20 +106,27 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
         return this
     }
 
+    val expectedClasses = method.argTypes
+        .map { (it as? ClassType)?.klass }
+        .zip(arguments)
+        .filter { (klass, _) -> klass != null }
+        .associate { (klass, descriptor) -> descriptor to klass!! }
+
     val mockMaker = kexConfig.getMockMaker(ctx).excluding { desc -> desc == instance }
     if (!kexConfig.isExpectMocks) {
         val visited = mutableSetOf<Descriptor>()
-        if (this.asList.none { it.requireMocks(mockMaker, visited) }) {
+        if (this.asList.none { it.requireMocks(mockMaker, expectedClasses, visited) }) {
             return this
         }
     }
     generator.generateAll()
     val visited = mutableSetOf<Descriptor>()
-    if (generator.allValues.none { it.requireMocks(mockMaker, visited) }) {
+    if (generator.allValues.none { it.requireMocks(mockMaker, expectedClasses, visited) }) {
         return this
     }
 
-    val descriptorToMock = createDescriptorToMock(generator.allValues, mockMaker, emptyMap())
+
+    val descriptorToMock = createDescriptorToMock(generator.allValues, mockMaker, expectedClasses)
     val withMocks = this.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
     val methodCalls = state.methodCalls()
     setupMocks(methodCalls, generator.memory, descriptorToMock)

@@ -103,20 +103,24 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 fun createDescriptorToMock(
     allDescriptors: Collection<Descriptor>,
     mockMaker: MockMaker,
-    expectedType: Map<Descriptor, Class>
+    expectedClasses: Map<Descriptor, Class>
 ): Map<Descriptor, MockDescriptor> {
     val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
     allDescriptors.forEach {
-        it.transform(descriptorToMock) { descriptor -> mockMaker.mockOrNull(descriptor) }
+        it.transform(descriptorToMock) { descriptor ->
+            mockMaker.mockOrNull(descriptor, expectedClasses[descriptor])
+        }
     }
     return descriptorToMock
 }
 
 
 fun Descriptor.requireMocks(
-    mockMaker: MockMaker, visited: MutableSet<Descriptor> = mutableSetOf()
+    mockMaker: MockMaker,
+    expectedClass: Map<Descriptor, Class>,
+    visited: MutableSet<Descriptor> = mutableSetOf()
 ): Boolean =
-    any(visited) { descriptor -> mockMaker.canMock(descriptor) }
+    any(visited) { descriptor -> mockMaker.canMock(descriptor, expectedClass[descriptor]) }
 
 
 fun setupMocks(

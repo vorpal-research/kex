@@ -35,7 +35,7 @@ sealed class Descriptor(term: Term, type: KexType) {
     var klassDescriptor: ObjectDescriptor
         get() {
             if (innerKlassDescriptor == null) {
-                innerKlassDescriptor = descriptor { klass(type) } as ObjectDescriptor
+                innerKlassDescriptor = descriptor { klass(type) }
             }
             return innerKlassDescriptor!!
         }
