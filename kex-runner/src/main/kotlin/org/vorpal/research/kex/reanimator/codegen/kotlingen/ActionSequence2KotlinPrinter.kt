@@ -5,13 +5,33 @@ import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.util.getConstructor
+import org.vorpal.research.kex.util.getMethod
+import org.vorpal.research.kex.util.isSubtypeOfCached
+import org.vorpal.research.kex.util.kex
+import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.BoolType
+import org.vorpal.research.kfg.type.ByteType
+import org.vorpal.research.kfg.type.CharType
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.DoubleType
+import org.vorpal.research.kfg.type.FloatType
+import org.vorpal.research.kfg.type.IntType
+import org.vorpal.research.kfg.type.LongType
+import org.vorpal.research.kfg.type.NullType
+import org.vorpal.research.kfg.type.ShortType
 import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.VoidType
+import org.vorpal.research.kfg.type.classType
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
-import java.lang.reflect.*
+import java.lang.reflect.Constructor
+import java.lang.reflect.Method
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.TypeVariable
+import java.lang.reflect.WildcardType
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KType
@@ -393,6 +413,8 @@ open class ActionSequence2KotlinPrinter(
             is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
             is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
             is ReflectionSetStaticField -> printReflectionSetStaticField(owner, reflectionCall)
+            is ReflectionGetField -> printReflectionGetField(owner, reflectionCall)
+            is ReflectionGetStaticField -> printReflectionGetStaticField(owner, reflectionCall)
         }
 
     private val <T> PrimaryValue<T>.asConstant: String
@@ -613,6 +635,15 @@ open class ActionSequence2KotlinPrinter(
         owner: ActionSequence,
         call: ReflectionSetStaticField
     ): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionGetStaticField(
+        owner: ActionSequence,
+        call: ReflectionGetStaticField
+    ): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionGetField(owner: ActionSequence, call: ReflectionGetField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =

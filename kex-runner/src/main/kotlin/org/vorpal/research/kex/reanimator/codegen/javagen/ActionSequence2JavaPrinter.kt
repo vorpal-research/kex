@@ -331,6 +331,8 @@ open class ActionSequence2JavaPrinter(
         is ReflectionArrayWrite -> resolveTypes(reflectionCall.value, visited)
         is ReflectionSetField -> resolveTypes(reflectionCall.value, visited)
         is ReflectionSetStaticField -> resolveTypes(reflectionCall.value, visited)
+        is ReflectionGetField -> resolveTypes(reflectionCall.owner, visited)
+        is ReflectionGetStaticField -> {}
         is ReflectionNewArray -> {}
         is ReflectionNewInstance -> {}
     }
@@ -421,6 +423,8 @@ open class ActionSequence2JavaPrinter(
             is ReflectionNewInstance -> printReflectionNewInstance(owner, reflectionCall)
             is ReflectionSetField -> printReflectionSetField(owner, reflectionCall)
             is ReflectionSetStaticField -> printReflectionSetStaticField(owner, reflectionCall)
+            is ReflectionGetField -> printReflectionGetField(owner, reflectionCall)
+            is ReflectionGetStaticField -> printReflectionGetStaticField(owner, reflectionCall)
         }
 
     protected fun printApiCall(owner: ActionSequence, codeAction: CodeAction): List<String> = when (codeAction) {
@@ -886,6 +890,15 @@ open class ActionSequence2JavaPrinter(
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printReflectionArrayWrite(owner: ActionSequence, call: ReflectionArrayWrite): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionGetStaticField(
+        owner: ActionSequence,
+        call: ReflectionGetStaticField
+    ): List<String> =
+        unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
+
+    protected open fun printReflectionGetField(owner: ActionSequence, call: ReflectionGetField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
     protected open fun printMockNewInstance(owner: ActionSequence, call: MockNewInstance): List<String> =

@@ -23,7 +23,8 @@ import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.*
+import org.vorpal.research.kex.util.isExpectMocks
+import org.vorpal.research.kex.util.isMockingEnabled
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.logging.debug
@@ -66,12 +67,10 @@ suspend fun Method.checkAsync(
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
-    val result =
-        checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
+    val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
     if (result !is Result.SatResult) {
         return null
     }
-
 
     return try {
         val (initialDescriptors, generator) = generateInitialDescriptors(
@@ -84,10 +83,8 @@ suspend fun Method.checkAsync(
         val finalDescriptors = initialDescriptors.finalizeDescriptors(ctx, generator, state, this)
 
         finalDescriptors
-            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
-                log.debug { "Generated params:\n$it" }
-            }
-            .filterStaticFinals(ctx.cm)
+            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+            .also { log.debug { "Generated params:\n$it" } }
             .filterIgnoredStatic()
     } catch (e: Throwable) {
         log.error("Error during descriptor generation: ", e)
@@ -146,8 +143,7 @@ suspend fun Method.checkAsyncAndSlice(
         .filterValues { it.isJavaRt }
         .mapValues { it.value.rtMapped }
         .toTypeMap()
-    val result =
-        checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
+    val result = checker.prepareAndCheck(this, clauses + query, concreteTypeInfo, enableInlining)
     if (result !is Result.SatResult) {
         return null
     }
@@ -160,17 +156,15 @@ suspend fun Method.checkAsyncAndSlice(
             checker.state
         )
         val filteredParams =
-            params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
-                log.debug { "Generated params:\n$it" }
+            params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                .also {log.debug { "Generated params:\n$it" }
             }
-                .filterStaticFinals(ctx.cm)
                 .filterIgnoredStatic()
 
         val (thisTerm, argTerms) = collectArguments(checker.state)
-        val termParams =
-            Parameters(thisTerm, this@checkAsyncAndSlice.argTypes.mapIndexed { index, type ->
-                argTerms[index] ?: term { arg(type.kexType, index) }
-            })
+        val termParams = Parameters(thisTerm, this@checkAsyncAndSlice.argTypes.mapIndexed { index, type ->
+            argTerms[index] ?: term { arg(type.kexType, index) }
+        })
 
         filteredParams to ConstraintExceptionPrecondition(
             termParams,
@@ -201,8 +195,7 @@ suspend fun Method.checkAsyncIncremental(
         this,
         IncrementalPredicateState(
             clauses + query,
-            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }
-                .toPersistentList()
+            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }.toPersistentList()
         ),
         concreteTypeInfo,
         enableInlining
@@ -219,7 +212,6 @@ suspend fun Method.checkAsyncIncremental(
                     .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                         log.debug { "Generated params:\n$it" }
                     }
-                    .filterStaticFinals(ctx.cm)
                     .filterIgnoredStatic()
             } catch (e: Throwable) {
                 log.error("Error during descriptor generation: ", e)
@@ -251,8 +243,7 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
         this,
         IncrementalPredicateState(
             clauses + query,
-            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }
-                .toPersistentList()
+            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }.toPersistentList()
         ),
         concreteTypeInfo,
         enableInlining
@@ -271,7 +262,6 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
                 val filteredParams =
                     params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
                         .also { log.debug { "Generated params:\n$it" } }
-                        .filterStaticFinals(ctx.cm)
                         .filterIgnoredStatic()
 
                 val (thisTerm, argTerms) = collectArguments(fullPS)
@@ -284,10 +274,7 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
 
                 filteredParams to ConstraintExceptionPrecondition(
                     termParams,
-                    SymbolicStateForwardSlicer(
-                        termParams.asList.toSet(),
-                        aa
-                    ).apply(state + queries[index])
+                    SymbolicStateForwardSlicer(termParams.asList.toSet(), aa).apply(state + queries[index])
                 )
             } catch (e: Throwable) {
                 log.error("Error during descriptor generation: ", e)

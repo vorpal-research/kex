@@ -66,6 +66,8 @@ class UnknownGenerator(
                         log.warn("Field ${field.first}: ${field.second} is not found in class $kfgClass")
                         continue
                     }
+                    if (kfgField.isFinal) continue
+
                     val valueAS = fallback.generate(value)
                     actionSequence += ReflectionSetStaticField(kfgField, valueAS)
                 }

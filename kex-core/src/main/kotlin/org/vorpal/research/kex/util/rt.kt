@@ -97,7 +97,11 @@ val Config.isMockTest: Boolean
 fun getRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useJavaRuntime", true)) return null
     val libPath = kexConfig.libPath ?: return null
-    val runtimeVersion = kexConfig.getStringValue("kex", "rtVersion") ?: return null
+    val jvmVersion = getJvmVersion()
+    val runtimeVersion = when {
+        jvmVersion <= 8 -> "1.8"
+        else -> "11"
+    }
     return JarContainer(libPath.resolve("rt-${runtimeVersion}.jar"), Package.defaultPackage)
 }
 

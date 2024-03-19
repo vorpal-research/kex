@@ -102,6 +102,8 @@ class ExecutorAS2JavaPrinter(
                                 when (it) {
                                     is ReflectionNewInstance -> it.type
                                     is ReflectionNewArray -> it.type
+                                    is ReflectionGetField -> it.field.type
+                                    is ReflectionGetStaticField -> it.field.type
                                     else -> null
                                 }
                             } ?: unreachable { log.error("Unexpected call in arg") }
@@ -318,7 +320,9 @@ class ExecutorAS2JavaPrinter(
         when (api) {
             is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
             is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
-            is ReflectionSetField -> printDeclarations(api.value, result)
+            is ReflectionGetField -> result += printReflectionGetField(owner, api)
+                    is ReflectionGetStaticField -> result += printReflectionGetStaticField(owner, api)
+                    is ReflectionSetField -> printDeclarations(api.value, result)
             is ReflectionSetStaticField -> printDeclarations(api.value, result)
             is ReflectionArrayWrite -> printDeclarations(api.value, result)
         }
@@ -496,6 +500,45 @@ class ExecutorAS2JavaPrinter(
             call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
                 ?: reflectionUtils.setField
         return listOf("${setFieldMethod.name}(null, Class.forName(\"${call.field.klass.canonicalDesc}\"), \"${call.field.name}\", ${call.value.stackName})")
+    }
+
+    override fun printReflectionGetStaticField(
+        owner: ActionSequence,
+        call: ReflectionGetStaticField
+    ): List<String> {
+        val actualType = when (call.field.type) {
+            is PrimitiveType -> call.field.type.asType
+            else -> ASClass(ctx.types.objectType)
+        }
+        actualTypes[owner] = actualType
+        val getFieldMethod = call.field.type.kexType.primitiveName?.let { reflectionUtils.getPrimitiveFieldMap[it]!! }
+            ?: reflectionUtils.getField
+        return listOf(
+            "${
+                printVarDeclaration(
+                    owner.name,
+                    actualType
+                )
+            } = ${getFieldMethod.name}(null, ${call.field.klass.asType.klassType}, \"${call.field.name}\")"
+        )
+    }
+
+    override fun printReflectionGetField(owner: ActionSequence, call: ReflectionGetField): List<String> {
+        val actualType = when (call.field.type) {
+            is PrimitiveType -> call.field.type.asType
+            else -> ASClass(ctx.types.objectType)
+        }
+        actualTypes[owner] = actualType
+        val getFieldMethod = call.field.type.kexType.primitiveName?.let { reflectionUtils.getPrimitiveFieldMap[it]!! }
+            ?: reflectionUtils.getField
+        return listOf(
+            "${
+                printVarDeclaration(
+                    owner.name,
+                    actualType
+                )
+            } = ${getFieldMethod.name}(${call.owner.name}, ${call.field.klass.asType.klassType}, \"${call.field.name}\")"
+        )
     }
 
     override fun printReflectionArrayWrite(
