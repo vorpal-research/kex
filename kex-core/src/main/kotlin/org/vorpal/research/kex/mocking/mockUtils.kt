@@ -14,4 +14,4 @@ fun Config.getMockMaker(ctx: ExecutionContext): MockMaker =
         .map { enumName -> MockingRule.valueOf(enumName.uppercase()) }
         .sortedBy { rule -> rule.ordinal }
         .map { rule -> createMockMaker(rule, ctx) }
-        .let { mockMakers -> CompositeMockMaker(mockMakers) }
+        .let { mockMakers -> composeMockMakers(mockMakers) }
