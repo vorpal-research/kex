@@ -5,7 +5,7 @@ import org.vorpal.research.kex.config.Config
 
 enum class MockingRule {
     // Order is important! First rule applies first
-    ANY, UNIMPLEMENTED, LAMBDA
+    UNIMPLEMENTED, ANY, LAMBDA
 }
 
 

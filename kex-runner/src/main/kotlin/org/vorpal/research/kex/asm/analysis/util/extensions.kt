@@ -11,7 +11,7 @@ import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.mocking.excluding
+import org.vorpal.research.kex.mocking.filterNot
 import org.vorpal.research.kex.mocking.getMockMaker
 import org.vorpal.research.kex.parameters.*
 import org.vorpal.research.kex.smt.AsyncChecker
@@ -109,7 +109,7 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
         .filter { (klass, _) -> klass != null }
         .associate { (klass, descriptor) -> descriptor to klass!! }
 
-    val mockMaker = kexConfig.getMockMaker(ctx).excluding { desc -> desc == instance }
+    val mockMaker = kexConfig.getMockMaker(ctx).filterNot { desc -> desc == instance }
     if (!kexConfig.isExpectMocks) {
         val visited = mutableSetOf<Descriptor>()
         if (this.asList.none { it.requireMocks(mockMaker, expectedClasses, visited) }) {

@@ -12,7 +12,6 @@ import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
 
-// mock is subtype of original
 interface MockMaker {
     fun canMock(descriptor: Descriptor, expectedClass: Class? = null): Boolean
     fun mockOrNull(original: Descriptor, expectedClass: Class? = null): MockDescriptor?
@@ -59,17 +58,17 @@ private const val FUNCTIONAL_INTERFACE_CLASS_NAME = "java/lang/FunctionalInterfa
 private val Class.isLambda: Boolean
     get() = isInterface && annotations.any { it.type.name == FUNCTIONAL_INTERFACE_CLASS_NAME }
 
-private class LambdaMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
-    private fun Class.getFunctionalInterfaces(
-        interfaces: MutableSet<Class> = mutableSetOf()
-    ): Set<Class> {
-        if (isLambda) {
-            interfaces.add(this)
-        }
-        allAncestors.forEach { it.getFunctionalInterfaces(interfaces) }
-        return interfaces
+private fun Class.getFunctionalInterfaces(
+    interfaces: MutableSet<Class> = mutableSetOf()
+): Set<Class> {
+    if (isLambda) {
+        interfaces.add(this)
     }
+    allAncestors.forEach { it.getFunctionalInterfaces(interfaces) }
+    return interfaces
+}
 
+private class LambdaMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
     override fun canMock(descriptor: Descriptor, expectedClass: Class?): Boolean {
         return expectedClass?.isLambda == true && descriptor is ObjectDescriptor
     }
@@ -83,6 +82,8 @@ private class LambdaMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
 
 
 internal class CompositeMockMaker(private val mockMakers: List<MockMaker>) : MockMaker {
+    constructor(vararg mockMakers: MockMaker) : this(mockMakers.toList())
+
     override fun canMock(descriptor: Descriptor, expectedClass: Class?): Boolean {
         return mockMakers.any { mockMaker -> mockMaker.canMock(descriptor, expectedClass) }
     }
@@ -108,11 +109,21 @@ private class ExcludingMockMaker(
     }
 }
 
-fun MockMaker.excluding(excludePredicate: (Descriptor) -> Boolean): MockMaker =
+fun MockMaker.filterNot(excludePredicate: (Descriptor) -> Boolean): MockMaker =
     ExcludingMockMaker(this, excludePredicate)
 
+fun MockMaker.filter(includePredicate: (Descriptor) -> Boolean): MockMaker =
+    ExcludingMockMaker(this) { descriptor -> includePredicate(descriptor).not() }
+
 fun createMockMaker(rule: MockingRule, ctx: ExecutionContext): MockMaker = when (rule) {
-    MockingRule.LAMBDA -> LambdaMockMaker(ctx)
+    MockingRule.LAMBDA -> CompositeMockMaker(
+        LambdaMockMaker(ctx),
+        UnimplementedMockMaker(ctx).filter { descriptor ->
+            val klass = (descriptor.type.getKfgType(ctx.types) as? ClassType)?.klass
+            klass?.getFunctionalInterfaces()?.isNotEmpty() ?: false
+        }
+    )
+
     MockingRule.ANY -> AllMockMaker(ctx)
     MockingRule.UNIMPLEMENTED -> UnimplementedMockMaker(ctx)
 }
