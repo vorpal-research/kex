@@ -8,7 +8,7 @@ enum class MockingRule {
     LAMBDA, ANY, UNIMPLEMENTED
 }
 
-fun Config.getMockMakers(ctx: ExecutionContext): List<MockMaker> =
+fun Config.getMockMakers(ctx: ExecutionContext): List<SafeMockMaker> =
     getMultipleStringValue("mock", "rule")
         .map { enumName -> MockingRule.valueOf(enumName.uppercase()) }
         .sortedBy { rule -> rule.ordinal }

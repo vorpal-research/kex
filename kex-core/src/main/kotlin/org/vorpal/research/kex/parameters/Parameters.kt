@@ -6,7 +6,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
-import org.vorpal.research.kex.mocking.MockMaker
+import org.vorpal.research.kex.mocking.SafeMockMaker
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
@@ -101,7 +101,7 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 
 fun createDescriptorToMock(
     allDescriptors: Collection<Descriptor>,
-    mockMakers: List<MockMaker>
+    mockMakers: List<SafeMockMaker>
 ): Map<Descriptor, MockDescriptor> {
     val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
     allDescriptors.forEach {
@@ -114,7 +114,7 @@ fun createDescriptorToMock(
 
 
 fun Descriptor.requireMocks(
-    mockMakers: List<MockMaker>, visited: MutableSet<Descriptor> = mutableSetOf()
+    mockMakers: List<SafeMockMaker>, visited: MutableSet<Descriptor> = mutableSetOf()
 ): Boolean =
     any(visited) { descriptor -> mockMakers.any { mockMaker -> mockMaker.canMock(descriptor) } }
 
