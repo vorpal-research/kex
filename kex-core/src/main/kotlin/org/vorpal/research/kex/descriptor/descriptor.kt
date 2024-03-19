@@ -715,30 +715,29 @@ fun Method.general(): Method {
         0 -> this
         1 -> possibleGeneralizations.first()
 
-        else -> {
+        else -> possibleGeneralizations.first().also {
             log.error {
                 "Got multiple general version of method $this. Versions:\n ${
                     possibleGeneralizations.joinToString(separator = "\n")
                 }\nPlease check your code."
             }
-            possibleGeneralizations.first()
         }
     }
 }
 
 
-class MockDescriptor(term: Term, type: KexClass, additionalInterfaces: Set<KexClass> = setOf()) :
+class MockDescriptor(term: Term, type: KexClass, extraInterfaces: Set<KexClass> = setOf()) :
     AbstractFieldContainingDescriptor(term, type) {
 
     constructor(type: KexClass) : this(term { generate(type) }, type)
     constructor(
         original: ObjectDescriptor,
         type: KexClass = original.type as KexClass,
-        additionalInterfaces: Set<KexClass> = emptySet()
-    ) : this(original.term, type, additionalInterfaces)
+        extraInterfaces: Set<KexClass> = emptySet()
+    ) : this(original.term, type, extraInterfaces)
 
     val methodReturns: MutableMap<Method, MutableList<Descriptor>> = mutableMapOf()
-    val extraInterfaces: MutableSet<KexClass> = additionalInterfaces.toMutableSet()
+    val extraInterfaces: MutableSet<KexClass> = extraInterfaces.toMutableSet()
 
     val allReturns: Sequence<Descriptor>
         get() = methodReturns.values.asSequence().flatMap { it.asSequence() }
@@ -919,8 +918,11 @@ open class DescriptorBuilder : StringInfoContext() {
         ArrayDescriptor(elementType, length)
 
     fun mock(type: KexClass) = MockDescriptor(type)
-    fun mock(original: ObjectDescriptor, type: KexClass = original.type as KexClass, additionalInterfaces: Set<KexClass> = emptySet()) =
-        MockDescriptor(original, type, additionalInterfaces)
+    fun mock(
+        original: ObjectDescriptor,
+        type: KexClass = original.type as KexClass,
+        extraInterfaces: Set<KexClass> = emptySet()
+    ) = MockDescriptor(original, type, extraInterfaces)
 
     fun default(type: KexType, nullable: Boolean): Descriptor = descriptor {
         when (type) {

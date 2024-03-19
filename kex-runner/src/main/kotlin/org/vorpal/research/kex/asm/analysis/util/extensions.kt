@@ -11,7 +11,8 @@ import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.mocking.getMockMakers
+import org.vorpal.research.kex.mocking.excluding
+import org.vorpal.research.kex.mocking.getMockMaker
 import org.vorpal.research.kex.parameters.*
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.AsyncIncrementalChecker
@@ -79,7 +80,7 @@ suspend fun Method.checkAsync(
             checker.state
         )
 
-        val finalDescriptors = initialDescriptors.finalizeDescriptors(ctx, generator, state)
+        val finalDescriptors = initialDescriptors.finalizeDescriptors(ctx, generator, state, this)
 
         finalDescriptors
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
@@ -93,30 +94,31 @@ suspend fun Method.checkAsync(
     }
 }
 
+
 private fun Parameters<Descriptor>.finalizeDescriptors(
     ctx: ExecutionContext,
     generator: DescriptorGenerator,
-    state: SymbolicState
+    state: SymbolicState,
+    method: Method
 ): Parameters<Descriptor> {
     if (!kexConfig.isMockingEnabled) {
         return this
     }
-    fun Collection<Descriptor>.removeInstance() = this.filterNot { it == instance }
 
-    val mockMakers = kexConfig.getMockMakers(ctx)
+    val mockMaker = kexConfig.getMockMaker(ctx).excluding { desc -> desc == instance }
     if (!kexConfig.isExpectMocks) {
         val visited = mutableSetOf<Descriptor>()
-        if (this.asList.removeInstance().none { it.requireMocks(mockMakers, visited) }) {
+        if (this.asList.none { it.requireMocks(mockMaker, visited) }) {
             return this
         }
     }
     generator.generateAll()
     val visited = mutableSetOf<Descriptor>()
-    if (generator.allValues.removeInstance().none { it.requireMocks(mockMakers, visited) }) {
+    if (generator.allValues.none { it.requireMocks(mockMaker, visited) }) {
         return this
     }
 
-    val descriptorToMock = createDescriptorToMock(generator.allValues.removeInstance(), mockMakers)
+    val descriptorToMock = createDescriptorToMock(generator.allValues, mockMaker, emptyMap())
     val withMocks = this.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
     val methodCalls = state.methodCalls()
     setupMocks(methodCalls, generator.memory, descriptorToMock)
@@ -204,7 +206,7 @@ suspend fun Method.checkAsyncIncremental(
                 val fullPS = checker.state + checker.queries[index].hardConstraints
                 generateInitialDescriptors(this, ctx, result.model, fullPS)
                     .let { (descriptors, generator) ->
-                        descriptors.finalizeDescriptors(ctx, generator, state)
+                        descriptors.finalizeDescriptors(ctx, generator, state, this)
                     }
                     .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                         log.debug { "Generated params:\n$it" }

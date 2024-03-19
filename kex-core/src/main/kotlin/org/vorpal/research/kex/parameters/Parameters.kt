@@ -6,12 +6,13 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
-import org.vorpal.research.kex.mocking.SafeMockMaker
+import org.vorpal.research.kex.mocking.MockMaker
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kfg.ClassManager
+import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import kotlin.random.Random
@@ -101,22 +102,21 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
 
 fun createDescriptorToMock(
     allDescriptors: Collection<Descriptor>,
-    mockMakers: List<SafeMockMaker>
+    mockMaker: MockMaker,
+    expectedType: Map<Descriptor, Class>
 ): Map<Descriptor, MockDescriptor> {
     val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
     allDescriptors.forEach {
-        it.transform(descriptorToMock) { descriptor ->
-            mockMakers.firstNotNullOfOrNull { mockMaker -> mockMaker.mockOrNull(descriptor) }
-        }
+        it.transform(descriptorToMock) { descriptor -> mockMaker.mockOrNull(descriptor) }
     }
     return descriptorToMock
 }
 
 
 fun Descriptor.requireMocks(
-    mockMakers: List<SafeMockMaker>, visited: MutableSet<Descriptor> = mutableSetOf()
+    mockMaker: MockMaker, visited: MutableSet<Descriptor> = mutableSetOf()
 ): Boolean =
-    any(visited) { descriptor -> mockMakers.any { mockMaker -> mockMaker.canMock(descriptor) } }
+    any(visited) { descriptor -> mockMaker.canMock(descriptor) }
 
 
 fun setupMocks(
