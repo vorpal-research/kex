@@ -14,6 +14,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.readLines
 
+val KEX_HOME_DIRECTORY: Path = Paths.get(System.getenv("KEX_HOME") ?: ".").toAbsolutePath()
+
+val Config.kexHome: Path get() = KEX_HOME_DIRECTORY
+
 val Config.outputDirectory: Path get() = getPathValue("kex", "outputDir")!!.normalize()
 
 @Deprecated("kex now does not write instrumented code into a directory")
@@ -44,7 +48,9 @@ val Config.testcaseDirectory: Path
     }
 
 val Config.runtimeDepsPath: Path?
-    get() = getPathValue("kex", "runtimeDepsPath")?.normalize()
+    get() = getPathValue("kex", "runtimeDepsPath")?.normalize()?.let {
+        kexHome.resolve(it)
+    }
 
 val Config.libPath: Path?
     get() = getStringValue("kex", "libPath")?.let {

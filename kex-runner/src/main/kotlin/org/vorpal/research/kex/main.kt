@@ -14,6 +14,7 @@ import org.vorpal.research.kex.launcher.LaunchMode
 import org.vorpal.research.kex.launcher.LauncherException
 import org.vorpal.research.kex.launcher.LibraryCheckLauncher
 import org.vorpal.research.kex.launcher.SymbolicLauncher
+import org.vorpal.research.kex.util.KEX_HOME_DIRECTORY
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -28,7 +29,7 @@ import kotlin.time.ExperimentalTime
 @DelicateCoroutinesApi
 fun main(args: Array<String>) {
     val cmd = RunnerCmdConfig(args)
-    val properties = cmd.getCmdValue("config", "kex.ini")
+    val properties = cmd.getCmdValue("config", KEX_HOME_DIRECTORY.resolve("kex.ini").toString())
     kexConfig.initialize(cmd, RuntimeConfig, FileConfig(properties))
 
     // initialize output dir
