@@ -60,8 +60,11 @@ private class LambdaMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
 
     override fun mockOrNull(original: Descriptor, expectedClass: Class?): MockDescriptor? {
         if (!canMock(original, expectedClass)) return null
+        original as ObjectDescriptor
 
-        return descriptor { mock(original as ObjectDescriptor, expectedClass!!.kexType) }
+        val mockKlass = original.kfgClass!!.let { if (it.isFinal) it.superClass!! else it }.kexType
+        val interfaces = setOf(expectedClass!!.kexType).filter { it != mockKlass }.toSet()
+        return descriptor { mock(original, mockKlass, interfaces) }
     }
 }
 
