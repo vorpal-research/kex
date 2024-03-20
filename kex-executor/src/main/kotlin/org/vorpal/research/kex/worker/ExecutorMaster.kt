@@ -17,11 +17,11 @@ import org.vorpal.research.kex.trace.symbolic.protocol.MasterProtocolHandler
 import org.vorpal.research.kex.util.getJavaPath
 import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
+import org.vorpal.research.kex.util.kexHome
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
-import java.nio.file.Paths
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -38,13 +38,13 @@ class ExecutorMaster(
     private val workerJvmParams = kexConfig.getMultipleStringValue(
         "executor", "workerJvmParams", ","
     ).toTypedArray()
-    private val executorPolicyPath = kexConfig.getPathValue(
-        "executor", "executorPolicyPath"
-    ) { Paths.get("kex.policy") }.toAbsolutePath()
+    private val executorPolicyPath = kexConfig.getPathValue("executor", "executorPolicyPath") {
+        kexConfig.kexHome.resolve("kex.policy")
+    }.toAbsolutePath()
     private val executorKlass = "org.vorpal.research.kex.launcher.WorkerLauncherKt"
-    private val executorConfigPath = kexConfig.getPathValue(
-        "executor", "executorConfigPath"
-    ) { Paths.get("kex.ini") }.toAbsolutePath()
+    private val executorConfigPath = kexConfig.getPathValue("executor", "executorConfigPath") {
+        kexConfig.kexHome.resolve("kex.ini")
+    }.toAbsolutePath()
 
     private val json = Json {
         encodeDefaults = false
