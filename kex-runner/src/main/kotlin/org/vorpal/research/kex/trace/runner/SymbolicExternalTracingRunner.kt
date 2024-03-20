@@ -38,7 +38,7 @@ internal object ExecutorMasterController : AutoCloseable {
         controllerSocket = ControllerProtocolSocketHandler(ctx)
         val outputDir = kexConfig.outputDirectory
         val executorPath = kexConfig.getPathValue("executor", "executorPath") {
-            kexConfig.kexHome.resolve("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")
+            kexConfig.kexHome.resolve("kex-executor/target/kex-executor-0.0.2-jar-with-dependencies.jar")
         }.toAbsolutePath()
         val executorKlass = "org.vorpal.research.kex.launcher.MasterLauncherKt"
         val executorConfigPath = kexConfig.getPathValue("executor", "executorConfigPath") {
