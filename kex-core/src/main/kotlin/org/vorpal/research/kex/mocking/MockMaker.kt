@@ -18,14 +18,13 @@ interface MockMaker {
 }
 
 private sealed class AbstractMockMaker(protected val ctx: ExecutionContext) : MockMaker {
-    protected val types: TypeFactory get() = ctx.types
     protected fun satisfiesNecessaryConditions(descriptor: Descriptor): Boolean {
         val klass = descriptor.kfgClass ?: return false
         return !klass.isFinal && !descriptor.type.isKexRt && descriptor is ObjectDescriptor
     }
 
     protected val Descriptor.kfgClass: Class?
-        get() = (type.getKfgType(types) as? ClassType)?.klass
+        get() = kfgClass(ctx.types)
 }
 
 private class AllMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
@@ -42,7 +41,7 @@ private class AllMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
 
 private class UnimplementedMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
     override fun canMock(descriptor: Descriptor, expectedClass: Class?): Boolean {
-        val klass = (descriptor.type.getKfgType(types) as? ClassType)?.klass ?: return false
+        val klass = descriptor.kfgClass ?: return false
         return satisfiesNecessaryConditions(descriptor) &&
                 !instantiationManager.isInstantiable(klass)
     }
@@ -106,10 +105,10 @@ fun composeMockMakers(vararg mockMakers: MockMaker): MockMaker = CompositeMockMa
 
 fun createMockMaker(rule: MockingRule, ctx: ExecutionContext): MockMaker = when (rule) {
     MockingRule.LAMBDA -> composeMockMakers(
-        LambdaMockMaker(ctx),
-        UnimplementedMockMaker(ctx).filter { descriptor ->
+        AllMockMaker(ctx).filter { descriptor ->
             descriptor.kfgClass(ctx.types)?.getFunctionalInterfaces()?.isNotEmpty() ?: false
-        }
+        },
+        LambdaMockMaker(ctx),
     )
 
     MockingRule.ANY -> AllMockMaker(ctx)
