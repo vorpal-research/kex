@@ -13,6 +13,9 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.util.KfgTargetFilter
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.type.TypeFactory
+import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import kotlin.random.Random
@@ -123,15 +126,25 @@ fun Descriptor.requireMocks(
     any(visited) { descriptor -> mockMaker.canMock(descriptor, expectedClass[descriptor]) }
 
 
+private fun Method.mockitoCanMock(types: TypeFactory): Boolean = when {
+    name == "getClass" && argTypes.isEmpty() -> false
+    name == "hashCode" && argTypes.isEmpty() -> false
+    name == "equals" && argTypes == listOf(types.objectType) -> false
+    isFinal || isPrivate -> false
+
+    else -> true
+}
+
 fun setupMocks(
+    types: TypeFactory,
     methodCalls: List<CallPredicate>,
     termToDescriptor: Map<Term, Descriptor>,
-    descriptorToMock: Map<Descriptor, MockDescriptor>
+    descriptorToMock: Map<Descriptor, MockDescriptor>,
 ) {
     for (callPredicate in methodCalls) {
         if (!callPredicate.hasLhv) continue
         val call = callPredicate.call as CallTerm
-        if (call.method.name == "getClass") continue
+        if (call.method.mockitoCanMock(types).not()) continue
 
         val mock =
             termToDescriptor[call.owner]?.let { descriptorToMock[it] ?: it } as? MockDescriptor

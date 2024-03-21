@@ -126,7 +126,7 @@ private fun Parameters<Descriptor>.finalizeDescriptors(
     val descriptorToMock = createDescriptorToMock(generator.allValues, mockMaker, expectedClasses)
     val withMocks = this.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
     val methodCalls = state.methodCalls()
-    setupMocks(methodCalls, generator.memory, descriptorToMock)
+    setupMocks(ctx.types, methodCalls, generator.memory, descriptorToMock)
     return withMocks
 }
 
