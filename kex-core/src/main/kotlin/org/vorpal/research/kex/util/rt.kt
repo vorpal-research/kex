@@ -82,10 +82,13 @@ fun getIntrinsics(): Container? {
 
 fun getPathSeparator(): String = File.pathSeparator
 
-fun getJunit(): Container? {
-    val libPath = kexConfig.libPath ?: return null
-    val junitVersion = kexConfig.getStringValue("kex", "junitVersion") ?: return null
-    return JarContainer(libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(), Package.defaultPackage)
+fun getJunit(): List<Container> {
+    val libPath = kexConfig.libPath ?: return emptyList()
+    val junitVersion = kexConfig.getStringValue("kex", "junitVersion") ?: return emptyList()
+    return listOf(
+        JarContainer(libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(), Package.defaultPackage),
+        JarContainer(libPath.resolve("hamcrest-core-1.3.jar").toAbsolutePath(), Package.defaultPackage),
+    )
 }
 
 fun getKexRuntime(): Container? {

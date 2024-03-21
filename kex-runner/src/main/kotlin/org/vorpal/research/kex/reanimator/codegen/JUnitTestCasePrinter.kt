@@ -20,7 +20,6 @@ import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
-import java.nio.file.Paths
 import kotlin.math.abs
 
 private val useReanimator by lazy { kexConfig.getBooleanValue("reanimator", "enabled", true) }
@@ -57,8 +56,8 @@ abstract class TestCasePrinter(
     fun checkTestCompiles() {
         if (testCaseLanguage == "java") {
             val compileDir = kexConfig.compiledCodeDirectory
-            val junitPath = getJunit()?.path ?: Paths.get(".")
-            val compiler = JavaCompilerDriver(ctx.classPath + listOf(junitPath), compileDir)
+            val junitPaths = getJunit().map { it.path }
+            val compiler = JavaCompilerDriver(ctx.classPath + junitPaths, compileDir)
             tryOrNull {
                 compiler.compile(listOf(targetFile.toPath()))
             }
