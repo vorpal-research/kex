@@ -6,6 +6,7 @@ import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.reflect.InvocationTargetException
@@ -28,7 +29,9 @@ class ExceptionReproductionCheckerImpl(
 
     private fun executeTest(testKlass: String): StackTrace? {
         val loader = CustomURLClassLoader(
-            listOfNotNull(kexConfig.compiledCodeDirectory.toUri().toURL(), getJunit()?.path?.toUri()?.toURL()) +
+            listOfNotNull(
+                kexConfig.compiledCodeDirectory.toUri().toURL(),
+                *getJunit().mapToArray { it.path.toUri().toURL() }) +
                     ctx.classPath.map { it.toUri().toURL() }
         )
         val actualClass = loader.loadClass(testKlass)
