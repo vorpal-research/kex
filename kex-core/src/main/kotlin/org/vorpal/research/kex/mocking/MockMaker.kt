@@ -17,10 +17,14 @@ interface MockMaker {
     fun mockOrNull(original: Descriptor, expectedClass: Class? = null): MockDescriptor?
 }
 
+// 2 last conditions are Kex limitations
+private fun Class.canMock(): Boolean =
+    !isFinal && !isPrivate && !isKexRt && !(!isPublic && pkg.concreteName.startsWith("java"))
+
 private sealed class AbstractMockMaker(protected val ctx: ExecutionContext) : MockMaker {
     protected fun satisfiesNecessaryConditions(descriptor: Descriptor): Boolean {
         val klass = descriptor.kfgClass ?: return false
-        return !klass.isFinal && !descriptor.type.isKexRt && descriptor is ObjectDescriptor
+        return klass.canMock() && !descriptor.type.isKexRt && descriptor is ObjectDescriptor
     }
 
     protected val Descriptor.kfgClass: Class?
@@ -42,8 +46,8 @@ private class AllMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
 private class UnimplementedMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
     override fun canMock(descriptor: Descriptor, expectedClass: Class?): Boolean {
         val klass = descriptor.kfgClass ?: return false
-        return satisfiesNecessaryConditions(descriptor) &&
-                !instantiationManager.isInstantiable(klass)
+        return satisfiesNecessaryConditions(descriptor)
+                && !instantiationManager.isInstantiable(klass)
     }
 
     override fun mockOrNull(original: Descriptor, expectedClass: Class?): MockDescriptor? {
@@ -62,9 +66,17 @@ private class LambdaMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
         if (!canMock(original, expectedClass)) return null
         original as ObjectDescriptor
 
-        val mockKlass = original.kfgClass!!.let { if (it.isFinal) it.superClass!! else it }.kexType
-        val interfaces = setOf(expectedClass!!.kexType).filter { it != mockKlass }.toSet()
-        return descriptor { mock(original, mockKlass, interfaces) }
+        var mockKlass = original.kfgClass!!
+        val interfaces = mutableSetOf(expectedClass!!)
+        while (!mockKlass.canMock()) {
+            interfaces.addAll(mockKlass.interfaces)
+            mockKlass = mockKlass.superClass!!
+        }
+        interfaces.remove(mockKlass)
+        interfaces.removeIf { klass -> !klass.canMock() }
+        return descriptor {
+            mock(original, mockKlass.kexType, interfaces.map { it.kexType }.toSet())
+        }
     }
 }
 
