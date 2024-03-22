@@ -17,7 +17,6 @@ interface MockMaker {
     fun mockOrNull(original: Descriptor, expectedClass: Class? = null): MockDescriptor?
 }
 
-// 2 last conditions are Kex limitations
 private fun Class.canMock(): Boolean =
     !isFinal && !isPrivate && !isKexRt && !(!isPublic && pkg.concreteName.startsWith("java"))
 
@@ -34,20 +33,6 @@ private sealed class AbstractMockMaker(protected val ctx: ExecutionContext) : Mo
 private class AllMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
     override fun canMock(descriptor: Descriptor, expectedClass: Class?): Boolean {
         return satisfiesNecessaryConditions(descriptor)
-    }
-
-    override fun mockOrNull(original: Descriptor, expectedClass: Class?): MockDescriptor? {
-        if (!canMock(original)) return null
-        original as ObjectDescriptor
-        return MockDescriptor(original).also { it.fields.putAll(original.fields) }
-    }
-}
-
-private class UnimplementedMockMaker(ctx: ExecutionContext) : AbstractMockMaker(ctx) {
-    override fun canMock(descriptor: Descriptor, expectedClass: Class?): Boolean {
-        val klass = descriptor.kfgClass ?: return false
-        return satisfiesNecessaryConditions(descriptor)
-                && !instantiationManager.isInstantiable(klass)
     }
 
     override fun mockOrNull(original: Descriptor, expectedClass: Class?): MockDescriptor? {
@@ -127,7 +112,11 @@ fun createMockMaker(rule: MockingRule, ctx: ExecutionContext): MockMaker = when 
     )
 
     MockingRule.ANY -> AllMockMaker(ctx)
-    MockingRule.UNIMPLEMENTED -> UnimplementedMockMaker(ctx)
+
+    MockingRule.UNIMPLEMENTED -> AllMockMaker(ctx).filter { descriptor ->
+        val klass = descriptor.kfgClass(ctx.types) ?: return@filter false
+        instantiationManager.isInstantiable(klass).not()
+    }
 }
 
 
