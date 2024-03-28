@@ -108,9 +108,9 @@ class ExecutorAS2JavaPrinter(
 //                importStatic("org.junit.Assert.assertThrows")
             }
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
+            importStatic("org.junit.Assert.assertTrue")
             if (finalInfoSequences as? ExecutionSuccessFinalInfo != null) {
                 importStatic("${equalityUtils.klass.pkg}.${equalityUtils.klass.name}.*")
-                importStatic("org.junit.Assert.assertTrue")
             }
 
 
@@ -276,7 +276,9 @@ class ExecutorAS2JavaPrinter(
                         if (isEqualsOverridden(instanceInfo.javaClass)) {
                             +"assertTrue($instanceName.equals(${instanceInfo.stackName}))"
                         }
-                        +"assertTrue(${equalityUtils.recursiveEquals.name}(${instanceName}, ${instanceInfo.stackName}))"
+                        else {
+                            +"assertTrue(${equalityUtils.recursiveEquals.name}(${instanceName}, ${instanceInfo.stackName}))"
+                        }
                     }
                 }
                 for ((i, arg) in actionSequences.arguments.withIndex()) {
@@ -284,14 +286,18 @@ class ExecutorAS2JavaPrinter(
                         if (isEqualsOverridden(arg.javaClass)) {
                             +"assertTrue(${arg.stackName}.equals(${finalInfoSequences.args[i].stackName}))"
                         }
-                        +"assertTrue(${equalityUtils.recursiveEquals.name}(${arg.stackName}, ${finalInfoSequences.args[i].stackName}))"
+                        else {
+                            +"assertTrue(${equalityUtils.recursiveEquals.name}(${arg.stackName}, ${finalInfoSequences.args[i].stackName}))"
+                        }
                     }
                 }
                 (finalInfoSequences as? ExecutionSuccessFinalInfo)?.retValue?.let { retValueInfo ->
                     if (isEqualsOverridden(retValueInfo.javaClass)) {
                         +"assertTrue(retValue.equals(${retValueInfo.stackName}))"
                     }
-                    +"assertTrue(${equalityUtils.recursiveEquals.name}(retValue, ${retValueInfo.stackName}))"
+                    else {
+                        +"assertTrue(${equalityUtils.recursiveEquals.name}(retValue, ${retValueInfo.stackName}))"
+                    }
                 }
             }
         }

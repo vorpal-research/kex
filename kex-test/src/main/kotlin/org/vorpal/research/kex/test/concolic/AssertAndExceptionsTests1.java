@@ -30,8 +30,4 @@ public class AssertAndExceptionsTests1 {
         return c;
     }
 
-    public static <T> Set<T> emptyIfNull(final Set<T> set) {
-        return set == null ? Collections.<T>emptySet() : set;
-    }
-
 }
