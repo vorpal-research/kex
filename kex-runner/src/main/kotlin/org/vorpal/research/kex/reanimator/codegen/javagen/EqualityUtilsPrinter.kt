@@ -14,6 +14,7 @@ class EqualityUtilsPrinter(
     val klass = builder.run { klass(packageName, EQUALITY_UTILS_CLASS) }
     val equalsPrimitiveMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
     val equalsPrimitiveArrayMap = mutableMapOf<String, JavaBuilder.JavaFunction>()
+    val equalsObjectArray: JavaBuilder.JavaFunction
     val containsKey: JavaBuilder.JavaFunction
     val equalsObject: JavaBuilder.JavaFunction
     val equalsAll: JavaBuilder.JavaFunction
@@ -79,6 +80,24 @@ class EqualityUtilsPrinter(
                     }
                 }
 
+                equalsObjectArray = method("equalsObjectArray") {
+                    arguments += arg("t1", type("Object[]"))
+                    arguments += arg("t2", type("Object[]"))
+                    arguments += arg("visitedFirstToSecond", type("Map<Object, Object>"))
+                    arguments += arg("visitedSecondToFirst", type("Map<Object, Object>"))
+                    returnType = type("boolean")
+                    visibility = Visibility.PUBLIC
+                    modifiers += "static"
+                    anIf("t1.length != t2.length") {
+                        +"return false"
+                    }
+                    aFor("int i=0; i<t1.length; i++") {
+                        anIf("!equalsAll(t1[i], t2[i], visitedFirstToSecond, visitedSecondToFirst)") {
+                            +"return false"
+                        }
+                    }
+                    +"return true"
+                }
 
                 containsKey = method("containsKey") {
                     arguments += arg("map", type("Map<Object, Object>"))
@@ -142,6 +161,9 @@ class EqualityUtilsPrinter(
                         anIf("clazz == $type[].class") {
                             +"return equals${type.kapitalize()}Array(($type[]) t1, ($type[]) t2)"
                         }
+                    }
+                    anIf("clazz.isArray()") {
+                        +"return equalsObjectArray((Object[]) t1, (Object[]) t2, visitedFirstToSecond, visitedSecondToFirst)"
                     }
 
                     +"return equalsObject(t1, t2, visitedFirstToSecond, visitedSecondToFirst)"

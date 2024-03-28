@@ -1,12 +1,6 @@
 package org.vorpal.research.kex.asm.analysis.concolic
 
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -88,6 +82,9 @@ class InstructionConcolicChecker(
             val timeLimit = kexConfig.getIntValue("concolic", "timeLimit", 100)
             val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
 
+            log.debug("Running on: ${targets.joinToString("\n", prefix = "\n")}")
+            log.debug("Time budget: $timeLimit")
+
             val actualNumberOfExecutors = maxOf(1, minOf(executors, targets.size))
             val coroutineContext = newFixedThreadPoolContextWithMDC(actualNumberOfExecutors, "concolic-dispatcher")
 
@@ -142,23 +139,25 @@ class InstructionConcolicChecker(
 
         compilerHelper.compileFile(testFile)
         val result = collectTrace(generator.testKlassName)
-        try {
-            if (result is ExecutionCompletedResult) {
-                val testWithAssertionsGenerator =
-                    UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
-                val finalInfoDescriptors = extractFinalInfo(result, method)
-                testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
-                val testFileWithAssertions = testWithAssertionsGenerator.emit()
-
-                compilerHelper.compileFile(testFileWithAssertions)
-                testFile.deleteIfExists()
+        CoroutineScope(Dispatchers.Default).launch {
+            try {
+                if (result is ExecutionCompletedResult) {
+                    val testWithAssertionsGenerator =
+                        UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
+                    val finalInfoDescriptors = extractFinalInfo(result, method)
+                    testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
+                    withContext(Dispatchers.IO) {
+                        testWithAssertionsGenerator.emit()
+                    }
+                    //testFile.deleteIfExists()
+                }
+            } catch (e: Throwable) {
+                log.debug("Tests with assertion generation failed with exception:")
+                log.debug(e.stackTrace)
             }
-            result
-        } catch (e: Throwable) {
-            log.debug("Tests with assertion generation failed with exception:")
-            log.debug(e.stackTrace)
-            result
         }
+
+        result
     }
 
     private suspend fun collectTrace(klassName: String): ExecutionResult {

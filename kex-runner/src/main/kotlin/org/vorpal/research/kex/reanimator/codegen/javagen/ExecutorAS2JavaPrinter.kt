@@ -44,6 +44,7 @@ import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.runIf
+import kotlin.time.Duration.Companion.seconds
 
 
 class ExecutorAS2JavaPrinter(
@@ -53,6 +54,7 @@ class ExecutorAS2JavaPrinter(
     private val setupName: String
 ) : ActionSequence2JavaPrinter(ctx, packageName, klassName) {
     private val surroundInTryCatch = kexConfig.getBooleanValue("testGen", "surroundInTryCatch", true)
+    private val testTimeout = kexConfig.getIntValue("testGen", "testTimeout", 10).seconds
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private val equalityUtils = EqualityUtilsPrinter.equalityUtils(packageName)
     private val reflectionUtils = ReflectionUtilsPrinter.reflectionUtils(packageName)
@@ -105,9 +107,12 @@ class ExecutorAS2JavaPrinter(
                 import(it.javaClass)
 //                importStatic("org.junit.Assert.assertThrows")
             }
-            importStatic("org.junit.Assert.assertTrue")
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
-            importStatic("${equalityUtils.klass.pkg}.${equalityUtils.klass.name}.*")
+            if (finalInfoSequences as? ExecutionSuccessFinalInfo != null) {
+                importStatic("${equalityUtils.klass.pkg}.${equalityUtils.klass.name}.*")
+                importStatic("org.junit.Assert.assertTrue")
+            }
+
 
             with(klass) {
                 if (generateSetup) {
@@ -166,7 +171,7 @@ class ExecutorAS2JavaPrinter(
                     exceptions += "Throwable"
                 } else method(testName) {
                     returnType = void
-                    annotations += "Test"
+                    //annotations += "Test(timeout = ${testTimeout.inWholeMilliseconds})"
                     if (finalInfoSequences == null) exceptions += "Throwable"
                 }
             }
@@ -195,7 +200,7 @@ class ExecutorAS2JavaPrinter(
                 with(klass) {
                     current = method(testName) {
                         returnType = void
-                        annotations += "Test"
+                        //annotations += "Test(timeout = ${testTimeout.inWholeMilliseconds})"
                     }
                 }
             }
