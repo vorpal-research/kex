@@ -14,6 +14,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.readLines
 
+val KEX_HOME_DIRECTORY: Path = Paths.get(System.getenv("KEX_HOME") ?: ".").toAbsolutePath()
+
+val Config.kexHome: Path get() = KEX_HOME_DIRECTORY
+
 val Config.outputDirectory: Path get() = getPathValue("kex", "outputDir")!!.normalize()
 
 @Deprecated("kex now does not write instrumented code into a directory")
@@ -44,7 +48,9 @@ val Config.testcaseDirectory: Path
     }
 
 val Config.runtimeDepsPath: Path?
-    get() = getPathValue("kex", "runtimeDepsPath")?.normalize()
+    get() = getPathValue("kex", "runtimeDepsPath")?.normalize()?.let {
+        kexHome.resolve(it)
+    }
 
 val Config.libPath: Path?
     get() = getStringValue("kex", "libPath")?.let {
@@ -111,20 +117,17 @@ fun getRuntime(): Container? {
 fun getIntrinsics(): Container? {
     val libPath = kexConfig.libPath ?: return null
     val intrinsicsVersion = kexConfig.getStringValue("kex", "intrinsicsVersion") ?: return null
-    return JarContainer(
-        libPath.resolve("kex-intrinsics-${intrinsicsVersion}.jar"),
-        Package.defaultPackage
-    )
+    return JarContainer(libPath.resolve("kex-intrinsics-${intrinsicsVersion}.jar"), Package.defaultPackage)
 }
 
 fun getPathSeparator(): String = File.pathSeparator
 
-fun getJunit(): Container? {
-    val libPath = kexConfig.libPath ?: return null
-    val junitVersion = kexConfig.getStringValue("kex", "junitVersion") ?: return null
-    return JarContainer(
-        libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(),
-        Package.defaultPackage
+fun getJunit(): List<Container> {
+    val libPath = kexConfig.libPath ?: return emptyList()
+    val junitVersion = kexConfig.getStringValue("kex", "junitVersion") ?: return emptyList()
+    return listOf(
+        JarContainer(libPath.resolve("junit-$junitVersion.jar").toAbsolutePath(), Package.defaultPackage),
+        JarContainer(libPath.resolve("hamcrest-core-1.3.jar").toAbsolutePath(), Package.defaultPackage),
     )
 }
 

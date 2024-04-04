@@ -15,6 +15,7 @@ import org.vorpal.research.kex.trace.symbolic.protocol.TestExecutionRequest
 import org.vorpal.research.kex.util.getJavaPath
 import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
+import org.vorpal.research.kex.util.kexHome
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.wheels.mapToArray
@@ -37,14 +38,14 @@ internal object ExecutorMasterController : AutoCloseable {
         controllerSocket = ControllerProtocolSocketHandler(ctx)
         val outputDir = kexConfig.outputDirectory
         val executorPath = kexConfig.getPathValue("executor", "executorPath") {
-            Paths.get("kex-executor/target/kex-executor-0.0.1-jar-with-dependencies.jar")
+            kexConfig.kexHome.resolve("kex-executor/target/kex-executor-0.0.2-jar-with-dependencies.jar")
         }.toAbsolutePath()
         val executorKlass = "org.vorpal.research.kex.launcher.MasterLauncherKt"
         val executorConfigPath = kexConfig.getPathValue("executor", "executorConfigPath") {
-            Paths.get("kex.ini")
+            kexConfig.kexHome.resolve("kex.ini")
         }.toAbsolutePath()
         val executorPolicyPath = kexConfig.getPathValue("executor", "executorPolicyPath") {
-            Paths.get("kex.policy")
+            kexConfig.kexHome.resolve("kex.policy")
         }.toAbsolutePath()
         val masterJvmParams = kexConfig.getMultipleStringValue("executor", "masterJvmParams", ",").toTypedArray()
         val numberOfWorkers = kexConfig.getIntValue("executor", "numberOfWorkers", 1)

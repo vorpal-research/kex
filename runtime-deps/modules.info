@@ -49,3 +49,4 @@ java.base/jdk.internal.util.xml=ALL-UNNAMED
 java.base/jdk.internal.util.xml.impl=ALL-UNNAMED
 java.base/jdk.internal.vm=ALL-UNNAMED
 java.base/jdk.internal.vm.annotation=ALL-UNNAMED
+java.logging/java.util.logging=ALL-UNNAMED

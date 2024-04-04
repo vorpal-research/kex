@@ -25,6 +25,7 @@ import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -83,7 +84,7 @@ class WorkerLauncherDebug(args: Array<String>) {
                 *classPaths.toTypedArray(),
 //                kexConfig.instrumentedCodeDirectory,
                 kexConfig.compiledCodeDirectory,
-                getJunit()?.path
+                *getJunit().mapToArray { it.path }
             )
         ) { kfgClass ->
             val instrumenter = SymbolicTraceInstrumenter(classManager)

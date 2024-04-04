@@ -18,6 +18,7 @@ import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.logging.log
+import ru.spbstu.wheels.mapToArray
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -61,7 +62,8 @@ class WorkerLauncher(args: Array<String>) {
                 exitProcess(1)
             }
         }
-        val classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
+        val classManager =
+            ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         classManager.initialize(
             *listOfNotNull(
                 *containers.toTypedArray(),
@@ -73,7 +75,7 @@ class WorkerLauncher(args: Array<String>) {
             classManager, listOfNotNull(
                 *classPaths.toTypedArray(),
                 kexConfig.compiledCodeDirectory,
-                getJunit()?.path,
+                *getJunit().mapToArray { it.path },
                 getIntrinsics()?.path,
                 kexConfig.mockito?.path,
             )

@@ -6,11 +6,10 @@ import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.mockito
 import org.vorpal.research.kex.util.testcaseDirectory
+import ru.spbstu.wheels.mapToArray
 import java.nio.file.Path
 
 class CompilerHelper(val ctx: ExecutionContext) {
-    private val junitJar = getJunit()!!
-    private val mockitoJar = kexConfig.mockito
     private val enabled: Boolean = kexConfig.getBooleanValue("compile", "enabled", true)
     private val compileDir: Path = kexConfig.compiledCodeDirectory.also {
         it.toFile().mkdirs()
@@ -21,12 +20,7 @@ class CompilerHelper(val ctx: ExecutionContext) {
         if (!enabled) return
 
         val compilerDriver = JavaCompilerDriver(
-            listOfNotNull(
-                *ctx.classPath.toTypedArray(),
-                mockitoJar?.path,
-                junitJar.path,
-                testDirectory
-            ), compileDir
+            listOfNotNull(*ctx.classPath.toTypedArray(), *getJunit().mapToArray { it.path }, kexConfig.mockito?.path, testDirectory), compileDir
         )
         compilerDriver.compile(listOf(file))
     }
