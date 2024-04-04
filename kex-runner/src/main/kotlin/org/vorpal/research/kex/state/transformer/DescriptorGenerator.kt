@@ -130,21 +130,28 @@ fun generateFinalTypeInfoMap(
     )
 }
 
+data class InitialDescriptors internal constructor(
+    val descriptors: Parameters<Descriptor>,
+    val generator: DescriptorGenerator
+)
+
 fun generateInitialDescriptors(
     method: Method,
     ctx: ExecutionContext,
     model: SMTModel,
     state: PredicateState
-): Pair<Parameters<Descriptor>, DescriptorGenerator> {
+): InitialDescriptors {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
-    return Parameters(
-        generator.instance,
-        generator.args.mapIndexed { index, arg ->
-            arg ?: descriptor { default(method.argTypes[index].kexType) }
-        },
-        generator.staticFields
-    ) to generator
+    return InitialDescriptors(
+        Parameters(
+            generator.instance,
+            generator.args.mapIndexed { index, arg ->
+                arg ?: descriptor { default(method.argTypes[index].kexType) }
+            },
+            generator.staticFields
+        ), generator
+    )
 }
 
 

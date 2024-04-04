@@ -287,7 +287,7 @@ class GeneratorContext(
         return when (val result = checker.check(checkedState)) {
             is Result.SatResult -> {
                 log.debug("Model: {}", result.model)
-                generateInitialDescriptors(this, context, result.model, checker.state).first
+                generateInitialDescriptors(this, context, result.model, checker.state).descriptors
             }
 
             else -> null
