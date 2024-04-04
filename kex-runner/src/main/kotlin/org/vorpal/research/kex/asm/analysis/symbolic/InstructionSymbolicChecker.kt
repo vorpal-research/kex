@@ -22,12 +22,12 @@ class InstructionSymbolicChecker(
     override val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
 
     init {
-        val pathSelectorName: String = kexConfig.getStringValue("kex", "pathSelector", "NSubpathPathSelector")
-        val n: Int = kexConfig.getIntValue("kex", "nPathSelectorArg", 2)
+        val pathSelectorName = kexConfig.getStringValue("symbolic", "pathSelector", "sgs")
+        val n = kexConfig.getIntValue("symbolic", "n", 2)
         pathSelector = when (pathSelectorName) {
-            "DequePathSelector" -> DequePathSelector()
-            "NSubpathPathSelector" -> NSubpathPathSelector(n)
-            "PriorityDequePathSelector" -> PriorityDequePathSelector(n)
+            "bfs" -> BFS()
+            "sgs" -> SGS(n)
+            "priority-bfs" -> PriorityBFS(n)
             else -> throw IllegalArgumentException("PathSelector '$pathSelectorName' doesn't exist. " +
                     "Check InstructionSymbolicChecker to see available path selectors")
         }

@@ -3,7 +3,6 @@ package org.vorpal.research.kex.asm.analysis.symbolic
 import org.vorpal.research.kex.asm.analysis.util.SuspendableIterator
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kthelper.collection.queueOf
-import kotlin.math.min
 
 interface SymbolicPathSelector : SuspendableIterator<Pair<TraverserState, BasicBlock>> {
     suspend fun add(state: TraverserState, block: BasicBlock)
@@ -14,7 +13,7 @@ interface SymbolicPathSelector : SuspendableIterator<Pair<TraverserState, BasicB
 /**
  * Implements bfs algorithm
  */
-class DequePathSelector : SymbolicPathSelector {
+class BFS : SymbolicPathSelector {
     private val queue = queueOf<Pair<TraverserState, BasicBlock>>()
 
     override suspend fun add(state: TraverserState, block: BasicBlock) {
@@ -29,7 +28,7 @@ class DequePathSelector : SymbolicPathSelector {
 /**
  * Implements n-subpath algorithm, which makes path decisions based on the frequency of visits to paths of length n
  */
-class NSubpathPathSelector(val n: Int = 2) : SymbolicPathSelector {
+class SGS(val n: Int = 2) : SymbolicPathSelector {
     private val eSVector = mutableSetOf<ExecutionState>()
     private val pathVisits = mutableMapOf<List<BasicBlock>, Int>()
 
@@ -44,8 +43,8 @@ class NSubpathPathSelector(val n: Int = 2) : SymbolicPathSelector {
     override suspend fun hasNext(): Boolean = eSVector.isNotEmpty()
 
     override suspend fun next(): Pair<TraverserState, BasicBlock> {
-        var minPath = Int.MAX_VALUE
-        eSVector.forEach { minPath = min(minPath, pathVisits[it.path]!!) }
+        val minPath = eSVector.minOf { pathVisits[it.path]!! }
+
         val selectSet = mutableSetOf<ExecutionState>()
 
         for (elem in eSVector) {
@@ -71,7 +70,7 @@ class NSubpathPathSelector(val n: Int = 2) : SymbolicPathSelector {
 /**
  * Implements bfs algorithm, which takes into account frequency of visits to paths of length n from n-subpath
  */
-class PriorityDequePathSelector(val n: Int = 2) : SymbolicPathSelector {
+class PriorityBFS(val n: Int = 2) : SymbolicPathSelector {
     private val eSVector = mutableSetOf<ExecutionState>()
     private val p = mutableMapOf<List<BasicBlock>, Int>()
 
@@ -89,8 +88,7 @@ class PriorityDequePathSelector(val n: Int = 2) : SymbolicPathSelector {
         val minLen = eSVector.minOf { it.path.size }
         val filteredESVector = eSVector.filter { it.path.size == minLen }
 
-        var minPath = Int.MAX_VALUE
-        filteredESVector.forEach { minPath = min(minPath, p[it.path]!!) }
+        val minPath = filteredESVector.minOf { p[it.path]!! }
         val filteredESVector2 = filteredESVector.filter { p[it.path] == minPath }
 
         val result =  filteredESVector2.random()
