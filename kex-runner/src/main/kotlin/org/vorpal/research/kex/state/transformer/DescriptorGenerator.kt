@@ -131,7 +131,8 @@ fun generateFinalTypeInfoMap(
     )
 }
 
-private data class InitialDescriptors(
+
+private class InitialDescriptors(
     override val descriptors: Parameters<Descriptor>,
     private val generator: DescriptorGenerator,
 ) : NonMockedDescriptors {
