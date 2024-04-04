@@ -4,8 +4,8 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.junit.Test
-import org.vorpal.research.kex.config.RuntimeConfig
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.util.isZeroCoverageEpsilon
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -14,6 +14,10 @@ import kotlin.time.ExperimentalTime
 @DelicateCoroutinesApi
 class MockConcolicLongTest : ConcolicTest("mock-concolic") {
     val prefix = "org/vorpal/research/kex/test/concolic/mock/"
+
+    companion object {
+        private fun eps(eps: Double): Double = if (kexConfig.isZeroCoverageEpsilon) 0.0 else eps
+    }
 
     @Test
     fun mockTest() {
@@ -42,14 +46,12 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
 
     @Test
     fun mockStaticsTests() {
-        val eps = 0.03
-        assertCoverage(cm[prefix + "MockStaticsTests"], 1.0, eps)
+        assertCoverage(cm[prefix + "MockStaticsTests"], 1.0)
     }
 
     @Test
     fun mockListTests() {
-        val eps = 0.12
-        assertCoverage(cm[prefix + "MockListTests"], 1.0, eps)
+        assertCoverage(cm[prefix + "MockListTests"], 1.0, eps(0.12))
     }
 
     @Test
@@ -59,8 +61,7 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
 
     @Test
     fun mockSetTests() {
-        val eps = 0.5
-        assertCoverage(cm[prefix + "MockSetTests"], 1.0, eps)
+        assertCoverage(cm[prefix + "MockSetTests"], 1.0, eps(0.5))
     }
 
     @Test

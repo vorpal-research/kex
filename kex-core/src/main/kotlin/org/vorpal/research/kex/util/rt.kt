@@ -81,6 +81,9 @@ val Config.isFixConcreteLambdas: Boolean
 val Config.isEasyRandomExcludeLambdas: Boolean
     get() = getBooleanValue("mock", "easyRandomExcludeLambdas", false)
 
+val Config.isZeroCoverageEpsilon: Boolean
+    get() = getBooleanValue("mock", "zeroCoverageEpsilon", false)
+
 val Config.mockito: Container?
     get() {
         val libPath = libPath ?: return null
