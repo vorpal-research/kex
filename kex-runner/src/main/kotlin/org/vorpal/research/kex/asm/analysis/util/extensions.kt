@@ -6,34 +6,24 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExceptionPrecondition
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.util.AccessModifier
-import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.mocking.filterNot
-import org.vorpal.research.kex.mocking.getMockMaker
+import org.vorpal.research.kex.mocking.*
 import org.vorpal.research.kex.parameters.*
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.AsyncIncrementalChecker
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
-import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.isExpectMocks
-import org.vorpal.research.kex.util.isMockingEnabled
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
-
-private fun SymbolicState.methodCalls(): List<CallPredicate> {
-    return clauses.map { clause -> clause.predicate }.filterIsInstance<CallPredicate>()
-}
 
 
 suspend fun Method.analyzeOrTimeout(
@@ -84,42 +74,6 @@ suspend fun Method.checkAsync(
     }
 }
 
-
-private fun InitialDescriptors.performMocking(
-    ctx: ExecutionContext,
-    state: SymbolicState,
-    method: Method
-): Parameters<Descriptor> {
-    if (!kexConfig.isMockingEnabled) {
-        return descriptors
-    }
-
-    val expectedClasses = method.argTypes
-        .map { (it as? ClassType)?.klass }
-        .zip(descriptors.arguments)
-        .filter { (klass, _) -> klass != null }
-        .associate { (klass, descriptor) -> descriptor to klass!! }
-
-    val mockMaker = kexConfig.getMockMaker(ctx).filterNot { desc -> desc == descriptors.instance }
-    if (!kexConfig.isExpectMocks) {
-        val visited = mutableSetOf<Descriptor>()
-        if (descriptors.asList.none { it.requireMocks(mockMaker, expectedClasses, visited) }) {
-            return descriptors
-        }
-    }
-    generator.generateAll()
-    val visited = mutableSetOf<Descriptor>()
-    if (generator.allValues.none { it.requireMocks(mockMaker, expectedClasses, visited) }) {
-        return descriptors
-    }
-
-
-    val descriptorToMock = createDescriptorToMock(generator.allValues, mockMaker, expectedClasses)
-    val withMocks = descriptors.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
-    val methodCalls = state.methodCalls()
-    setupMocks(ctx.types, methodCalls, generator.memory, descriptorToMock)
-    return withMocks
-}
 
 @Suppress("unused")
 suspend fun Method.checkAsyncAndSlice(

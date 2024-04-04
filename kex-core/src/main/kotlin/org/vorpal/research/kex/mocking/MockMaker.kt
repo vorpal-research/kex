@@ -17,9 +17,6 @@ interface MockMaker {
     fun mockOrNull(original: Descriptor, expectedClass: Class? = null): MockDescriptor?
 }
 
-private fun Class.canMock(): Boolean =
-    !isFinal && !isPrivate && !isKexRt && !(!isPublic && pkg.concreteName.startsWith("java"))
-
 private sealed class AbstractMockMaker(protected val ctx: ExecutionContext) : MockMaker {
     protected fun satisfiesNecessaryConditions(descriptor: Descriptor): Boolean {
         val klass = descriptor.kfgClass ?: return false

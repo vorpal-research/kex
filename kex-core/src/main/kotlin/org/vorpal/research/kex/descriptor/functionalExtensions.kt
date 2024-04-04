@@ -22,32 +22,32 @@ fun <T : Descriptor> Descriptor.transform(
 
 private fun <T : Descriptor> Descriptor.transformChildren(
     mapped: MutableMap<Descriptor, T>,
-    failureMappings: MutableSet<Descriptor>,
+    failedMappings: MutableSet<Descriptor>,
     transformOrNull: (Descriptor) -> T?
 ) {
     when (this) {
         is ConstantDescriptor -> Unit
         is ClassDescriptor -> fields.replaceAll { _, descriptor ->
-            descriptor.transform(mapped, failureMappings, transformOrNull)
+            descriptor.transform(mapped, failedMappings, transformOrNull)
         }
 
         is ObjectDescriptor -> fields.replaceAll { _, descriptor ->
-            descriptor.transform(mapped, failureMappings, transformOrNull)
+            descriptor.transform(mapped, failedMappings, transformOrNull)
         }
 
         is MockDescriptor -> {
             fields.replaceAll { _, descriptor ->
-                descriptor.transform(mapped, failureMappings, transformOrNull)
+                descriptor.transform(mapped, failedMappings, transformOrNull)
             }
             methodReturns.values.forEach { values ->
                 values.replaceAll { descriptor ->
-                    descriptor.transform(mapped, failureMappings, transformOrNull)
+                    descriptor.transform(mapped, failedMappings, transformOrNull)
                 }
             }
         }
 
         is ArrayDescriptor -> elements.replaceAll { _, descriptor ->
-            descriptor.transform(mapped, failureMappings, transformOrNull)
+            descriptor.transform(mapped, failedMappings, transformOrNull)
         }
     }
 }
