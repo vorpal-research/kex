@@ -1,8 +1,9 @@
-@file:Suppress("SENSELESS_COMPARISON", "UNUSED_VARIABLE", "UNUSED_PARAMETER")
+@file:Suppress("unused")
 
 package org.vorpal.research.kex.test.debug
 
 import org.vorpal.research.kex.intrinsics.AssertIntrinsics
+
 //
 //enum class TestEnum {
 //    A, B, C

@@ -15,7 +15,7 @@ import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.ir.OuterClass
 import org.vorpal.research.kfg.ir.value.instruction.CallInst
 import org.vorpal.research.kfg.ir.value.instruction.CallOpcode
-import org.vorpal.research.kfg.ir.value.instruction.Handle
+import org.vorpal.research.kfg.ir.value.instruction.HandleBsmArgument
 import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
 import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.ClassType
@@ -107,10 +107,10 @@ class DefaultCallResolver(
         state: TraverserState,
         inst: InvokeDynamicInst
     ): TraverserState? {
-        val lambdaBases = inst.bootstrapMethodArgs.filterIsInstance<Handle>()
+        val lambdaBases = inst.bootstrapMethodArgs.filterIsInstance<HandleBsmArgument>()
         if (lambdaBases.size != 1) return null
 
-        val lambdaBase = lambdaBases.first()
+        val lambdaBase = lambdaBases.first().handle
         val argParameters = lambdaBase.method.argTypes.withIndex().map { term { arg(it.value.kexType, it.index) } }
         val lambdaParameters = lambdaBase.method.argTypes.withIndex().map { (index, type) ->
             term { value(type.kexType, "lambda_${lambdaBase.method.name}_$index") }

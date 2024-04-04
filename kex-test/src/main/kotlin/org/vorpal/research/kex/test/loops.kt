@@ -1,4 +1,5 @@
-@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
+@file:Suppress("unused", "UNUSED_VARIABLE")
+
 package org.vorpal.research.kex.test
 
 class LoopTests {
@@ -98,8 +99,8 @@ class LoopTests {
         val names = mutableListOf("a", "b", "c")
         for (name in names) {
             try {
-                val concater = StringBuilder()
-//                for (i in 0..name.length) concater.append(name[i] + 1)
+                val builder = StringBuilder()
+//                for (i in 0..name.length) builder.append(name[i] + 1)
             } catch (e: IndexOutOfBoundsException) {
                 println("Oops")
             }

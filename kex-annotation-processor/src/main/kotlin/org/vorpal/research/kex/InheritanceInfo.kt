@@ -1,14 +1,13 @@
 package org.vorpal.research.kex
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @Serializable
 data class InheritanceInfo(
-        val base: String,
-        val inheritors: Set<Inheritor>
+    val base: String,
+    val inheritors: Set<Inheritor>
 ) {
     fun toJson() = Json.encodeToString(this)
 
@@ -21,8 +20,8 @@ data class InheritanceInfo(
 
 @Serializable
 data class Inheritor(
-        val name: String,
-        val inheritorClass: String
+    val name: String,
+    val inheritorClass: String
 )
 
 

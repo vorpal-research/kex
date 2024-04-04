@@ -1,6 +1,6 @@
 # Kex
 
-Kex is a platform for analysis of Java  bytecode.
+Kex is a platform for analysis of Java bytecode.
 
 # Build
 
@@ -13,13 +13,14 @@ Kex is a platform for analysis of Java  bytecode.
     ```
     mvn clean package -Psolver
     ```
-    where `solver` can be:
-  * `z3`
-  * `boolector` (supported only on linux)
-  * `ksmt` &mdash; used by default
-  * `full-smt` &mdash; build with z3, boolector and KSMT
+  where `solver` can be:
+    * `z3`
+    * `boolector` (supported only on linux)
+    * `ksmt` &mdash; used by default
+    * `full-smt` &mdash; build with z3, boolector and KSMT
 
 Run all the tests:
+
 ```
 mvn clean verify [-Psolver]
 ```
@@ -54,13 +55,14 @@ Docker images with the latest version installed. Example:
 
 ```bash
 docker run -v ~/myproject:/home/myproject -v ~/kex-output:/home/kex-output \
- abdullin/kex-standalone:run --classpath /home/myproject/target/myproject.jar \
+ abdullin/kex-standalone:0.0.1 --classpath /home/myproject/target/myproject.jar \
  --target myproject.\* --output /home/kex-output --mode concolic
 ```
 
 # Example
 
 Consider an example class:
+
 ```kotlin
 class TestClass {
     class Point(val x: Int, val y: Int)
@@ -78,6 +80,7 @@ class TestClass {
 ```
 
 Compile that class into the jar file and run Kex on it using following command:
+
 ```bash
 python ./kex.py --classpath test.jar --target TestClass --output test --mode concolic
 ```

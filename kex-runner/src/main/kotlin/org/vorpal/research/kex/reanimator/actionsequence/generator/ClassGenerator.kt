@@ -45,6 +45,7 @@ class ClassGenerator(private val fallback: Generator) : Generator {
                     else -> nameDescriptor!!
                 }
             }
+
             else -> randomKlassName()
         }
 
@@ -56,6 +57,7 @@ class ClassGenerator(private val fallback: Generator) : Generator {
                 val elementTypeAS = fallback.generate(elementTypeDescriptor)
                 ArrayClassConstantGetter(elementTypeAS)
             }
+
             else -> ExternalConstructorCall(
                 forNameMethod,
                 listOf(

@@ -268,12 +268,14 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
                 val builder = psa.builder(method)
                 builder.methodState
             }
+
             method.isConstructor -> {
                 val builder = psa.builder(method)
                 val state = builder.methodState ?: return null
                 val mappings = buildMappings(method, state, callMappings)
                 TermRenamer("${++counter}", mappings).apply(state)
             }
+
             else -> {
                 val mappedThis = callMappings.mappings[cm.value.getThis(method.klass)]!!
                 val actualMethod = getOverloadedMethod(mappedThis, callMethod)
@@ -419,6 +421,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
                     }
                 }
             }
+
             else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
         }
     }
@@ -437,6 +440,7 @@ class ConcolicStateBuilder(val cm: ClassManager, val psa: PredicateStateAnalysis
                     }
                 }
             }
+
             else -> throw InvalidStateException("Inst ${inst.print()} successor does not correspond to actual successor ${next.name}")
         }
     }

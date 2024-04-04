@@ -42,18 +42,21 @@ class ExtendedContext : Context() {
             }
             array32to32Sort!! as ArraySort<D, R>
         }
+
         domain === bv32Sort && range === bv64Sort -> {
             if (array32to64Sort == null) {
                 array32to64Sort = super.mkArraySort(bv32Sort, bv64Sort)
             }
             array32to64Sort!! as ArraySort<D, R>
         }
+
         domain === bv64Sort && range === bv64Sort -> {
             if (array64to64Sort == null) {
                 array64to64Sort = super.mkArraySort(bv64Sort, bv64Sort)
             }
             array64to64Sort!! as ArraySort<D, R>
         }
+
         else -> super.mkArraySort(domain, range)
     }
 

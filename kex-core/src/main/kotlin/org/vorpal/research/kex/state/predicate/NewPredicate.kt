@@ -11,9 +11,10 @@ import org.vorpal.research.kfg.ir.Location
 @InheritorOf("Predicate")
 @Serializable
 class NewPredicate(
-        val lhv: Term,
-        @Required override val type: PredicateType = PredicateType.State(),
-        @Required @Contextual override val location: Location = Location()) : Predicate() {
+    val lhv: Term,
+    @Required override val type: PredicateType = PredicateType.State(),
+    @Required @Contextual override val location: Location = Location()
+) : Predicate() {
     override val operands by lazy { listOf(lhv) }
 
     override fun print() = "$lhv = new ${lhv.type}"

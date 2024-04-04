@@ -16,6 +16,7 @@ import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
 import java.net.ServerSocket
 
+@Suppress("unused")
 class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) : ConcolicPathSelector {
 
     override val ctx = concolicPathSelector.ctx
@@ -40,16 +41,20 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
 
     override suspend fun isEmpty(): Boolean = concolicPathSelector.isEmpty()
 
-    override suspend fun addExecutionTrace(method: Method, result: ExecutionCompletedResult) {
+    override suspend fun addExecutionTrace(
+        method: Method,
+        checkedState: PersistentSymbolicState,
+        result: ExecutionCompletedResult
+    ) {
         val vertices = graph.addTrace(result.symbolicState.toPersistentState())
         val json = Json.encodeToString(vertices)
         log.debug("Vertices trace: $json")
         log.debug(graph)
         client.send(json)
-        concolicPathSelector.addExecutionTrace(method, result)
+        concolicPathSelector.addExecutionTrace(method, checkedState, result)
     }
 
-    override suspend fun next(): PersistentSymbolicState {
+    override suspend fun next(): Pair<Method, PersistentSymbolicState> {
         log.debug("Waiting for client decision")
         val received = client.receive()
 
@@ -61,7 +66,8 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
         val vertex: Vertex = Json.decodeFromString(received)
         log.debug("Received vertex: {}", vertex)
 
-        return interactiveNext(vertex) ?: concolicPathSelector.next()
+        return interactiveNext(vertex)?.let { it.clauses.first().instruction.parent.method to it }
+            ?: concolicPathSelector.next()
     }
 
     private fun interactiveNext(vertex: Vertex): PersistentSymbolicState? {
@@ -69,8 +75,8 @@ class GUIProxySelector(private val concolicPathSelector: ConcolicPathSelector) :
         val state = graph.findStateByPathClause(pathClause) ?: return null
 
         val revertedClause = reverse(pathClause) ?: return null
-        val clauses = state.clauses.subState(0, state.clauses.indexOf(pathClause))
-        val path = state.path.subPath(0, state.path.indexOf(pathClause))
+        val clauses = state.clauses.subState(state.clauses.indexOf(pathClause))
+        val path = state.path.subPath(state.path.indexOf(pathClause))
 
         return persistentSymbolicState(
             clauses,

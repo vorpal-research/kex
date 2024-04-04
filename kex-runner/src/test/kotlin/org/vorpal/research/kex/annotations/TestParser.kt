@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.annotations
 
+import org.vorpal.research.kfg.type.SystemTypeNames
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -8,7 +9,7 @@ class TestParser {
     @Test
     fun test1() {
         val extra = ExternalAnnotationsLoader()
-        extra.loadFrom(TestParser::class.java.getResource("annotations.1.xml"))
+        extra.loadFrom(TestParser::class.java.getResource("annotations.1.xml")!!)
         val call = extra.getExactCall("java/io/Reader.read", "char[]", "int", "int")
         assertNotNull(call, "call \"java/io/Reader.read\" not loaded")
         assertEquals(1, call.annotations.size, "1 annotation for this method expected")
@@ -22,10 +23,10 @@ class TestParser {
         val annotation = annotations[0]
         assertEquals("org.jetbrains.annotations.NotNull", annotation.name)
         assertEquals(0, call.params[1].annotations.size)
-        val callInit = extra.getExactCall("java/io/File.<init>", "java/lang/String")
+        val callInit = extra.getExactCall("${SystemTypeNames.fileClass}.<init>", SystemTypeNames.stringClass)
         assertNotNull(callInit)
         assertEquals(emptyList(), callInit.annotations)
-        assertEquals("java/io/File", callInit.returnType)
+        assertEquals(SystemTypeNames.fileClass, callInit.returnType)
         assertEquals(1, callInit.params.size)
         assertEquals(1, callInit.params[0].annotations.size)
         val initAnnotation = callInit.params[0].annotations[0]

@@ -23,7 +23,7 @@ abstract class Term : InheritanceTypeInfo {
         val terms = run {
             val loader = Thread.currentThread().contextClassLoader
             val resource = loader.getResourceAsStream("Term.json")
-                    ?: fail { log.error("Could not load term inheritance info") }
+                ?: fail { log.error("Could not load term inheritance info") }
             val inheritanceInfo = InheritanceInfo.fromJson(resource.bufferedReader().readText())
             resource.close()
 
@@ -86,19 +86,21 @@ val Term.isConst
         else -> false
     }
 
-val Term.numericValue: Number get() = when (this) {
-    is ConstBoolTerm -> value.toInt()
-    is ConstByteTerm -> value
-    is ConstCharTerm -> value.code
-    is ConstShortTerm -> value
-    is ConstIntTerm -> value
-    is ConstLongTerm -> value
-    is ConstFloatTerm -> value
-    is ConstDoubleTerm -> value
-    else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
-}
+val Term.numericValue: Number
+    get() = when (this) {
+        is ConstBoolTerm -> value.toInt()
+        is ConstByteTerm -> value
+        is ConstCharTerm -> value.code
+        is ConstShortTerm -> value
+        is ConstIntTerm -> value
+        is ConstLongTerm -> value
+        is ConstFloatTerm -> value
+        is ConstDoubleTerm -> value
+        else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
+    }
 
-val Term.boolValue: Boolean get() = when (this) {
-    is ConstBoolTerm -> value
-    else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
-}
+val Term.boolValue: Boolean
+    get() = when (this) {
+        is ConstBoolTerm -> value
+        else -> unreachable { log.error("Trying to get value of term: $this with type $type") }
+    }

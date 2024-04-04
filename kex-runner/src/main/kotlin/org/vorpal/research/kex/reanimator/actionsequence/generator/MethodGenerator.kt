@@ -21,7 +21,7 @@ import org.vorpal.research.kfg.type.stringType
 class MethodGenerator(private val fallback: Generator) : Generator {
     override val context get() = fallback.context
 
-    private val kfgMethodClass = context.cm["java/lang/reflect/Method"]
+    private val kfgMethodClass = context.cm[SystemTypeNames.methodClass]
     private val kexMethodClass = kfgMethodClass.kexType
     private val kfgStringClass = context.cm.stringClass
     private val kfgJavaClass = KexJavaClass().kfgClass(context.types)

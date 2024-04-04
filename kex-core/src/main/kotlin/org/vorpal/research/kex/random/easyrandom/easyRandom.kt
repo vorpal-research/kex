@@ -271,6 +271,7 @@ class EasyRandomDriver(
             }
             array
         }
+
         is TypeVariable<*> -> generateTypeVariable(type, depth)
         is WildcardType -> {
             assert(type.upperBounds.size == 1) { log.debug("Unexpected size of wildcard type upper bounds: {}", type) }

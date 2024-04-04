@@ -11,6 +11,7 @@ object AnnotatedMethodsThere {
     fun rangeExample(param0: Any?, param1: Int): Int {
         return param1 + 2
     }
+
     @JvmStatic
     // "!null, _ -> !null; _, true -> new; _, false -> param1"
     fun haveContract(param0: Any?, param1: Boolean): Any? = if (param1) Any() else param0
@@ -92,9 +93,9 @@ class ThatClassContainsHighQualityCodeToProf {
             val bestStream = ByteArrayInputStream(exitingArgument.toByteArray())
             val meaningfulResult = importantMethods.makeBeautifulList(lovelyInteger)
             //while (bestStream.available() > 0) {
-                val remarkableLetter = bestStream.read()
-                importantMethods.assertTrue(importantMethods.assertTrue(remarkableLetter > 0) == importantMethods)
-                meaningfulResult += remarkableLetter
+            val remarkableLetter = bestStream.read()
+            importantMethods.assertTrue(importantMethods.assertTrue(remarkableLetter > 0) == importantMethods)
+            meaningfulResult += remarkableLetter
             //}
             importantMethods.assertNotNull(meaningfulResult)
             return meaningfulResult

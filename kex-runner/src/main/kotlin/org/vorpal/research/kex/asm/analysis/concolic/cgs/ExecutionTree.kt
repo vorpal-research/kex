@@ -170,17 +170,18 @@ class ExecutionTree(val ctx: ExecutionContext) : PredecessorGraph<Vertex>, Viewa
         tree[this]?.dominates(other)
     } ?: false
 
-    fun contexts(pathVertex: PathVertex, k: Int): Set<Context> = pathVertex.states.mapTo(mutableSetOf()) { (path, state) ->
-        Context(
-            path.builder()
-                .map { edges[it]!! }
-                .filter { !it.dominates(pathVertex) }
-                .takeLast(k)
-                .toPersistentList(),
-            path,
-            state
-        )
-    }
+    fun contexts(pathVertex: PathVertex, k: Int): Set<Context> =
+        pathVertex.states.mapTo(mutableSetOf()) { (path, state) ->
+            Context(
+                path.builder()
+                    .map { edges[it]!! }
+                    .filter { !it.dominates(pathVertex) }
+                    .takeLast(k)
+                    .toPersistentList(),
+                path,
+                state
+            )
+        }
 
     private fun getBranchDepths(): Map<PathVertex, Int> {
         val search = mutableMapOf<PathVertex, Int>()

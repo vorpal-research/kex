@@ -15,7 +15,7 @@ class ConcatTerm(
     override val name = "$lhv ++ $rhv"
     override val subTerms by lazy { listOf(lhv, rhv) }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>): Term {
+    override fun <T : Transformer<T>> accept(t: Transformer<T>): Term {
         val tLhv = t.transform(lhv)
         val tRhv = t.transform(rhv)
         return when {

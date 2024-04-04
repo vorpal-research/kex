@@ -573,7 +573,7 @@ class Ifer {
             inline fun < reified T : $valexpr > `else`(`false`: T): T {
                 val ctx = cond.ctx
                 val expr = engine().ite(ctx, cond.expr, `true`.expr, `false`.expr)
-                val axiom = spliceAxioms(ctx, `true`.axiom, `false`.axiom)
+                val axiom = spliceAxioms(ctx, cond.axiom, `true`.axiom, `false`.axiom)
                 return ${valexpr}.forceCast< T >($valexpr(ctx, expr, axiom))
             }
             inline fun < reified T : $valexpr > else_(`false`: () -> T) = `else`(`false`())

@@ -11,7 +11,7 @@ class ArgumentTerm(override val type: KexType, val index: Int) : Term() {
     override val name = "arg$$index"
     override val subTerms by lazy { listOf<Term>() }
 
-    override fun <T: Transformer<T>> accept(t: Transformer<T>) = this
+    override fun <T : Transformer<T>> accept(t: Transformer<T>) = this
 
     override fun hashCode() = 31 * super.hashCode() + index.hashCode()
     override fun equals(other: Any?): Boolean {

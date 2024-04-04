@@ -10,7 +10,7 @@ import org.vorpal.research.kex.jacoco.CoverageReporter
 import org.vorpal.research.kex.launcher.ClassLevel
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.visitor.executePipeline
+import org.vorpal.research.kfg.visitor.executePackagePipeline
 import org.vorpal.research.kthelper.logging.log
 import kotlin.test.assertEquals
 import kotlin.time.ExperimentalTime
@@ -24,7 +24,7 @@ abstract class SymbolicTest(
 ) : KexRunnerTest(testDirectoryName) {
 
     fun assertCoverage(klass: Class, expectedCoverage: Double = 1.0, eps: Double = 0.0) {
-        executePipeline(analysisContext.cm, Package.defaultPackage) {
+        executePackagePipeline(analysisContext.cm, Package.defaultPackage) {
             +ClassInstantiationDetector(analysisContext)
         }
 
@@ -32,7 +32,7 @@ abstract class SymbolicTest(
             InstructionSymbolicChecker.run(analysisContext, setOf(method))
         }
 
-        val coverage = CoverageReporter(listOf(jar)).execute(klass.cm, ClassLevel(klass))
+        val coverage = CoverageReporter(klass.cm, listOf(jar)).computeCoverage(ClassLevel(klass))
         log.debug(coverage.print(true))
         assertEquals(expectedCoverage, coverage.instructionCoverage.ratio, eps)
     }

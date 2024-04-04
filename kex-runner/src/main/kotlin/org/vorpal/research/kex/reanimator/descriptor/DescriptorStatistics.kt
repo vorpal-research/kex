@@ -8,7 +8,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.StringValue
 import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
-import java.util.Locale
+import java.util.*
 
 object DescriptorStatistics {
     private val failures = mutableSetOf<Descriptor>()
@@ -35,23 +35,28 @@ object DescriptorStatistics {
                 failures += descriptor
                 failTime += time
             }
+
             is PrimaryValue<*> -> {
                 ++successes
             }
+
             is StringValue -> {
                 ++successes
             }
+
             is ActionList -> when {
                 actionSequence.isComplete -> {
                     ++successes
                     if (descDepth > 1) ++nonTrivialSuccesses
                     successTime += time
                 }
+
                 else -> {
                     failures += descriptor
                     failTime += time
                 }
             }
+
             else -> log.error { "Unexpected type of action sequence in executor: $actionSequence" }
         }
     }

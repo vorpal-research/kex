@@ -58,23 +58,26 @@ import org.vorpal.research.kfg.ir.Field as KfgField
 import java.lang.reflect.Method as JMethod
 import java.lang.reflect.Type as JType
 
-val ANNOTATION_MODIFIER: Int get() {
-    val field1 = Modifier::class.java.getDeclaredField("ANNOTATION")
-    field1.isAccessible = true
-    return field1.getInt(null)
-}
+val ANNOTATION_MODIFIER: Int
+    get() {
+        val field1 = Modifier::class.java.getDeclaredField("ANNOTATION")
+        field1.isAccessible = true
+        return field1.getInt(null)
+    }
 
-val ENUM_MODIFIER: Int get() {
-    val field1 = Modifier::class.java.getDeclaredField("ENUM")
-    field1.isAccessible = true
-    return field1.getInt(null)
-}
+val ENUM_MODIFIER: Int
+    get() {
+        val field1 = Modifier::class.java.getDeclaredField("ENUM")
+        field1.isAccessible = true
+        return field1.getInt(null)
+    }
 
-val SYNTHETIC_MODIFIER: Int get() {
-    val field1 = Modifier::class.java.getDeclaredField("SYNTHETIC")
-    field1.isAccessible = true
-    return field1.getInt(null)
-}
+val SYNTHETIC_MODIFIER: Int
+    get() {
+        val field1 = Modifier::class.java.getDeclaredField("SYNTHETIC")
+        field1.isAccessible = true
+        return field1.getInt(null)
+    }
 
 val Class<*>.isAbstract get() = (this.modifiers and Modifier.ABSTRACT) == Modifier.ABSTRACT
 
@@ -110,6 +113,7 @@ val Class<*>.kex: KexType
             Double::class.java -> KexDouble
             else -> unreachable { log.error("Unknown primitive type $this") }
         }
+
         this.isArray -> KexArray(this.componentType.kex)
         else -> KexClass(this.trimmedName.replace(KfgPackage.CANONICAL_SEPARATOR, KfgPackage.SEPARATOR))
     }
@@ -183,11 +187,13 @@ fun ClassLoader.loadClass(type: Type): Class<*> = try {
             val arrayInstance = Array.newInstance(element, 0)
             arrayInstance.javaClass
         }
+
         is ClassType -> try {
             this.loadClass(type.klass.canonicalDesc)
         } catch (e: ClassNotFoundException) {
             ClassLoader.getSystemClassLoader().loadClass(type.klass.canonicalDesc)
         }
+
         else -> throw ClassNotFoundException(type.toString())
     }
 } catch (e: NoClassDefFoundError) {
@@ -270,7 +276,11 @@ fun Field.eq(cl: ClassLoader, field: KfgField): Boolean {
 fun findSubtypesOf(loader: ClassLoader, vararg classes: Class<*>): Set<Class<*>> {
     val reflections = Reflections(
         ConfigurationBuilder()
-            .addUrls(classes.mapNotNull { (it.classLoader as? PathClassLoader)?.paths?.map { path -> path.toUri().toURL() } }.flatten())
+            .addUrls(classes.mapNotNull {
+                (it.classLoader as? PathClassLoader)?.paths?.map { path ->
+                    path.toUri().toURL()
+                }
+            }.flatten())
             .addUrls(classes.mapNotNull { (it.classLoader as? URLClassLoader)?.urLs }.flatMap { it.toList() })
             .addClassLoaders(*classes.map { it.classLoader }.toTypedArray())
             .addClassLoaders(loader)
@@ -290,12 +300,14 @@ fun mergeTypes(lhv: java.lang.reflect.Type, rhv: java.lang.reflect.Type, loader:
             else -> findSubtypesOf(loader, lhv, rhv).firstOrNull()
                 ?: unreachable { log.error("Cannot decide on argument type: $rhv or $lhv") }
         }
+
         is ParameterizedType -> {
             val rawType = rhv.rawType as Class<*>
             // todo: find a way to create a new parameterized type with new raw type
             @Suppress("UNUSED_VARIABLE") val actualType = mergeTypes(lhv, rawType, loader) as Class<*>
             rhv
         }
+
         is TypeVariable<*> -> {
             val bounds = rhv.bounds
             when {
@@ -307,6 +319,7 @@ fun mergeTypes(lhv: java.lang.reflect.Type, rhv: java.lang.reflect.Type, loader:
                 }
             }
         }
+
         else -> {
             log.warn("Merging unexpected types $lhv and $rhv")
             rhv
@@ -363,6 +376,7 @@ fun parseTypeDesc(classLoader: ClassLoader, desc: String): List<Class<*>> {
                         index = colonIndex + 1
                     }
                 }
+
                 '[' -> {
                     var level = 0
                     while (desc[index] == '[') {
@@ -382,6 +396,7 @@ fun parseTypeDesc(classLoader: ClassLoader, desc: String): List<Class<*>> {
                         arrayInstance.javaClass
                     }
                 }
+
                 else -> unreachable { log.error("Unknown type") }
             }
         )

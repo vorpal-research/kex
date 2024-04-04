@@ -147,6 +147,7 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
                 element.toWrapper(visited)
             }
         }
+
         is ClassDescriptor -> {
             val klass = DescriptorWrapper.Klass(id, this.type, mutableListOf()).also {
                 visited[id] = it
@@ -158,6 +159,7 @@ private fun Descriptor.toWrapper(visited: MutableMap<Id, DescriptorWrapper>) {
                 field.toWrapper(visited)
             }
         }
+
         is ObjectDescriptor -> {
             val instance = DescriptorWrapper.Object(id, this.type, mutableListOf()).also {
                 visited[id] = it

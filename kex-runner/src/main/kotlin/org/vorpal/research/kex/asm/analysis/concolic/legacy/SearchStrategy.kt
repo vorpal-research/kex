@@ -39,6 +39,7 @@ class BfsStrategy(override val method: Method, override val paths: Set<Predicate
                         currentPath += predicate
                     }
                 }
+
                 else -> {
                     currentState += predicate
                 }

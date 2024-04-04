@@ -86,22 +86,27 @@ object ConstantPropagator : Transformer<ConstantPropagator>, IncrementalTransfor
                     val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
                     const(nLhv + nRhv)
                 }
+
                 BinaryOpcode.SUB -> {
                     val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
                     const(nLhv - nRhv)
                 }
+
                 BinaryOpcode.MUL -> {
                     val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
                     const(nLhv * nRhv)
                 }
+
                 BinaryOpcode.DIV -> {
                     val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
                     const(nLhv / nRhv)
                 }
+
                 BinaryOpcode.REM -> {
                     val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
                     const(nLhv % nRhv)
                 }
+
                 BinaryOpcode.SHL -> const(lhv.shl(rhv as Int))
                 BinaryOpcode.SHR -> const(lhv.shr(rhv as Int))
                 BinaryOpcode.USHR -> const(lhv.ushr(rhv as Int))
@@ -109,10 +114,12 @@ object ConstantPropagator : Transformer<ConstantPropagator>, IncrementalTransfor
                     val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
                     const(nLhv and nRhv)
                 }
+
                 BinaryOpcode.OR -> {
                     val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
                     const(nLhv or nRhv)
                 }
+
                 BinaryOpcode.XOR -> {
                     val (nLhv, nRhv) = toCompatibleTypes(lhv, rhv)
                     const(nLhv xor nRhv)
@@ -138,11 +145,13 @@ object ConstantPropagator : Transformer<ConstantPropagator>, IncrementalTransfor
                     is Float -> const(nLhv eq nRhv.toFloat())
                     else -> const(nLhv == nRhv)
                 }
+
                 CmpOpcode.NEQ -> when (nLhv) {
                     is Double -> const(nLhv neq nRhv.toDouble())
                     is Float -> const(nLhv neq nRhv.toFloat())
                     else -> const(nLhv != nRhv)
                 }
+
                 CmpOpcode.LT -> const(nLhv < nRhv)
                 CmpOpcode.GT -> const(nLhv > nRhv)
                 CmpOpcode.LE -> const(nLhv <= nRhv)

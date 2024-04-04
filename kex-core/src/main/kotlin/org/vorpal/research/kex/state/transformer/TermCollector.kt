@@ -71,6 +71,7 @@ fun collectPredicateTerms(state: PredicateState, filter: (Predicate) -> Boolean)
 
 fun collectRequiredTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Require(), state)
 fun collectAssumedTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Assume(), state)
+
 @Suppress("unused")
 fun collectAxiomTerms(state: PredicateState) = collectPredicateTypeTerms(PredicateType.Axiom(), state)
 

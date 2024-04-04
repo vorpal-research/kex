@@ -33,7 +33,7 @@ class NullityInfoAdapter : RecollectingTransformer<NullityInfoAdapter> {
         }
         currentBuilder += newChoices
         annotatedTerms = choiceAnnotatedTerms.flatten().toSet()
-                .filterTo(mutableSetOf()) { term -> choiceAnnotatedTerms.all { term in it } }
+            .filterTo(mutableSetOf()) { term -> choiceAnnotatedTerms.all { term in it } }
         return ps
     }
 

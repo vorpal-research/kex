@@ -37,6 +37,7 @@ public class PrimitiveConcolicTests {
             AssertIntrinsics.kexAssert(true);
         }
     }
+
     public void testCharMatrix(char[][] a) {
         if (a.length > 10) {
             if (a[0].length < 2) {
@@ -48,6 +49,7 @@ public class PrimitiveConcolicTests {
             AssertIntrinsics.kexAssert(true);
         }
     }
+
     public void testStringMatrix(String[][] a) {
         if (a.length > 10) {
             if (a[0].length < 2) {

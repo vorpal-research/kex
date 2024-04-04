@@ -72,10 +72,12 @@ class BoolectorSolverTest : KexTest("boolector-solver") {
         memA.writeWordMemory(ptr, 0, a)
         memB.writeWordMemory(ptr, 0, b)
 
-        val merged = BoolectorContext.mergeContexts("merged", default, mapOf(
+        val merged = BoolectorContext.mergeContexts(
+            "merged", default, mapOf(
                 condA to memA,
                 condB to memB
-        ))
+            )
+        )
 
         val c = merged.readWordMemory(ptr, 0)
 

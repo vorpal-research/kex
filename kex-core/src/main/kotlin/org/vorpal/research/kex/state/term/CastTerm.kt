@@ -13,8 +13,8 @@ class CastTerm(override val type: KexType, val operand: Term) : Term() {
 
 
     override fun <T : Transformer<T>> accept(t: Transformer<T>): Term =
-            when (val tOperand = t.transform(operand)) {
-                operand -> this
-                else -> term { termFactory.getCast(type, tOperand) }
-             }
+        when (val tOperand = t.transform(operand)) {
+            operand -> this
+            else -> term { termFactory.getCast(type, tOperand) }
+        }
 }

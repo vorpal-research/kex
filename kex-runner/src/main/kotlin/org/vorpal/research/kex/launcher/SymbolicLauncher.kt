@@ -29,6 +29,7 @@ class SymbolicLauncher(classPaths: List<String>, targetName: String) : KexAnalys
         for (setOfTargets in batchedTargets) {
             InstructionSymbolicChecker.run(context, setOfTargets)
         }
-        reportCoverage(containers, context.cm, analysisLevel, "symbolic")
+
+        reportCoverage(context.cm, containers, analysisLevel, "symbolic")
     }
 }

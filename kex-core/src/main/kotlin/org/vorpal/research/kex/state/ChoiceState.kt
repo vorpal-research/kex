@@ -16,7 +16,9 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
         append(" END)")
     }
 
-    override fun fmap(transform: (PredicateState) -> PredicateState): PredicateState = ChoiceState(choices.map { transform(it) })
+    override fun fmap(transform: (PredicateState) -> PredicateState): PredicateState =
+        ChoiceState(choices.map { transform(it) })
+
     override fun reverse() = ChoiceState(choices.map { it.reverse() })
 
     override fun hashCode() = choices.hashCode()
@@ -27,7 +29,8 @@ class ChoiceState(val choices: List<PredicateState>) : PredicateState(), Iterabl
         return this.choices == other.choices
     }
 
-    override fun addPredicate(predicate: Predicate) = ChainState(ChoiceState(choices), BasicState(arrayListOf(predicate)))
+    override fun addPredicate(predicate: Predicate) =
+        ChainState(ChoiceState(choices), BasicState(arrayListOf(predicate)))
 
     override fun sliceOn(state: PredicateState): PredicateState? {
         if (this == state) return emptyState()

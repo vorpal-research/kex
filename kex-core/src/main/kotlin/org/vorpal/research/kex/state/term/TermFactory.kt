@@ -270,7 +270,7 @@ interface TermBuilder {
     fun <T : Number> const(number: T) = termFactory.getConstant(number)
 
     fun Char.asType(type: KexType): Term = when (type) {
-        is KexChar ->  termFactory.getChar(this)
+        is KexChar -> termFactory.getChar(this)
         is KexByte -> termFactory.getByte(this.code.toByte())
         else -> unreachable { log.error("Unexpected cast from char to $type") }
     }
@@ -297,6 +297,7 @@ interface TermBuilder {
             val type = (this.type as KexReference).reference
             termFactory.getFieldLoad(type, this)
         }
+
         else -> unreachable { log.error("Unknown term type in load: $this") }
     }
 
@@ -338,7 +339,9 @@ interface TermBuilder {
     infix fun Term.implies(rhv: Term) = !this or rhv
     infix fun Term.implies(rhv: Boolean) = !this or rhv
 
-    fun Term.apply(types: TypeFactory, opcode: BinaryOpcode, rhv: Term) = termFactory.getBinary(types, opcode, this, rhv)
+    fun Term.apply(types: TypeFactory, opcode: BinaryOpcode, rhv: Term) =
+        termFactory.getBinary(types, opcode, this, rhv)
+
     fun Term.apply(type: KexType, opcode: BinaryOpcode, rhv: Term) = termFactory.getBinary(type, opcode, this, rhv)
     fun Term.apply(opcode: CmpOpcode, rhv: Term) = termFactory.getCmp(opcode, this, rhv)
 
@@ -466,7 +469,8 @@ interface TermBuilder {
     fun IntRange.exists(body: Term) = exists(const(start), const(last), body)
     fun IntRange.exists(body: TermBuilder.() -> Term) = exists(const(start), const(last), body)
 
-    fun ite(type: KexType, cond: Term, trueValue: Term, falseValue: Term) = termFactory.getIte(type, cond, trueValue, falseValue)
+    fun ite(type: KexType, cond: Term, trueValue: Term, falseValue: Term) =
+        termFactory.getIte(type, cond, trueValue, falseValue)
 
     val Term.klass get() = termFactory.getClassAccess(this)
 
