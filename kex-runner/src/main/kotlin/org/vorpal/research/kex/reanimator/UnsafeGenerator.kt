@@ -33,7 +33,7 @@ class UnsafeGenerator(
     fun generate(descriptors: Parameters<Descriptor>, finalInfoDescriptors: ExecutionFinalInfo<Descriptor>? = null) = try {
         val sequences = descriptors.actionSequences
         val finalInfoSequences = finalInfoDescriptors?.actionSequences
-        printer.print(method, sequences.rtUnmapped, finalInfoSequences)
+        printer.print(method, sequences.rtUnmapped, finalInfoSequences?.rtUnmapped)
     } catch (e: GenerationException) {
         log.warn("Generation error when generating action sequences:", e)
         throw e

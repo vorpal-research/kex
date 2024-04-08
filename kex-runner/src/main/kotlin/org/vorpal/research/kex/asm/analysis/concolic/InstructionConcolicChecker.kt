@@ -149,7 +149,7 @@ class InstructionConcolicChecker(
                     withContext(Dispatchers.IO) {
                         testWithAssertionsGenerator.emit()
                     }
-                    //testFile.deleteIfExists()
+                    testFile.deleteIfExists()
                 }
             } catch (e: Throwable) {
                 log.debug("Tests with assertion generation failed with exception:")

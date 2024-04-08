@@ -175,7 +175,7 @@ class ExecutorAS2JavaPrinter(
                     exceptions += "Throwable"
                 } else method(testName) {
                     returnType = void
-                    //annotations += "Test(timeout = ${testTimeout.inWholeMilliseconds})"
+                    annotations += "Test"
                     if (finalInfoSequences == null) exceptions += "Throwable"
                 }
             }
@@ -204,14 +204,14 @@ class ExecutorAS2JavaPrinter(
                 with(klass) {
                     current = method(testName) {
                         returnType = void
-                        //annotations += "Test(timeout = ${testTimeout.inWholeMilliseconds})"
+                        annotations += "Test"
+                        exceptions += "Throwable"
                     }
                 }
             }
         }
 
         with(current) {
-//            exceptions += if (exception != null) "ClassNotFoundException" else "Throwable"
             exceptions += "Throwable"
             printTestCall(method, actionSequences, finalInfoSequences, this)
         }
@@ -266,6 +266,7 @@ class ExecutorAS2JavaPrinter(
 //                )
                 aTry {
                     +methodInvocation
+                    +"assertTrue(false)"
                 }.catch {
                     exceptions += JavaBuilder.StringType(exceptionClassName)
                 }
