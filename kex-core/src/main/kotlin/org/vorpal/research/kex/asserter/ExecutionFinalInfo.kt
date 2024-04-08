@@ -28,16 +28,7 @@ class ExecutionSuccessFinalInfo<T>(
     override val instance: T?,
     override val args: List<T>,
     val retValue: T?
-) : ExecutionFinalInfo<T>() {
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is ExecutionSuccessFinalInfo<*>) return false
-        return instance == other.instance && args == other.args && retValue == other.retValue
-    }
-
-    override fun hashCode(): Int = (instance?.hashCode() ?: 0) * 239 + args.hashCode() * 101 + (retValue?.hashCode() ?: 0)
-
-}
+) : ExecutionFinalInfo<T>()
 
 class ExecutionExceptionFinalInfo<T>(
     override val instance: T?,

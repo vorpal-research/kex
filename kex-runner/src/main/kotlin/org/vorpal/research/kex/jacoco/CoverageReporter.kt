@@ -14,6 +14,7 @@ import org.jacoco.core.instr.Instrumenter
 import org.jacoco.core.internal.analysis.PackageCoverageImpl
 import org.jacoco.core.runtime.LoggerRuntime
 import org.jacoco.core.runtime.RuntimeData
+import org.junit.runner.Result
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.minimization.GreedyTestReductionImpl
 import org.vorpal.research.kex.jacoco.minimization.TestwiseCoverageReporter
@@ -259,6 +260,10 @@ open class CoverageReporter(
             val returnValue = jcClass.getMethod("run", computerClass, Class::class.java.asArray())
                 .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
 
+            log.debug("Failures:")
+            (returnValue as? Result)?.failures?.forEach {
+                log.debug(it.trace)
+            }
             val executionData = ExecutionDataStore()
             data.collect(executionData, SessionInfoStore(), false)
             datum[testPath] = executionData.deepCopy()
