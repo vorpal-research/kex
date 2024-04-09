@@ -24,7 +24,7 @@
         <maven.compiler.source>${jvm.version}</maven.compiler.source>
         <maven.compiler.target>${jvm.version}</maven.compiler.target>
 
-        <kotlin.version>1.9.20</kotlin.version>
+        <kotlin.version>1.9.23</kotlin.version>
         <kotlin.code.style>official</kotlin.code.style>
         <serialization.version>1.5.1</serialization.version>
         <coroutines.version>1.6.4</coroutines.version>
