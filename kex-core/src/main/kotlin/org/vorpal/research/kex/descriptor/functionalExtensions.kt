@@ -2,52 +2,51 @@ package org.vorpal.research.kex.descriptor
 
 
 fun <T : Descriptor> Descriptor.transform(
-    mapped: MutableMap<Descriptor, T>,
-    failureMappings: MutableSet<Descriptor> = mutableSetOf(),
+    mapping: MutableMap<Descriptor, T?>,
     transformOrNull: (Descriptor) -> T?
 ): Descriptor {
-    if (mapped[this] != null) return mapped[this]!!
-    if (this in failureMappings) return this
+    if (this in mapping) return mapping[this] ?: this
 
-    val newDescriptor = transformOrNull(this) ?: return this.also {
-        failureMappings.add(this)
-        this.transformChildren(mapped, failureMappings, transformOrNull)
+    val newDescriptor = transformOrNull(this)
+    mapping[this] = newDescriptor
+
+    if (newDescriptor == null) {
+        this.transformChildren(mapping, transformOrNull)
+        return this
     }
 
-    mapped[this] = newDescriptor
-    mapped[newDescriptor] = newDescriptor
-    newDescriptor.transformChildren(mapped, failureMappings, transformOrNull)
+    mapping[newDescriptor] = newDescriptor
+    newDescriptor.transformChildren(mapping, transformOrNull)
     return newDescriptor
 }
 
 private fun <T : Descriptor> Descriptor.transformChildren(
-    mapped: MutableMap<Descriptor, T>,
-    failedMappings: MutableSet<Descriptor>,
+    mapped: MutableMap<Descriptor, T?>,
     transformOrNull: (Descriptor) -> T?
 ) {
     when (this) {
         is ConstantDescriptor -> Unit
         is ClassDescriptor -> fields.replaceAll { _, descriptor ->
-            descriptor.transform(mapped, failedMappings, transformOrNull)
+            descriptor.transform(mapped, transformOrNull)
         }
 
         is ObjectDescriptor -> fields.replaceAll { _, descriptor ->
-            descriptor.transform(mapped, failedMappings, transformOrNull)
+            descriptor.transform(mapped, transformOrNull)
         }
 
         is MockDescriptor -> {
             fields.replaceAll { _, descriptor ->
-                descriptor.transform(mapped, failedMappings, transformOrNull)
+                descriptor.transform(mapped, transformOrNull)
             }
             methodReturns.values.forEach { values ->
                 values.replaceAll { descriptor ->
-                    descriptor.transform(mapped, failedMappings, transformOrNull)
+                    descriptor.transform(mapped, transformOrNull)
                 }
             }
         }
 
         is ArrayDescriptor -> elements.replaceAll { _, descriptor ->
-            descriptor.transform(mapped, failedMappings, transformOrNull)
+            descriptor.transform(mapped, transformOrNull)
         }
     }
 }

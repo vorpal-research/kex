@@ -16,7 +16,7 @@ class KfgClassLoader(
     private val includes: Set<KfgTargetFilter> = INCLUDES,
     private val excludes: Set<KfgTargetFilter> = EXCLUDES,
     val transformation: (ConcreteClass) -> Unit = {}
-) : HackedClassLoader() {
+) : ClassLoaderWithMockitoWorkaround() {
     private val cache = hashMapOf<String, Class<*>>()
     val fallback = PathClassLoader(paths)
 

@@ -16,6 +16,7 @@ import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.ktype.KexString
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.asArray
+import org.vorpal.research.kex.mocking.isMockitoClassesWorkaroundEnabled
 import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.assert.unreachable

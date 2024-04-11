@@ -188,12 +188,11 @@ class ReflectionList(
     }
 }
 
-class MockSequence(
+class MockList(
     name: String,
-    val mockCalls: MutableList<MockCall>, // create instance and setup methods
-    val reflectionCalls: MutableList<ReflectionCall> // only setup fields
-) : ActionSequence(name) {
-    constructor(name: String) : this(name, mutableListOf(), mutableListOf())
+    internal val mockCalls: MutableList<MockCall>,
+) : ActionSequence(name), Iterable<MockCall> by mockCalls {
+    constructor(name: String) : this(name, mutableListOf())
 
     override fun print(): String {
         val builder = StringBuilder()
@@ -207,12 +206,9 @@ class MockSequence(
         for (mockCall in mockCalls) {
             mockCall.print(this, builder, visited)
         }
-        for (reflectionCall in reflectionCalls) {
-            reflectionCall.print(this, builder, visited)
-        }
     }
 
-    override fun clone() = MockSequence(name, mockCalls.toMutableList(), reflectionCalls.toMutableList())
+    override fun clone() = MockList(name, mockCalls.toMutableList())
 }
 
 sealed interface MockCall {
@@ -227,7 +223,11 @@ data class MockNewInstance(val klass: Class, val extraInterfaces: Set<Class>) : 
 
     override fun toString() = "Mockito.mock(${klass.fullName}})"
 
-    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+    override fun print(
+        owner: ActionSequence,
+        builder: StringBuilder,
+        visited: MutableSet<ActionSequence>
+    ) {
         builder.appendLine { "${owner.name} = $this" }
     }
 }
@@ -238,10 +238,31 @@ data class MockSetupMethod(
     override val parameters: List<ActionSequence>
         get() = returnValues
 
-    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
+    override fun print(
+        owner: ActionSequence,
+        builder: StringBuilder,
+        visited: MutableSet<ActionSequence>
+    ) {
         builder.appendLine { "${owner.name}.$method returns $returnValues" }
     }
 }
+
+data class MockSetField(val field: Field, val value: ActionSequence) : MockCall {
+    override val parameters: List<ActionSequence> get() = listOf(value)
+
+
+    override fun toString() = "setField(${field.name}, $value)"
+
+    override fun print(
+        owner: ActionSequence,
+        builder: StringBuilder,
+        visited: MutableSet<ActionSequence>
+    ) {
+        value.print(builder, visited)
+        builder.appendLine("setField(${owner.name}, ${field.name}, $value")
+    }
+}
+
 
 sealed interface CodeAction {
     val parameters: List<ActionSequence>
@@ -595,19 +616,14 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
             }
         }
 
-        is MockSequence -> when (ct) {
+        is MockList -> when (ct) {
             in cache -> cache[ct]!!
             else -> {
-                val res = MockSequence(ct.name.mapped)
+                val res = MockList(ct.name.mapped)
                 cache[ct] = res
                 for (mockCall in ct.mockCalls) {
                     res.mockCalls += map(mockCall)
                 }
-                for (reflectionCall in ct.reflectionCalls) {
-                    res.reflectionCalls += map(reflectionCall)
-                }
-
-                // TODO: Mock. Not sure if it works
                 res
             }
         }
@@ -761,7 +777,18 @@ class ActionSequenceRtMapper(private val mode: KexRtManager.Mode) {
     }
 
     fun map(api: MockCall): MockCall = when (api) {
-        is MockNewInstance -> MockNewInstance(api.klass.mapped, api.extraInterfaces.map{it.mapped}.toSet())
-        is MockSetupMethod -> MockSetupMethod(api.method.mapped, api.returnValues.map { value -> map(value) })
+        is MockNewInstance -> MockNewInstance(
+            api.klass.mapped, api.extraInterfaces.map { it.mapped }.toSet()
+        )
+
+        is MockSetupMethod -> MockSetupMethod(
+            api.method.mapped, api.returnValues.map { value -> map(value) }
+        )
+
+        is MockSetField -> {
+            val unmappedKlass = api.field.klass.mapped
+            val unmappedField = unmappedKlass.getField(api.field.name, api.field.type.mapped)
+            MockSetField(unmappedField, map(api.value))
+        }
     }
 }

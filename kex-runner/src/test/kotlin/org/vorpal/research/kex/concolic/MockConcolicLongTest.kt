@@ -5,7 +5,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.junit.Test
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.util.isZeroCoverageEpsilon
+import org.vorpal.research.kex.mocking.isZeroCoverageEpsilon
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime

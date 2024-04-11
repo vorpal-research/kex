@@ -7,21 +7,11 @@ import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kfg.type.objectType
-import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.logging.warn
 
 enum class MockingRule {
     // Order is important! First rule applies first
     UNIMPLEMENTED, ANY, LAMBDA
 }
-
-
-fun Config.getMockMaker(ctx: ExecutionContext): MockMaker =
-    getMultipleStringValue("mock", "rule")
-        .map { enumName -> MockingRule.valueOf(enumName.uppercase()) }
-        .sortedBy { rule -> rule.ordinal }
-        .map { rule -> createMockMaker(rule, ctx) }
-        .let { mockMakers -> composeMockMakers(mockMakers) }
 
 
 fun Class.canMock(): Boolean =
@@ -35,3 +25,38 @@ fun Method.canMock(types: TypeFactory): Boolean = when {
 
     else -> true
 }
+
+
+fun Config.getMockMaker(ctx: ExecutionContext): MockMaker =
+    getMultipleStringValue("mock", "rule")
+        .map { enumName -> MockingRule.valueOf(enumName.uppercase()) }
+        .sortedBy { rule -> rule.ordinal }
+        .map { rule -> createMockMaker(rule, ctx) }
+        .let { mockMakers -> composeMockMakers(mockMakers) }
+
+val Config.isMockitoClassesWorkaroundEnabled: Boolean
+    get() = getBooleanValue("mock", "mockitoClassesWorkaround", true)
+
+val Config.isMockitoJava8WorkaroundEnabled: Boolean
+    get() = getBooleanValue("mock", "java8WorkaroundEnabled", false)
+
+val Config.logTypeFix: Boolean
+    get() = getBooleanValue("mock", "logTypeFix", false)
+
+val Config.logStackTraceTypeFix: Boolean
+    get() = getBooleanValue("mock", "logStackTraceTypeFix", false)
+
+val Config.isExpectMocks: Boolean
+    get() = getBooleanValue("mock", "expectMocks", false)
+
+val Config.isEasyRandomExcludeLambdas: Boolean
+    get() = getBooleanValue("mock", "easyRandomExcludeLambdas", false)
+
+val Config.isZeroCoverageEpsilon: Boolean
+    get() = getBooleanValue("mock", "zeroCoverageEpsilon", false)
+
+
+// debug purposes, normally should be false
+@Suppress("unused")
+val Config.isMockTest: Boolean
+    get() = getBooleanValue("mock", "test", false).also { if (it) println("Test feature invoked!") }

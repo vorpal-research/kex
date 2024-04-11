@@ -861,7 +861,7 @@ class MockDescriptor(term: Term, type: KexClass, extraInterfaces: Set<KexClass> 
     }
 
     override fun collectQuery(set: MutableSet<Descriptor>): PredicateState {
-        TODO("Mock. Unimplemented")
+        TODO("Unimplemented")
     }
 
     override fun deepCopy(copied: MutableMap<Descriptor, Descriptor>): Descriptor {

@@ -12,6 +12,7 @@ import org.objenesis.ObjenesisStd
 import org.reflections.Reflections
 import org.reflections.util.ConfigurationBuilder
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.mocking.isEasyRandomExcludeLambdas
 import org.vorpal.research.kex.random.GenerationException
 import org.vorpal.research.kex.random.Randomizer
 import org.vorpal.research.kex.random.UnknownTypeException

@@ -4,7 +4,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
-import org.vorpal.research.kex.util.mockito
+import org.vorpal.research.kex.util.getMockito
 import org.vorpal.research.kex.util.testcaseDirectory
 import ru.spbstu.wheels.mapToArray
 import java.nio.file.Path
@@ -20,7 +20,7 @@ class CompilerHelper(val ctx: ExecutionContext) {
         if (!enabled) return
 
         val compilerDriver = JavaCompilerDriver(
-            listOfNotNull(*ctx.classPath.toTypedArray(), *getJunit().mapToArray { it.path }, kexConfig.mockito?.path, testDirectory), compileDir
+            listOfNotNull(*ctx.classPath.toTypedArray(), *getJunit().mapToArray { it.path }, getMockito()?.path, testDirectory), compileDir
         )
         compilerDriver.compile(listOf(file))
     }

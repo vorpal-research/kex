@@ -66,42 +66,13 @@ fun getJavaPath(): Path = Paths.get(System.getProperty("java.home"), "bin", "jav
 val Config.isMockingEnabled: Boolean
     get() = getBooleanValue("mock", "enabled", false)
 
-val Config.isMockitoClassesWorkaroundEnabled: Boolean
-    get() = getBooleanValue("mock", "mockitoClassesWorkaround", true)
-
-val Config.isMockitoJava8WorkaroundEnabled: Boolean
-    get() = getBooleanValue("mock", "java8WorkaroundEnabled", false)
-
-val Config.logTypeFix: Boolean
-    get() = getBooleanValue("mock", "logTypeFix", false)
-
-val Config.logStackTraceTypeFix: Boolean
-    get() = getBooleanValue("mock", "logStackTraceTypeFix", false)
-
-val Config.isExpectMocks: Boolean
-    get() = getBooleanValue("mock", "expectMocks", false)
-
-val Config.isFixConcreteLambdas: Boolean
-    get() = getBooleanValue("mock", "concreteLambdasPassEnabled", false)
-
-val Config.isEasyRandomExcludeLambdas: Boolean
-    get() = getBooleanValue("mock", "easyRandomExcludeLambdas", false)
-
-val Config.isZeroCoverageEpsilon: Boolean
-    get() = getBooleanValue("mock", "zeroCoverageEpsilon", false)
-
-val Config.mockito: Container?
-    get() {
-        val libPath = libPath ?: return null
-        val mockitoVersion = getStringValue("mock", "mockitoVersion") ?: return null
-        val mockitoPath = libPath.resolve("mockito-core-$mockitoVersion.jar").toAbsolutePath()
-        return JarContainer(mockitoPath, Package("org.mockito"))
-    }
-
-// debug purposes, normally should be false
-val Config.isMockTest: Boolean
-    get() = getBooleanValue("mock", "test", false).also { if (it) println("Test feature invoked!") }
-
+fun getMockito(): Container? {
+    val config = kexConfig
+    val libPath = config.libPath ?: return null
+    val mockitoVersion = config.getStringValue("mock", "mockitoVersion") ?: return null
+    val mockitoPath = libPath.resolve("mockito-core-$mockitoVersion.jar").toAbsolutePath()
+    return JarContainer(mockitoPath, Package("org.mockito"))
+}
 
 fun getRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useJavaRuntime", true)) return null

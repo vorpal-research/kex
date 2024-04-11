@@ -5,6 +5,8 @@ package org.vorpal.research.kex.util
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.mocking.logStackTraceTypeFix
+import org.vorpal.research.kex.mocking.logTypeFix
 import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.UnknownInstanceException
 import org.vorpal.research.kfg.ir.Class

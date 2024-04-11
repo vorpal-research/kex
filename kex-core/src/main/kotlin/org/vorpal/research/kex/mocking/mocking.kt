@@ -12,7 +12,6 @@ import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
-import org.vorpal.research.kex.util.isExpectMocks
 import org.vorpal.research.kex.util.isMockingEnabled
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
@@ -33,13 +32,14 @@ fun createDescriptorToMock(
     mockMaker: MockMaker,
     expectedClasses: Map<Descriptor, Class>
 ): Map<Descriptor, MockDescriptor> {
-    val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor>()
+    val descriptorToMock = mutableMapOf<Descriptor, MockDescriptor?>()
     allDescriptors.forEach {
         it.transform(descriptorToMock) { descriptor ->
             mockMaker.mockOrNull(descriptor, expectedClasses[descriptor])
         }
     }
-    return descriptorToMock
+
+    return descriptorToMock.filterValues { value -> value != null }.mapValues { (_, v) -> v!! }
 }
 
 fun setupMocks(
@@ -100,7 +100,6 @@ fun NonMockedDescriptors.performMocking(
     if (allDescriptors.none { it.isRequireMocks(mockMaker, expectedClasses, visited) }) {
         return descriptors
     }
-
 
     val descriptorToMock = createDescriptorToMock(allDescriptors, mockMaker, expectedClasses)
     val withMocks = descriptors.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }

@@ -9,7 +9,7 @@ import kotlin.io.path.readBytes
 class PathClassLoader(
     val paths: List<Path>,
     parent: ClassLoader = PathClassLoader::class.java.classLoader
-) : HackedClassLoader(parent) {
+) : ClassLoaderWithMockitoWorkaround(parent) {
     private val cache = hashMapOf<String, Class<*>>()
 
     private fun readClassFromJar(name: String, path: Path): ByteArray? {

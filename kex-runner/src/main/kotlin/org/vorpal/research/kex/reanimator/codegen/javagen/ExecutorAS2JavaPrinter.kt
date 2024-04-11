@@ -108,7 +108,7 @@ class ExecutorAS2JavaPrinter(
                                 }
                             } ?: unreachable { log.error("Unexpected call in arg") }
 
-                            is MockSequence -> arg.mockCalls.firstNotNullOfOrNull {
+                            is MockList -> arg.mockCalls.firstNotNullOfOrNull {
                                 when (it) {
                                     is MockNewInstance -> it.klass.asType
                                     else -> null
@@ -263,7 +263,7 @@ class ExecutorAS2JavaPrinter(
         return res
     }
 
-    override fun printMockSequence(mockSequence: MockSequence): List<String> {
+    override fun printMockList(mockSequence: MockList): List<String> {
         val res = mutableListOf<String>()
         printDeclarations(mockSequence, res)
         printInsides(mockSequence, res)
@@ -273,14 +273,14 @@ class ExecutorAS2JavaPrinter(
     private fun printDeclarations(owner: ActionSequence, result: MutableList<String>) {
         when (owner) {
             is ReflectionList -> printReflectionListDeclarations(owner, result)
-            is MockSequence -> printMockSequenceDeclarations(owner, result)
+            is MockList -> printMockSequenceDeclarations(owner, result)
             else -> {
                 owner.printAsJava()
             }
         }
     }
 
-    private fun printMockSequenceDeclarations(owner: MockSequence, result: MutableList<String>) {
+    private fun printMockSequenceDeclarations(owner: MockList, result: MutableList<String>) {
         if (owner.name in printedDeclarations) return
         printedDeclarations += owner.name
 
@@ -288,15 +288,10 @@ class ExecutorAS2JavaPrinter(
             when (mockCall) {
                 is MockNewInstance -> result += printMockNewInstance(owner, mockCall)
                 is MockSetupMethod -> mockCall.returnValues.forEach {
-                    printDeclarations(
-                        it,
-                        result
-                    )
+                    printDeclarations(it,result)
                 }
+                is MockSetField -> printDeclarations(mockCall.value, result)
             }
-        }
-        for (reflectionCall in owner.reflectionCalls) {
-            printReflectionCallDeclarations(reflectionCall, result, owner)
         }
     }
 
@@ -332,14 +327,14 @@ class ExecutorAS2JavaPrinter(
     private fun printInsides(owner: ActionSequence, result: MutableList<String>): Unit =
         when (owner) {
             is ReflectionList -> printReflectionListInsides(owner, result)
-            is MockSequence -> printMockSequenceInsides(owner, result)
+            is MockList -> printMockSequenceInsides(owner, result)
             else -> {
                 owner.printAsJava()
             }
         }
 
     private fun printMockSequenceInsides(
-        owner: MockSequence,
+        owner: MockList,
         result: MutableList<String>
     ) {
         if (owner.name in printedInsides) return
@@ -353,10 +348,11 @@ class ExecutorAS2JavaPrinter(
                 }
 
                 is MockNewInstance -> {}
+                is MockSetField -> {
+                    printInsides(mockCall.value, result)
+                    result += printMockSetField(owner, mockCall)
+                }
             }
-        }
-        for (reflectionCall in owner.reflectionCalls) {
-            printReflectionCallInsides(reflectionCall, result, owner)
         }
     }
 
@@ -615,5 +611,12 @@ class ExecutorAS2JavaPrinter(
         val methodName = call.method.name
         val instance = "(${owner.cast(call.method.klass.asType.asType)})"
         return listOf("Mockito.when($instance.$methodName($anys)).thenReturn($returns)")
+    }
+
+    override fun printMockSetField(owner: MockList, mockCall: MockSetField): List<String> {
+        val setFieldMethod =
+            mockCall.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
+                ?: reflectionUtils.setField
+        return listOf("${setFieldMethod.name}(${owner.name}, ${owner.name}.getClass(), \"${mockCall.field.name}\", ${mockCall.value.stackName})")
     }
 }

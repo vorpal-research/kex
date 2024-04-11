@@ -337,7 +337,7 @@ open class ActionSequence2KotlinPrinter(
                 asConstant
             }
 
-            is MockSequence -> TODO("Mock")
+            is MockList -> TODO("Unimplemented")
         }
         with(current) {
             for (statement in statements)

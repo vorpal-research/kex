@@ -20,15 +20,15 @@ class MockGenerator(private val fallback: Generator) : Generator {
         with(context) {
             descriptor as? MockDescriptor
                 ?: throw IllegalArgumentException("Expected MockDescriptor. Got: $descriptor")
-            descriptor as MockDescriptor // helps autocompletion
 
             val name = "${descriptor.term}"
-            val actionSequence = MockSequence(name)
+            val actionSequence = MockList(name)
             saveToCache(descriptor, actionSequence)
             val kfgClass = (descriptor.type.getKfgType(types) as ClassType).klass
             val extraInterfaces = descriptor.extraInterfaces
                 .map { (it.getKfgType(types) as ClassType).klass }
                 .toSet()
+
             actionSequence.mockCalls.add(MockNewInstance(kfgClass, extraInterfaces))
 
             for ((method, returnValuesDesc) in descriptor.methodReturns) {
@@ -36,11 +36,8 @@ class MockGenerator(private val fallback: Generator) : Generator {
                 actionSequence.mockCalls += MockSetupMethod(method, returnValues)
             }
 
-            actionSequence.reflectionCalls.addSetupFieldsCalls(
-                descriptor.fields,
-                kfgClass,
-                types,
-                fallback
+            actionSequence.mockCalls.addSetupFieldsCalls(
+                descriptor.fields, kfgClass, types, fallback
             )
 
             getFromCache(descriptor)!!
@@ -49,7 +46,7 @@ class MockGenerator(private val fallback: Generator) : Generator {
 
 }
 
-fun MutableList<ReflectionCall>.addSetupFieldsCalls(
+private fun MutableList<MockCall>.addSetupFieldsCalls(
     fields: MutableMap<Pair<String, KexType>, Descriptor>,
     kfgClass: Class,
     types: TypeFactory,
@@ -64,6 +61,6 @@ fun MutableList<ReflectionCall>.addSetupFieldsCalls(
             continue
         }
         val valueAS = fallback.generate(value)
-        this += ReflectionSetField(kfgField, valueAS)
+        this += MockSetField(kfgField, valueAS)
     }
 }

@@ -103,7 +103,7 @@ fun composeMockMakers(vararg mockMakers: MockMaker): MockMaker = CompositeMockMa
 fun createMockMaker(rule: MockingRule, ctx: ExecutionContext): MockMaker = when (rule) {
     MockingRule.LAMBDA -> composeMockMakers(
         AllMockMaker(ctx).filter { descriptor ->
-            descriptor.kfgClass(ctx.types)?.getFunctionalInterfaces()?.isNotEmpty() ?: false
+            descriptor.kfgClass(ctx.types)?.getFunctionalInterfaces()?.isNotEmpty() == true
         },
         LambdaMockMaker(ctx),
     )
