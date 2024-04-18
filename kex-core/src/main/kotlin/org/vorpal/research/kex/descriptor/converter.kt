@@ -35,7 +35,7 @@ private val ignoreSyntheticObjects by lazy {
 }
 
 class Object2DescriptorConverter : DescriptorBuilder() {
-    var objectToDescriptor = IdentityHashMap<Any, Descriptor>()
+    private val objectToDescriptor = IdentityHashMap<Any, Descriptor>()
 
     fun type(any: Any?): KexType {
         if (any == null) return KexNull()
