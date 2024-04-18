@@ -5,9 +5,14 @@ import java.nio.file.Path
 object RuntimeConfig : Config() {
     private val options = mutableMapOf<String, MutableMap<String, String>>()
 
+<<<<<<< HEAD
     fun setValue(section: String, name: String, value: String?) =
             if (value != null) options.getOrPut(section) { mutableMapOf() }.set(name, value)
             else options.getOrPut(section) { mutableMapOf() }.remove(name)
+=======
+    fun setValue(section: String, name: String, value: String) =
+        options.getOrPut(section) { mutableMapOf() }.set(name, value)
+>>>>>>> master
 
     fun setValue(section: String, name: String, value: Path) =
         options.getOrPut(section) { mutableMapOf() }.set(name, value.toString())

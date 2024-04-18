@@ -14,6 +14,7 @@ import org.jacoco.core.instr.Instrumenter
 import org.jacoco.core.internal.analysis.PackageCoverageImpl
 import org.jacoco.core.runtime.LoggerRuntime
 import org.jacoco.core.runtime.RuntimeData
+
 import org.junit.runner.Result
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.minimization.GreedyTestReductionImpl
@@ -44,8 +45,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
-import java.util.stream.Collectors
-import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.readBytes
@@ -269,7 +268,6 @@ open class CoverageReporter(
             datum[testPath] = executionData.deepCopy()
             data.reset()
         }
-
         context.runtime.shutdown()
         return datum
     }

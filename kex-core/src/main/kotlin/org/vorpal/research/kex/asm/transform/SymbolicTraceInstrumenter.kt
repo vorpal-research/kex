@@ -761,7 +761,6 @@ class SymbolicTraceInstrumenter(
             )
             add(resetCollector())
         }
-
         inst.insertBefore(instrumented.mapLocation())
     }
 

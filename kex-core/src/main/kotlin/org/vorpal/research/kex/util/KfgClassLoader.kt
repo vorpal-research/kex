@@ -22,7 +22,7 @@ class KfgClassLoader(
 
     companion object {
         private val INCLUDES = setOf(
-            "package org.vorpal.research.kex.test.*"
+            "package org.vorpal.research.kex.test.*",
         ).mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
         private val EXCLUDES = setOf(
             "package java.*",

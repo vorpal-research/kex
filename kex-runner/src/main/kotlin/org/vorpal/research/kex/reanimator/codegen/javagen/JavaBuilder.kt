@@ -187,6 +187,7 @@ class JavaBuilder(val pkg: String = "") {
         fun ifElse(condition: String, body: ElseIfStatement.() -> Unit) =
             ifElse(StringConditionStatement(condition), body)
     }
+
     // TODO: add iterateStatement as Data Class
     data class ForStatement(
         override val subStatements: MutableList<JavaStatement> = mutableListOf(),

@@ -424,8 +424,6 @@ class SymbolicTraceBuilder(
     }
 
     override fun track(value: String, concreteValue: Any?) {
-        // clear cache - some earlier versions of values may be loaded
-        //(converter as? Object2DescriptorConverter)?.objectToDescriptor = IdentityHashMap<Any, Descriptor>()
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
         val descriptor = concreteValue.getAsDescriptor(termValue.type)

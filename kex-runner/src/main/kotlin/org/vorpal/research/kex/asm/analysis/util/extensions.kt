@@ -149,6 +149,7 @@ suspend fun Method.checkAsyncIncremental(
                         log.debug { "Generated params:\n$it" }
                     }
                     .filterIgnoredStatic()
+
                 var (finalDescriptors, memoryMap) = generateFinalDescriptorsWithMemoryMap(this, ctx, result.model, fullPS)
                 finalDescriptors = finalDescriptors
                     .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)

@@ -7,6 +7,7 @@ interface InstructionTraceCollector {
     val symbolicState: SymbolicState
 
     fun track(value: String, concreteValue: Any?)
+
     fun resetConverter()
 
     fun methodEnter(
