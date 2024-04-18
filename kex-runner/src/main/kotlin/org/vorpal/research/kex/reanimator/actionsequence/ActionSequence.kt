@@ -463,17 +463,6 @@ data class ReflectionGetField(val field: Field, val owner: ActionSequence) : Ref
     }
 }
 
-data class ReflectionGetField(val field: Field, val owner: ActionSequence) : ReflectionCall {
-    override val parameters: List<ActionSequence> get() = listOf(owner)
-
-
-    override fun toString() = "getField(${owner.name}, ${field.name})"
-
-    override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
-        builder.appendLine("${owner.name} = (${field.type}) getField(${this.owner.name}, ${field.name}")
-    }
-}
-
 data class ReflectionSetStaticField(val field: Field, val value: ActionSequence) : ReflectionCall {
     override val parameters: List<ActionSequence> get() = listOf(value)
 

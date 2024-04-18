@@ -41,9 +41,7 @@ class EqualityUtilsTest: KexRunnerTest("equality-utils") {
         EqualityUtilsPrinter.equalityUtils("org.vorpal.research.kex.equtils")
         val compilerHelper = CompilerHelper(analysisContext)
         compilerHelper.compileFile(path.resolve("org/vorpal/research/kex/equtils/EqualityUtils.java"))
-
-        prevTestcaseDir?.let { RuntimeConfig.setValue("testGen", "testsDir", it) }
-        // TODO: null value not restored
+        RuntimeConfig.setValue("testGen", "testsDir", prevTestcaseDir)
     }
 
     private fun recursiveEquals(t1: Any?, t2: Any?): Boolean {
