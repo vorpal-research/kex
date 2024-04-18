@@ -8,6 +8,7 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.concolic.bfs.BfsPathSelectorManager
 import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelectorManager
 import org.vorpal.research.kex.asm.analysis.concolic.coverage.CoverageGuidedSelectorManager
+import org.vorpal.research.kex.asm.analysis.concolic.coverage.ExperimentPathSelectorManager
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.assertions.extractFinalInfo
@@ -69,12 +70,13 @@ class InstructionConcolicChecker(
             ctx: ExecutionContext,
             targets: Set<Method>,
             strategyName: String,
-        ): ConcolicPathSelectorManager = when (strategyName) {
-            "bfs" -> BfsPathSelectorManager(ctx, targets)
-            "cgs" -> ContextGuidedSelectorManager(ctx, targets)
-            "coverage" -> CoverageGuidedSelectorManager(ctx, targets)
-            else -> unreachable { log.error("Unknown type of search strategy $strategyName") }
-        }
+        ): ConcolicPathSelectorManager = ExperimentPathSelectorManager(ctx, targets)
+//            when (strategyName) {
+//            "bfs" -> BfsPathSelectorManager(ctx, targets)
+//            "cgs" -> ContextGuidedSelectorManager(ctx, targets)
+//            "coverage" -> CoverageGuidedSelectorManager(ctx, targets)
+//            else -> unreachable { log.error("Unknown type of search strategy $strategyName") }
+//        }
 
         @ExperimentalTime
         @DelicateCoroutinesApi
