@@ -1,6 +1,6 @@
 package org.vorpal.research.kex.reanimator.codegen
 
-import org.vorpal.research.kex.asserter.ExecutionFinalInfo
+import org.vorpal.research.kex.assertions.ExecutionFinalInfo
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kfg.ir.Method

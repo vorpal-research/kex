@@ -3,7 +3,7 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.asm.util.accessModifier
-import org.vorpal.research.kex.asserter.ExecutionFinalInfo
+import org.vorpal.research.kex.assertions.ExecutionFinalInfo
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters

@@ -138,7 +138,7 @@ class SymbolicTraceBuilder(
      * mutable backing fields for required fields
      */
     private val cm get() = ctx.cm
-    private val converter = Object2DescriptorConverter()
+    private var converter = Object2DescriptorConverter()
     private val stateBuilder = arrayListOf<Clause>()
     private val traceBuilder = arrayListOf<Instruction>()
     private val pathBuilder = arrayListOf<PathClause>()
@@ -425,7 +425,7 @@ class SymbolicTraceBuilder(
 
     override fun track(value: String, concreteValue: Any?) {
         // clear cache - some earlier versions of values may be loaded
-        (converter as? Object2DescriptorConverter)?.objectToDescriptor = IdentityHashMap<Any, Descriptor>()
+        //(converter as? Object2DescriptorConverter)?.objectToDescriptor = IdentityHashMap<Any, Descriptor>()
         val kfgValue = parseValue(value)
         val termValue = mkValue(kfgValue)
         val descriptor = concreteValue.getAsDescriptor(termValue.type)
@@ -1496,5 +1496,9 @@ class SymbolicTraceBuilder(
         if (from in lengthChecked) {
             lengthChecked += to
         }
+    }
+
+    override fun resetConverter() {
+        converter = Object2DescriptorConverter()
     }
 }

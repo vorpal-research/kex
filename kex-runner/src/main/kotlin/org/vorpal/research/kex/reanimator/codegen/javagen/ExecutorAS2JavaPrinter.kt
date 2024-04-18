@@ -1,9 +1,9 @@
 package org.vorpal.research.kex.reanimator.codegen.javagen
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asserter.ExecutionExceptionFinalInfo
-import org.vorpal.research.kex.asserter.ExecutionFinalInfo
-import org.vorpal.research.kex.asserter.ExecutionSuccessFinalInfo
+import org.vorpal.research.kex.assertions.ExecutionExceptionFinalInfo
+import org.vorpal.research.kex.assertions.ExecutionFinalInfo
+import org.vorpal.research.kex.assertions.ExecutionSuccessFinalInfo
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexBool
 import org.vorpal.research.kex.ktype.KexByte

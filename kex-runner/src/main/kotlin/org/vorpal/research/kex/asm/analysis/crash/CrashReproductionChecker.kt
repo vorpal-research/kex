@@ -20,7 +20,7 @@ import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPrecondi
 import org.vorpal.research.kex.asm.analysis.symbolic.*
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncremental
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncrementalAndSlice
-import org.vorpal.research.kex.asserter.ExecutionFinalInfo
+import org.vorpal.research.kex.assertions.ExecutionFinalInfo
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor

@@ -1,8 +1,5 @@
 package org.vorpal.research.kex.reanimator.actionsequence
 
-import org.vorpal.research.kex.asserter.ExecutionExceptionFinalInfo
-import org.vorpal.research.kex.asserter.ExecutionFinalInfo
-import org.vorpal.research.kex.asserter.ExecutionSuccessFinalInfo
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorRtMapper
 import org.vorpal.research.kex.ktype.KexRtManager

@@ -1,7 +1,7 @@
 package org.vorpal.research.kex.reanimator.codegen
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asserter.ExecutionFinalInfo
+import org.vorpal.research.kex.assertions.ExecutionFinalInfo
 import org.vorpal.research.kex.compile.JavaCompilerDriver
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.parameters.Parameters

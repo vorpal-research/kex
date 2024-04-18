@@ -14,14 +14,13 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncremental
-import org.vorpal.research.kex.asserter.ExecutionFinalInfo
-import org.vorpal.research.kex.asserter.extractExceptionFinalInfo
-import org.vorpal.research.kex.asserter.extractSuccessFinalInfo
+import org.vorpal.research.kex.assertions.ExecutionFinalInfo
+import org.vorpal.research.kex.assertions.extractExceptionFinalInfo
+import org.vorpal.research.kex.assertions.extractSuccessFinalInfo
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorBuilder
-import org.vorpal.research.kex.descriptor.ObjectDescriptor
 import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexType

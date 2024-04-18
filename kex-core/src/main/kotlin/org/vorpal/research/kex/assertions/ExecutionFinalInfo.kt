@@ -1,9 +1,6 @@
-package org.vorpal.research.kex.asserter
+package org.vorpal.research.kex.assertions
 
-import org.vorpal.research.kex.descriptor.ConstantDescriptor
-import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.descriptor.DescriptorBuilder
-import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.state.term.ArgumentTerm
@@ -16,7 +13,6 @@ import org.vorpal.research.kfg.ir.value.Constant
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kfg.type.BoolType
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.toBoolean
 
 sealed class ExecutionFinalInfo<T>() {
     abstract val instance: T?
@@ -74,13 +70,13 @@ fun extractFinalInfo(executionResult: ExecutionResult, method: Method): Executio
                     .filterIsInstance<ReturnInst>().firstOrNull()
                 val retValue = if (retInst?.hasReturnValue == true) retInst.returnValue else null
                 val retDescriptor = if (retValue is Constant) {
-                    DescriptorBuilder().const(retValue)
+                    descriptor { const(retValue) }
                 } else {
                     val retTerm = executionResult.symbolicState.termMap.entries.firstOrNull {
                         it.value.value == retValue && it.value.depth == 0
                     }?.key
                     val descriptor = executionResult.symbolicState.concreteValues[retTerm]
-                    if (method.returnType == BoolType) {
+                    if (method.returnType is BoolType) {
                         (descriptor as? ConstantDescriptor.Int)?.toBool()
                     } else {
                         descriptor

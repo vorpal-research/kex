@@ -1,7 +1,7 @@
 package org.vorpal.research.kex.reanimator.codegen.kotlingen
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.asserter.ExecutionFinalInfo
+import org.vorpal.research.kex.assertions.ExecutionFinalInfo
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
 

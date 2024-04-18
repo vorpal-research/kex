@@ -53,6 +53,7 @@ import org.vorpal.research.kfg.type.listType
 import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kfg.type.stringType
 import org.vorpal.research.kfg.visitor.MethodVisitor
+import org.vorpal.research.kthelper.logging.log
 
 class SymbolicTraceInstrumenter(
     override val cm: ClassManager,
@@ -758,7 +759,9 @@ class SymbolicTraceInstrumenter(
                     )
                 )
             )
+            add(resetCollector())
         }
+
         inst.insertBefore(instrumented.mapLocation())
     }
 
@@ -862,6 +865,13 @@ class SymbolicTraceInstrumenter(
                 )
             )
         )
+    }
+
+    private fun resetCollector(): Instruction {
+        val resetMethod = collectorClass.getMethod("resetConverter", types.voidType)
+        log.debug("resetCollector")
+        log.debug(resetMethod.toString())
+        return collectorClass.interfaceCall(resetMethod, traceCollector, listOf())
     }
 
     private fun addNullityConstraint(inst: Instruction, value: Value): List<Instruction> = buildList {

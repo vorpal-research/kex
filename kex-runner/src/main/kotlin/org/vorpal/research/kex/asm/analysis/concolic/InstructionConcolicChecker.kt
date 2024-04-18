@@ -9,7 +9,7 @@ import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelectorMa
 import org.vorpal.research.kex.asm.analysis.concolic.coverage.CoverageGuidedSelectorManager
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
-import org.vorpal.research.kex.asserter.extractFinalInfo
+import org.vorpal.research.kex.assertions.extractFinalInfo
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -140,7 +140,7 @@ class InstructionConcolicChecker(
             try {
                 if (result is ExecutionCompletedResult) {
                     val testWithAssertionsGenerator =
-                        UnsafeGenerator(ctx, method, method.klassName + testIndex.getAndIncrement())
+                        UnsafeGenerator(ctx, method, testNameGenerator.generateName(method, parameters))
                     val finalInfoDescriptors = extractFinalInfo(result, method)
                     testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
                     withContext(Dispatchers.IO) {
