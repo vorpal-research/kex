@@ -37,7 +37,7 @@ abstract class KexTest(testDirectoryName: String) {
         kexConfig.initLog("kex-test.log")
 
         jarPath = "$rootDir/kex-test/target/kex-test-$version-jar-with-dependencies.jar"
-        jar = Paths.get(jarPath).asContainer(`package`)!!
+        jar = Paths.get(jarPath).asContainer()!!
 
         val jars = listOfNotNull(jar, getRuntime(), getKexRuntime(), getIntrinsics())
         loader = jars.first().classLoader
