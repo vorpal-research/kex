@@ -98,7 +98,7 @@ class ExecutorMaster(
                 "--option", "kex:log:${outputDir.resolve("kex-executor-worker$id.log").toAbsolutePath()}",
                 "--classpath", kfgClassPath.joinToString(getPathSeparator()),
                 "--port", "${connection.workerPort}"
-            )
+            ).inheritIO()
             log.debug("Starting worker process with command: '${pb.command().joinToString(" ")}'")
             return pb.start()
         }
@@ -139,6 +139,9 @@ class ExecutorMaster(
         fun destroy() {
             workerConnection.close()
             process.destroy()
+            if (process.isAlive) {
+                process.destroyForcibly()
+            }
         }
     }
 
@@ -182,7 +185,9 @@ class ExecutorMaster(
     }
 
     fun destroy() {
+        log.debug("Master is destroying all the workers")
         for (worker in workers) {
+            log.debug("Destroying worker ${worker.id}")
             worker.destroy()
         }
     }

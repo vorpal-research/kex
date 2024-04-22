@@ -71,7 +71,7 @@ internal object ExecutorMasterController : AutoCloseable {
             "--kfgClassPath", kfgClassPath.joinToString(getPathSeparator()),
             "--workerClassPath", workerClassPath.joinToString(getPathSeparator()),
             "--numOfWorkers", "$numberOfWorkers"
-        )
+        ).inheritIO()
         log.debug("Starting executor master process with command: '${pb.command().joinToString(" ")}'")
         process = pb.start()
         runBlocking {
@@ -85,6 +85,9 @@ internal object ExecutorMasterController : AutoCloseable {
 
     override fun close() {
         process.destroy()
+        if (process.isAlive) {
+            process.destroyForcibly()
+        }
         controllerSocket.close()
     }
 }
