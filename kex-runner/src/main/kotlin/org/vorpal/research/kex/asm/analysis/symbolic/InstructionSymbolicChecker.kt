@@ -22,7 +22,7 @@ class InstructionSymbolicChecker(
     override val invokeDynamicResolver: SymbolicInvokeDynamicResolver = DefaultCallResolver(ctx)
 
     init {
-        val pathSelectorName = kexConfig.getStringValue("symbolic", "pathSelector", "sgs")
+        val pathSelectorName = kexConfig.getStringValue("symbolic", "searchStrategy", "sgs")
         val n = kexConfig.getIntValue("symbolic", "n", 2)
         pathSelector = when (pathSelectorName) {
             "bfs" -> BFS()
