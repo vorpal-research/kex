@@ -7,61 +7,12 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.actionsequence.ActionList
-import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
-import org.vorpal.research.kex.reanimator.actionsequence.ArrayClassConstantGetter
-import org.vorpal.research.kex.reanimator.actionsequence.ArrayWrite
-import org.vorpal.research.kex.reanimator.actionsequence.ClassConstantGetter
-import org.vorpal.research.kex.reanimator.actionsequence.CodeAction
-import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.EnumValueCreation
-import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.FieldSetter
-import org.vorpal.research.kex.reanimator.actionsequence.InnerClassConstructorCall
-import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.NewArray
-import org.vorpal.research.kex.reanimator.actionsequence.NewArrayWithInitializer
-import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionArrayWrite
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionCall
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetField
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetStaticField
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewArray
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewInstance
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetField
-import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetStaticField
-import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
-import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldSetter
-import org.vorpal.research.kex.reanimator.actionsequence.StaticMethodCall
-import org.vorpal.research.kex.reanimator.actionsequence.StringValue
-import org.vorpal.research.kex.reanimator.actionsequence.TestCall
-import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
+import org.vorpal.research.kex.reanimator.actionsequence.*
 import org.vorpal.research.kex.reanimator.codegen.ActionSequencePrinter
-import org.vorpal.research.kex.util.getConstructor
-import org.vorpal.research.kex.util.getMethod
-import org.vorpal.research.kex.util.isSubtypeOfCached
-import org.vorpal.research.kex.util.javaString
-import org.vorpal.research.kex.util.kex
-import org.vorpal.research.kex.util.loadClass
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.type.ArrayType
-import org.vorpal.research.kfg.type.BoolType
-import org.vorpal.research.kfg.type.ByteType
-import org.vorpal.research.kfg.type.CharType
-import org.vorpal.research.kfg.type.ClassType
-import org.vorpal.research.kfg.type.DoubleType
-import org.vorpal.research.kfg.type.FloatType
-import org.vorpal.research.kfg.type.IntType
-import org.vorpal.research.kfg.type.LongType
-import org.vorpal.research.kfg.type.NullType
-import org.vorpal.research.kfg.type.ShortType
+import org.vorpal.research.kfg.type.*
 import org.vorpal.research.kfg.type.Type
-import org.vorpal.research.kfg.type.VoidType
-import org.vorpal.research.kfg.type.classType
-import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -306,6 +257,10 @@ open class ActionSequence2JavaPrinter(
                 actionSequence.args.forEach { resolveTypes(it, visited) }
             }
 
+            is MockList -> {
+                actionSequence.mockCalls.reversed().map { resolveTypes(it, visited) }
+            }
+
             else -> {}
         }
     }
@@ -386,6 +341,12 @@ open class ActionSequence2JavaPrinter(
         is ReflectionNewInstance -> {}
     }
 
+    private fun resolveTypes(mockCall: MockCall, visited: MutableSet<String>): Unit = when (mockCall) {
+        is MockNewInstance -> {}
+        is MockSetupMethod -> mockCall.returnValues.forEach { value -> resolveTypes(value, visited) }
+        is MockSetField    -> resolveTypes(mockCall.value, visited)
+    }
+
     protected open fun ActionSequence.printAsJava() {
         if (name in printedStacks) return
         printedStacks += name
@@ -401,6 +362,8 @@ open class ActionSequence2JavaPrinter(
             is StringValue -> listOf<String>().also {
                 asConstant
             }
+
+            is MockList -> printMockList(this)
         }
         with(current) {
             for (statement in statements)
@@ -413,6 +376,10 @@ open class ActionSequence2JavaPrinter(
 
     protected open fun printReflectionList(reflectionList: ReflectionList): List<String> =
         reflectionList.flatMap { printReflectionCall(reflectionList, it) }
+
+    protected open fun printMockList(mockSequence: MockList): List<String> =
+        unreachable { log.error("Mock calls are not supported in AS 2 Java printer") }
+
 
     protected val Class.javaString: String get() = this.asType.javaString
 
@@ -482,6 +449,12 @@ open class ActionSequence2JavaPrinter(
         is StaticFieldGetter -> printStaticFieldGetter(owner, codeAction)
         is ClassConstantGetter -> printClassConstantGetter(owner, codeAction)
         is ArrayClassConstantGetter -> printArrayClassConstantGetter(owner, codeAction)
+    }
+
+    private fun printMockCall(owner: MockList, mockCall: MockCall): List<String> = when (mockCall) {
+        is MockNewInstance -> printMockNewInstance(owner, mockCall)
+        is MockSetupMethod -> printMockSetupMethod(owner, mockCall)
+        is MockSetField    -> printMockSetField(owner, mockCall)
     }
 
     protected val <T> PrimaryValue<T>.asConstant: String
@@ -934,6 +907,15 @@ open class ActionSequence2JavaPrinter(
     protected open fun printReflectionGetField(owner: ActionSequence, call: ReflectionGetField): List<String> =
         unreachable { log.error("Reflection calls are not supported in AS 2 Java printer") }
 
+    protected open fun printMockNewInstance(owner: ActionSequence, call: MockNewInstance): List<String> =
+        unreachable { log.error("Mock calls are not supported in AS 2 Java printer") }
+
+    protected open fun printMockSetupMethod(owner: ActionSequence, call: MockSetupMethod): List<String> =
+        unreachable { log.error("Mock calls are not supported in AS 2 Java printer") }
+
+    protected open fun printMockSetField(owner: MockList, mockCall: MockSetField): List<String> =
+        unreachable { log.error("Mock calls are not supported in AS 2 Java printer") }
+
     protected open fun printUnknownSequence(sequence: UnknownSequence): List<String> {
         val actualType = sequence.target.type.asType
         return listOf(
@@ -948,5 +930,4 @@ open class ActionSequence2JavaPrinter(
             }
         )
     }
-
 }

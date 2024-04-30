@@ -87,7 +87,12 @@ class Reanimator(
         method.klassName
     )
 
-    override fun generate(testName: String, method: Method, state: PredicateState, model: SMTModel) = try {
+    override fun generate(
+        testName: String,
+        method: Method,
+        state: PredicateState,
+        model: SMTModel
+    ) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state)
             .filterStaticFinals(cm)
             .filterIgnoredStatic()

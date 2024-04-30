@@ -8,24 +8,14 @@ import org.vorpal.research.kex.KexTest
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorBuilder
 import org.vorpal.research.kex.descriptor.convertToDescriptor
-import org.vorpal.research.kex.ktype.KexArray
-import org.vorpal.research.kex.ktype.KexBool
-import org.vorpal.research.kex.ktype.KexClass
-import org.vorpal.research.kex.ktype.KexDouble
-import org.vorpal.research.kex.ktype.KexInt
-import org.vorpal.research.kex.ktype.KexType
-import org.vorpal.research.kex.ktype.KexVoid
-import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.ktype.*
 import org.vorpal.research.kex.state.PredicateState
-import org.vorpal.research.kex.state.predicate.Predicate
-import org.vorpal.research.kex.state.predicate.PredicateType
-import org.vorpal.research.kex.state.predicate.assume
-import org.vorpal.research.kex.state.predicate.path
-import org.vorpal.research.kex.state.predicate.state
+import org.vorpal.research.kex.state.predicate.*
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kfg.stringClass
+import org.vorpal.research.kfg.type.ClassType
 import kotlin.test.assertTrue
 
 @ExperimentalSerializationApi
@@ -185,5 +175,21 @@ class KexSerializerTest : KexTest("kex-serializer") {
         val recursiveJson = serializer.toJson(recursiveInstance)
         val recursiveFromJson = serializer.fromJson<Descriptor>(recursiveJson)
         assertTrue { recursiveInstance eq recursiveFromJson }
+    }
+
+
+    @Test
+    fun mockDescriptorSerializationTest() {
+        return with(DescriptorBuilder()) {
+            val klass = KexClass("java/util/stream/Stream")
+            val toArrayMethod = (klass.getKfgType(cm.type) as ClassType).klass.methods.first { it.name == "toArray" }
+            val instance = mock(klass)
+            instance.addReturnValue(toArrayMethod, convertToDescriptor(Array(2) { Any() }))
+            instance["selfReference" to klass] = instance
+            instance["string" to cm.stringClass.kexType] = convertToDescriptor("test")
+            val instanceJson = serializer.toJson(instance)
+            val instanceFromJson = serializer.fromJson<Descriptor>(instanceJson)
+            assertTrue { instance eq instanceFromJson }
+        }
     }
 }

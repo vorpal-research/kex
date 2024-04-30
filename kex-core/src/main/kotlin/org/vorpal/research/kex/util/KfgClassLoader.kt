@@ -16,7 +16,7 @@ class KfgClassLoader(
     private val includes: Set<KfgTargetFilter> = INCLUDES,
     private val excludes: Set<KfgTargetFilter> = EXCLUDES,
     val transformation: (ConcreteClass) -> Unit = {}
-) : ClassLoader() {
+) : ClassLoaderWithMockitoWorkaround() {
     private val cache = hashMapOf<String, Class<*>>()
     val fallback = PathClassLoader(paths)
 
@@ -27,6 +27,9 @@ class KfgClassLoader(
         private val EXCLUDES = setOf(
             "package java.*",
             "package org.vorpal.research.kex.*",
+            "package org.mockito.*",
+            "package net.bytebuddy.*",
+            "package org.objenesis.*"
         ).mapTo(mutableSetOf()) { KfgTargetFilter.parse(it) }
     }
 

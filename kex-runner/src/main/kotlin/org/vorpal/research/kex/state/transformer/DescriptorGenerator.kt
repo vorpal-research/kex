@@ -8,6 +8,7 @@ import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.mocking.NonMockedDescriptors
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.smt.FinalDescriptorReanimator
 import org.vorpal.research.kex.smt.InitialDescriptorReanimator
@@ -56,8 +57,16 @@ class DescriptorGenerator(
         }
 
     override fun checkPath(path: Predicate): Boolean = when (path) {
-        is EqualityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a.numericValue == b.numericValue }
-        is InequalityPredicate -> checkTerms(path.lhv, path.rhv) { a, b -> a.numericValue != b.numericValue }
+        is EqualityPredicate -> checkTerms(
+            path.lhv,
+            path.rhv
+        ) { a, b -> a.numericValue == b.numericValue }
+
+        is InequalityPredicate -> checkTerms(
+            path.lhv,
+            path.rhv
+        ) { a, b -> a.numericValue != b.numericValue }
+
         is DefaultSwitchPredicate -> {
             val lhv = path.cond
             val conditions = path.cases
@@ -145,22 +154,38 @@ fun generateFinalTypeInfoMap(
     )
 }
 
+
+private class InitialDescriptors(
+    override val descriptors: Parameters<Descriptor>,
+    private val generator: DescriptorGenerator,
+) : NonMockedDescriptors {
+    override val termToDescriptor: Map<Term, Descriptor> get() = generator.memory
+    override val allDescriptors: Iterable<Descriptor> get() = generator.allValues
+
+    override fun generateAllDescriptors() {
+        generator.generateAll()
+    }
+}
+
 fun generateInitialDescriptors(
     method: Method,
     ctx: ExecutionContext,
     model: SMTModel,
     state: PredicateState
-): Parameters<Descriptor> {
+): NonMockedDescriptors {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
-    return Parameters(
-        generator.instance,
-        generator.args.mapIndexed { index, arg ->
-            arg ?: descriptor { default(method.argTypes[index].kexType) }
-        },
-        generator.staticFields
+    return InitialDescriptors(
+        Parameters(
+            generator.instance,
+            generator.args.mapIndexed { index, arg ->
+                arg ?: descriptor { default(method.argTypes[index].kexType) }
+            },
+            generator.staticFields
+        ), generator
     )
 }
+
 
 fun generateInitialDescriptorsAndAA(
     method: Method,
@@ -175,6 +200,6 @@ fun generateInitialDescriptorsAndAA(
         generator.args.mapIndexed { index, arg ->
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
-        generator.staticFields
+        generator.staticFields,
     ) to SMTModelALiasAnalysis(generator)
 }

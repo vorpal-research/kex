@@ -11,12 +11,7 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.random.easyrandom.EasyRandomDriver
 import org.vorpal.research.kex.serialization.KexSerializer
 import org.vorpal.research.kex.trace.symbolic.protocol.Worker2MasterSocketConnection
-import org.vorpal.research.kex.util.KfgClassLoader
-import org.vorpal.research.kex.util.compiledCodeDirectory
-import org.vorpal.research.kex.util.getIntrinsics
-import org.vorpal.research.kex.util.getJunit
-import org.vorpal.research.kex.util.getPathSeparator
-import org.vorpal.research.kex.util.getRuntime
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kex.worker.ExecutorWorker
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
@@ -67,7 +62,8 @@ class WorkerLauncher(args: Array<String>) {
                 exitProcess(1)
             }
         }
-        val classManager = ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
+        val classManager =
+            ClassManager(KfgConfig(flags = Flags.readAll, failOnError = false, verifyIR = false))
         classManager.initialize(
             *listOfNotNull(
                 *containers.toTypedArray(),
@@ -80,7 +76,8 @@ class WorkerLauncher(args: Array<String>) {
                 *classPaths.toTypedArray(),
                 kexConfig.compiledCodeDirectory,
                 *getJunit().mapToArray { it.path },
-                getIntrinsics()?.path
+                getIntrinsics()?.path,
+                getMockito()?.path,
             )
         ) { kfgClass ->
             val instrumenter = SymbolicTraceInstrumenter(classManager)

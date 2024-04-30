@@ -34,6 +34,7 @@ import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 
+
 suspend fun Method.analyzeOrTimeout(
     accessLevel: AccessModifier,
     analysis: suspend (Method) -> Unit
@@ -51,6 +52,7 @@ suspend fun Method.analyzeOrTimeout(
         log.warn { "Method $this processing is finished with timeout" }
     }
 }
+
 
 suspend fun Method.checkAsync(
     ctx: ExecutionContext,
@@ -71,6 +73,7 @@ suspend fun Method.checkAsync(
 
     return try {
         generateInitialDescriptors(this, ctx, result.model, checker.state)
+            .performMocking(ctx, state, this)
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
             .also { log.debug { "Generated params:\n$it" } }
             .filterIgnoredStatic()
@@ -79,6 +82,7 @@ suspend fun Method.checkAsync(
         null
     }
 }
+
 
 @Suppress("unused")
 suspend fun Method.checkAsyncAndSlice(
@@ -99,15 +103,24 @@ suspend fun Method.checkAsyncAndSlice(
     }
 
     return try {
-        val (params, aa) = generateInitialDescriptorsAndAA(this, ctx, result.model, checker.state)
-        val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-            .also { log.debug { "Generated params:\n$it" } }
-            .filterIgnoredStatic()
+        val (params, aa) = generateInitialDescriptorsAndAA(
+            this,
+            ctx,
+            result.model,
+            checker.state
+        )
+        val filteredParams =
+            params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                .also {
+                    log.debug { "Generated params:\n$it" }
+                }
+                .filterIgnoredStatic()
 
         val (thisTerm, argTerms) = collectArguments(checker.state)
-        val termParams = Parameters(thisTerm, this@checkAsyncAndSlice.argTypes.mapIndexed { index, type ->
-            argTerms[index] ?: term { arg(type.kexType, index) }
-        })
+        val termParams =
+            Parameters(thisTerm, this@checkAsyncAndSlice.argTypes.mapIndexed { index, type ->
+                argTerms[index] ?: term { arg(type.kexType, index) }
+            })
 
         filteredParams to ConstraintExceptionPrecondition(
             termParams,
@@ -138,7 +151,8 @@ suspend fun Method.checkAsyncIncremental(
         this,
         IncrementalPredicateState(
             clauses + query,
-            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }.toPersistentList()
+            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }
+                .toPersistentList()
         ),
         concreteTypeInfo,
         enableInlining
@@ -149,6 +163,7 @@ suspend fun Method.checkAsyncIncremental(
             is Result.SatResult -> try {
                 val fullPS = checker.state + checker.queries[index].hardConstraints
                 val initialDescriptors = generateInitialDescriptors(this, ctx, result.model, fullPS)
+                    .performMocking(ctx, state, this)
                     .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                         log.debug { "Generated params:\n$it" }
                     }
@@ -201,7 +216,8 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
         this,
         IncrementalPredicateState(
             clauses + query,
-            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }.toPersistentList()
+            queries.map { PredicateQuery(it.clauses.asState() + it.path.asState()) }
+                .toPersistentList()
         ),
         concreteTypeInfo,
         enableInlining
@@ -211,10 +227,16 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
         when (result) {
             is Result.SatResult -> try {
                 val fullPS = (checker.state + checker.queries[index].hardConstraints).simplify()
-                val (params, aa) = generateInitialDescriptorsAndAA(this, ctx, result.model, fullPS)
-                val filteredParams = params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-                    .also { log.debug { "Generated params:\n$it" } }
-                    .filterIgnoredStatic()
+                val (params, aa) = generateInitialDescriptorsAndAA(
+                    this,
+                    ctx,
+                    result.model,
+                    fullPS
+                )
+                val filteredParams =
+                    params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                        .also { log.debug { "Generated params:\n$it" } }
+                        .filterIgnoredStatic()
 
                 val (thisTerm, argTerms) = collectArguments(fullPS)
                 val termParams = Parameters(
@@ -226,7 +248,10 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
 
                 filteredParams to ConstraintExceptionPrecondition(
                     termParams,
-                    SymbolicStateForwardSlicer(termParams.asList.toSet(), aa).apply(state + queries[index])
+                    SymbolicStateForwardSlicer(
+                        termParams.asList.toSet(),
+                        aa
+                    ).apply(state + queries[index])
                 )
             } catch (e: Throwable) {
                 log.error("Error during descriptor generation: ", e)

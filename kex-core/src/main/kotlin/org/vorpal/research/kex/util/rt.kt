@@ -63,6 +63,17 @@ fun getJDKPath(): Path {
 
 fun getJavaPath(): Path = Paths.get(System.getProperty("java.home"), "bin", "java").toAbsolutePath()
 
+val Config.isMockingEnabled: Boolean
+    get() = getBooleanValue("mock", "enabled", false)
+
+fun getMockito(): Container? {
+    val config = kexConfig
+    val libPath = config.libPath ?: return null
+    val mockitoVersion = config.getStringValue("mock", "mockitoVersion") ?: return null
+    val mockitoPath = libPath.resolve("mockito-core-$mockitoVersion.jar").toAbsolutePath()
+    return JarContainer(mockitoPath, Package("org.mockito"))
+}
+
 fun getRuntime(): Container? {
     if (!kexConfig.getBooleanValue("kex", "useJavaRuntime", true)) return null
     val libPath = kexConfig.libPath ?: return null

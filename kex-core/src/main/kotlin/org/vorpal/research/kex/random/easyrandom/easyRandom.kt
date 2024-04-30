@@ -12,14 +12,11 @@ import org.objenesis.ObjenesisStd
 import org.reflections.Reflections
 import org.reflections.util.ConfigurationBuilder
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.mocking.isEasyRandomExcludeLambdas
 import org.vorpal.research.kex.random.GenerationException
 import org.vorpal.research.kex.random.Randomizer
 import org.vorpal.research.kex.random.UnknownTypeException
-import org.vorpal.research.kex.util.KfgTargetFilter
-import org.vorpal.research.kex.util.asmString
-import org.vorpal.research.kex.util.isAbstract
-import org.vorpal.research.kex.util.isPublic
-import org.vorpal.research.kex.util.isStatic
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
@@ -285,6 +282,11 @@ class EasyRandomDriver(
         if (depth > config.depth) {
             log.warn("Reached maximum depth of generation $depth")
             return null
+        }
+        if (kexConfig.isMockingEnabled && kexConfig.isEasyRandomExcludeLambdas && type is Class<*>) {
+            if (type.isInterface && type.getAnnotation(FunctionalInterface::class.java) != null) {
+                return null
+            }
         }
         repeat(config.attempts) {
             tryOrNull<Unit> {

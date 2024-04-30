@@ -11,12 +11,7 @@ import org.vorpal.research.kex.state.ChoiceState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.emptyState
 import org.vorpal.research.kex.state.predicate.Predicate
-import org.vorpal.research.kex.state.term.ConstBoolTerm
-import org.vorpal.research.kex.state.term.ConstIntTerm
-import org.vorpal.research.kex.state.term.ConstLongTerm
-import org.vorpal.research.kex.state.term.FieldTerm
-import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.state.term.*
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.assert.unreachable
@@ -44,10 +39,13 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     var thisTerm: Term?
     val argTerms: MutableMap<Int, Term>
     val staticFieldOwners: MutableSet<Term>
+    val allTerms: MutableSet<Term>
+        get() = memory.keys
 
     val instance get() = thisTerm?.let { memory[it] }
     val args get() = argTerms.map { memory[it.value] }
     val staticFields get() = staticFieldOwners.mapTo(mutableSetOf()) { memory[it]!! }
+    val allValues: Collection<T> get() = memory.values
 
     fun generateThis() = thisTerm?.let {
         memory[it] = modelReanimator.reanimate(it)
@@ -56,6 +54,18 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
     fun generateArgs() = argTerms.values.forEach { term ->
         reanimateTerm(term)
     }
+
+
+    fun generateAll() {
+        hashSetOf<Term>().apply {
+            addAll(model.assignments.keys)
+            addAll(model.typeMap.keys)
+            addAll(model.assignments.values)
+            model.arrays.values.forEach { addAll(it.keys) }
+        }
+            .forEach { term -> reanimateTerm(term) }
+    }
+
 
     fun reanimateTerm(term: Term): T? = memory.getOrPut(term) {
         modelReanimator.reanimate(term)
@@ -81,6 +91,7 @@ interface AbstractGenerator<T> : Transformer<AbstractGenerator<T>> {
         }
         generateThis()
         generateArgs()
+//        generateAll()
         return instance to args
     }
 

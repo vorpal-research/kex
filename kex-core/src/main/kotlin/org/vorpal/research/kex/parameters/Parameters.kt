@@ -3,9 +3,7 @@ package org.vorpal.research.kex.parameters
 import kotlinx.serialization.Serializable
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.descriptor.ClassDescriptor
-import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
+import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.util.KfgTargetFilter
@@ -29,13 +27,22 @@ data class Parameters<T>(
     }
 }
 
+// `instance` is always nullable, so `transform` may or may not accept null
+inline fun <T : F, U, reified F> Parameters<T>.map(transform: (F) -> U): Parameters<U> {
+    return Parameters(
+        if (instance is F) transform(instance) else null,
+        arguments.map(transform),
+        statics.mapTo(mutableSetOf(), transform)
+    )
+}
+
 val Parameters<Any?>.asDescriptors: Parameters<Descriptor>
     get() {
         val context = Object2DescriptorConverter()
         return Parameters(
             context.convert(instance),
             arguments.map { context.convert(it) },
-            statics.mapTo(mutableSetOf()) { context.convert(it) }
+            statics.mapTo(mutableSetOf()) { context.convert(it) },
         )
     }
 
@@ -46,7 +53,7 @@ fun Parameters<Descriptor>.concreteParameters(
 ) = Parameters(
     instance?.concretize(cm, accessLevel, random),
     arguments.map { it.concretize(cm, accessLevel, random) },
-    statics.mapTo(mutableSetOf()) { it.concretize(cm, accessLevel, random) }
+    statics.mapTo(mutableSetOf()) { it.concretize(cm, accessLevel, random) },
 )
 
 fun Parameters<Descriptor>.filterStaticFinals(cm: ClassManager): Parameters<Descriptor> {
@@ -85,5 +92,3 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
         }
     return Parameters(instance, arguments, filteredStatics)
 }
-
-

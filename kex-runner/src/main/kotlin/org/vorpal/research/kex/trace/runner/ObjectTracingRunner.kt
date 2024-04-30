@@ -78,7 +78,9 @@ class ReanimatingRandomObjectTracingRunner(
 
     private val Parameters<Any?>.descriptors
         get() = with(Object2DescriptorConverter()) {
-            Parameters(convert(instance), arguments.map { convert(it) }, statics.mapTo(mutableSetOf()) { convert(it) })
+            Parameters(convert(instance),
+                arguments.map { convert(it) },
+                statics.mapTo(mutableSetOf()) { convert(it) })
         }
 
     override fun generateArguments(): Parameters<Any?>? {

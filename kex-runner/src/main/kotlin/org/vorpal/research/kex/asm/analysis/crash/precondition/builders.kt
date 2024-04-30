@@ -2,10 +2,7 @@ package org.vorpal.research.kex.asm.analysis.crash.precondition
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.symbolic.TraverserState
-import org.vorpal.research.kex.descriptor.ArrayDescriptor
-import org.vorpal.research.kex.descriptor.ConstantDescriptor
-import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.descriptor.FieldContainingDescriptor
+import org.vorpal.research.kex.descriptor.*
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.state.predicate.path
@@ -13,27 +10,12 @@ import org.vorpal.research.kex.state.predicate.state
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.SymbolicStateTermRemapper
-import org.vorpal.research.kex.trace.symbolic.PathClause
-import org.vorpal.research.kex.trace.symbolic.PathClauseType
-import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
-import org.vorpal.research.kex.trace.symbolic.StateClause
-import org.vorpal.research.kex.trace.symbolic.persistentClauseStateOf
-import org.vorpal.research.kex.trace.symbolic.persistentPathConditionOf
-import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
+import org.vorpal.research.kex.trace.symbolic.*
 import org.vorpal.research.kex.util.asSet
 import org.vorpal.research.kfg.arrayIndexOOBClass
 import org.vorpal.research.kfg.classCastClass
 import org.vorpal.research.kfg.ir.Class
-import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
-import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
-import org.vorpal.research.kfg.ir.value.instruction.CallInst
-import org.vorpal.research.kfg.ir.value.instruction.CastInst
-import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
-import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
-import org.vorpal.research.kfg.ir.value.instruction.Instruction
-import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
-import org.vorpal.research.kfg.ir.value.instruction.NewInst
-import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
+import org.vorpal.research.kfg.ir.value.instruction.*
 import org.vorpal.research.kfg.negativeArrayClass
 import org.vorpal.research.kfg.nullptrClass
 import org.vorpal.research.kthelper.assert.unreachable
@@ -214,6 +196,7 @@ class DescriptorExceptionPreconditionBuilder(
         is ConstantDescriptor -> this.asSymbolicState(location, mapping, visited)
         is FieldContainingDescriptor<*> -> this.asSymbolicState(location, mapping, visited)
         is ArrayDescriptor -> this.asSymbolicState(location, mapping, visited)
+        is MockDescriptor -> TODO("Not implemented")
     }
 
     private fun ConstantDescriptor.asSymbolicState(
@@ -379,7 +362,9 @@ class ConstraintExceptionPreconditionBuilder(
                             location,
                             state { (mapped `is` original.type) equality true }
                         )
-                        typePrecondition += StateClause(location, state { casted equality (mapped `as` original.type) })
+                        typePrecondition += StateClause(
+                            location,
+                            state { casted equality (mapped `as` original.type) })
                         this[original] = casted
                     }
                 }
