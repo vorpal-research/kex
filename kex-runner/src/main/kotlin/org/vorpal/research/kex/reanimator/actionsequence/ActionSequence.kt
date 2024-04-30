@@ -15,7 +15,6 @@ import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.logging.log
 import ru.spbstu.wheels.mapToArray
 
-
 sealed class ActionSequence(val name: String) {
     open val isConstantValue: Boolean get() = false
 
@@ -525,7 +524,7 @@ data class ReflectionSetField(val field: Field, val value: ActionSequence) : Ref
 
     override fun print(owner: ActionSequence, builder: StringBuilder, visited: MutableSet<ActionSequence>) {
         value.print(builder, visited)
-        builder.appendLine("setField(${owner.name}, ${field.name}, $value")
+        builder.appendLine("setField(${owner.name}, ${field.name}, $value)")
     }
 }
 

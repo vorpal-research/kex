@@ -2,10 +2,49 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.reanimator.actionsequence.*
-import org.vorpal.research.kfg.type.*
+import org.vorpal.research.kex.parameters.hasReturnValueOrFalse
+import org.vorpal.research.kex.parameters.isExceptionOrFalse
+import org.vorpal.research.kex.parameters.isSuccessOrFalse
+import org.vorpal.research.kex.reanimator.actionsequence.ActionList
+import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.EnumValueCreation
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.InnerClassConstructorCall
+import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.NewArray
+import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionArrayWrite
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetField
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetStaticField
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewArray
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionNewInstance
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetField
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetStaticField
+import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
+import org.vorpal.research.kex.reanimator.actionsequence.StringValue
+import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
+import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.PrimitiveType
+import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
@@ -21,6 +60,7 @@ class ExecutorAS2JavaPrinter(
     private val surroundInTryCatch =
         kexConfig.getBooleanValue("testGen", "surroundInTryCatch", true)
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
+    private val equalityUtils = EqualityUtilsPrinter.equalityUtils(packageName)
     private val reflectionUtils = ReflectionUtilsPrinter.reflectionUtils(packageName)
     private val mockUtils by lazy {
         MockUtilsPrinter.mockUtils(packageName)
@@ -51,12 +91,13 @@ class ExecutorAS2JavaPrinter(
 
     override fun printActionSequence(
         testName: String,
-        method: org.vorpal.research.kfg.ir.Method,
-        actionSequences: Parameters<ActionSequence>
+        method: Method,
+        parameters: Parameters<ActionSequence>,
+        finalParameters: FinalParameters<ActionSequence>?
     ) {
         cleanup()
 
-        for (cs in actionSequences.asList)
+        for (cs in parameters.asList)
             resolveTypes(cs)
 
         with(builder) {
@@ -71,20 +112,33 @@ class ExecutorAS2JavaPrinter(
             import("java.util.stream.Stream")
             import("java.util.stream.Collectors")
 
+            finalParameters?.exceptionTypeUnsafe?.let {
+                import(it)
+            }
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
+            importStatic("org.junit.Assert.assertTrue")
+            if (finalParameters?.isSuccess == true) {
+                importStatic("${equalityUtils.klass.pkg}.${equalityUtils.klass.name}.*")
+            }
+
 
             with(klass) {
                 if (generateSetup) {
                     runIf(!method.isConstructor) {
-                        actionSequences.instance?.let {
+                        parameters.instance?.let {
                             if (!it.isConstantValue)
                                 testParams += field(it.name, type("Object"))
                         }
                     }
-                    actionSequences.arguments.forEach { arg ->
-                        val type = when (arg) {
-                            is UnknownSequence -> arg.type
-                            is ActionList -> arg.firstNotNullOfOrNull {
+                    val terms = parameters.arguments.toMutableSet()
+                    if (finalParameters.isSuccessOrFalse) {
+                        terms += finalParameters!!.asList
+                    }
+
+                    terms.forEach { sequence ->
+                        val type = when (sequence) {
+                            is UnknownSequence -> sequence.type
+                            is ActionList -> sequence.firstNotNullOfOrNull {
                                 when (it) {
                                     is DefaultConstructorCall -> it.klass.asType
                                     is ConstructorCall -> it.constructor.klass.asType
@@ -96,9 +150,9 @@ class ExecutorAS2JavaPrinter(
                                     is StaticFieldGetter -> it.field.type
                                     else -> null
                                 }
-                            } ?: unreachable { log.error("Unexpected call in arg") }
+                            } ?: unreachable { log.error("Unexpected call in action list: {}", sequence) }
 
-                            is ReflectionList -> arg.firstNotNullOfOrNull {
+                            is ReflectionList -> sequence.firstNotNullOfOrNull {
                                 when (it) {
                                     is ReflectionNewInstance -> it.type
                                     is ReflectionNewArray -> it.type
@@ -106,7 +160,7 @@ class ExecutorAS2JavaPrinter(
                                     is ReflectionGetStaticField -> it.field.type
                                     else -> null
                                 }
-                            } ?: unreachable { log.error("Unexpected call in arg") }
+                            } ?: unreachable { log.error("Unexpected call in reflection list {}", sequence) }
 
                             is MockList -> arg.mockCalls.firstNotNullOfOrNull {
                                 when (it) {
@@ -117,12 +171,11 @@ class ExecutorAS2JavaPrinter(
 
                             is PrimaryValue<*> -> return@forEach
                             is StringValue -> return@forEach
-                            else -> unreachable { log.error("Unexpected call in arg") }
+                            else -> unreachable { log.error("Unexpected call in arg {}", sequence) }
                         }
-                        val fieldType =
-                            type.kexType.primitiveName?.let { type(it) } ?: type("Object")
-                        if (testParams.all { it.name != arg.name }) {
-                            testParams += field(arg.name, fieldType)
+                        val fieldType = type.kexType.primitiveName?.let { type(it) } ?: type("Object")
+                        if (testParams.all { it.name != sequence.name }) {
+                            testParams += field(sequence.name, fieldType)
                         }
                     }
                 }
@@ -134,7 +187,7 @@ class ExecutorAS2JavaPrinter(
                 } else method(testName) {
                     returnType = void
                     annotations += "Test"
-                    exceptions += "Throwable"
+                    if (finalParameters == null) exceptions += "Throwable"
                 }
             }
         }
@@ -142,11 +195,22 @@ class ExecutorAS2JavaPrinter(
         with(current) {
             if (surroundInTryCatch) statement("try {")
             runIf(!method.isConstructor) {
-                actionSequences.instance?.printAsJava()
+                parameters.instance?.printAsJava()
             }
-            for (cs in actionSequences.asList)
+            for (cs in parameters.asList)
                 cs.printAsJava()
-            if (surroundInTryCatch) statement("} catch (Throwable e) {}")
+
+            if (finalParameters.isSuccessOrFalse) {
+                finalParameters!!.asList.forEach {
+                    it.printAsJava()
+                }
+            }
+
+            val catchExceptionType = when {
+                finalParameters.isExceptionOrFalse -> finalParameters!!.exceptionType.substringAfterLast('.')
+                else -> "Throwable"
+            }
+            if (surroundInTryCatch) statement("} catch ($catchExceptionType e) {}")
         }
 
         printedStacks.clear()
@@ -163,9 +227,8 @@ class ExecutorAS2JavaPrinter(
         }
 
         with(current) {
-            if (surroundInTryCatch) statement("try {")
-            printTestCall(method, actionSequences)
-            if (surroundInTryCatch) statement("} catch (Throwable e) {}")
+            exceptions += "Throwable"
+            printTestCall(method, parameters, finalParameters, this)
         }
     }
 
@@ -184,24 +247,88 @@ class ExecutorAS2JavaPrinter(
         }
 
     private fun printTestCall(
-        method: org.vorpal.research.kfg.ir.Method,
-        actionSequences: Parameters<ActionSequence>
-    ) =
-        with(current) {
-            +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
-            +"Class<?>[] argTypes = new Class<?>[${method.argTypes.size}]"
-            for ((index, type) in method.argTypes.withIndex()) {
-                +"argTypes[$index] = ${type.klassType}"
+        method: Method,
+        parameters: Parameters<ActionSequence>,
+        finalParameters: FinalParameters<ActionSequence>?,
+        methodBuilder: JavaBuilder.ControlStatement
+    ) = with(methodBuilder) {
+        +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
+        +"Class<?>[] argTypes = new Class<?>[${method.argTypes.size}]"
+        for ((index, type) in method.argTypes.withIndex()) {
+            +"argTypes[$index] = ${type.klassType}"
+        }
+        +"Object[] args = new Object[${method.argTypes.size}]"
+        for ((index, arg) in parameters.arguments.withIndex()) {
+            +"args[$index] = ${arg.stackName}"
+        }
+
+        val methodInvocation = when {
+            method.isConstructor -> buildString {
+                append("Object instance = ")
+                append(reflectionUtils.callConstructor.name)
+                append("(klass, argTypes, args)")
             }
-            +"Object[] args = new Object[${method.argTypes.size}]"
-            for ((index, arg) in actionSequences.arguments.withIndex()) {
-                +"args[$index] = ${arg.stackName}"
+
+            finalParameters.hasReturnValueOrFalse -> buildString {
+                append("Object retValue = ")
+                append(reflectionUtils.callMethod.name)
+                append("(klass, \"")
+                append(method.name)
+                append("\", argTypes, ")
+                append(parameters.instance?.name)
+                append(", args)")
             }
-            +when {
-                method.isConstructor -> "${reflectionUtils.callConstructor.name}(klass, argTypes, args)"
-                else -> "${reflectionUtils.callMethod.name}(klass, \"${method.name}\", argTypes, ${actionSequences.instance?.name}, args)"
+
+            else -> buildString {
+                append(reflectionUtils.callMethod.name)
+                append("(klass, \"")
+                append(method.name)
+                append("\", argTypes, ")
+                append(parameters.instance?.name)
+                append(", args)")
             }
         }
+        if (finalParameters.isExceptionOrFalse) {
+            aTry {
+                +methodInvocation
+                +"assertTrue(false)"
+            }.catch {
+                exceptions += JavaBuilder.StringType(finalParameters!!.exceptionType.substringAfterLast('.'))
+            }
+        } else {
+            +methodInvocation
+        }
+        if (finalParameters.isSuccessOrFalse) {
+            finalParameters!!.instance?.let { instanceInfo ->
+                val instanceName = if (method.isConstructor) "instance" else parameters.instance?.stackName
+                if (!instanceInfo.isConstantValue && instanceName != null) {
+                    +buildAssert(instanceInfo.javaClass, instanceName, instanceInfo.stackName)
+                }
+            }
+            for ((index, arg) in parameters.arguments.withIndex()) {
+                if (!arg.isConstantValue) {
+                    +buildAssert(arg.javaClass, arg.stackName, finalParameters.args[index].stackName)
+                }
+            }
+            finalParameters.returnValueUnsafe?.let {
+                +buildAssert(it.javaClass, "retValue", it.stackName)
+            }
+        }
+    }
+
+    private fun buildAssert(
+        klass: Class<*>,
+        lhv: String,
+        rhv: String,
+    ): String = when {
+        isEqualsOverridden(klass) -> "assertTrue(${lhv}.equals(${rhv}))"
+        else -> "assertTrue(${equalityUtils.recursiveEquals.name}(${lhv}, ${rhv}))"
+    }
+
+    private fun isEqualsOverridden(klass: Class<*>): Boolean {
+        val method = klass.getMethod("equals", Object::class.java)
+        return method.declaringClass != Object::class.java
+    }
 
     override fun printConstructorCall(owner: ActionSequence, call: ConstructorCall): List<String> {
         call.args.forEach { it.printAsJava() }

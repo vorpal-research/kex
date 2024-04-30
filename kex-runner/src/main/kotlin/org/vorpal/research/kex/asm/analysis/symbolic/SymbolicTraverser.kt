@@ -17,11 +17,14 @@ import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncremental
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
+import org.vorpal.research.kex.parameters.extractFinalParameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.inverse
@@ -756,7 +759,7 @@ abstract class SymbolicTraverser(
                         UpdateAndReportQuery(
                             persistentSymbolicState(),
                             { state -> state },
-                            { _, parameters -> report(inst, parameters) }
+                            { state, parameters -> retrieveFinalInfoAndReport(inst, parameters, state) }
                         )
                     )
                 )
@@ -1210,12 +1213,12 @@ abstract class SymbolicTraverser(
         throwable: Term
     ) {
         val params = check(rootMethod, state.symbolicState) ?: return
-        throwExceptionAndReport(state, params, inst, throwable)
+        throwExceptionAndReport(state, DescriptorState(params, null), inst, throwable)
     }
 
     protected open suspend fun throwExceptionAndReport(
         state: TraverserState,
-        parameters: Parameters<Descriptor>,
+        parameters: DescriptorState,
         inst: Instruction,
         throwable: Term
     ) {
@@ -1244,21 +1247,47 @@ abstract class SymbolicTraverser(
                 ) to catchBlock
             }
 
-            else -> report(inst, parameters, "_throw_${throwableType.toString().replace("[/$.]".toRegex(), "_")}")
+            else -> report(
+                inst,
+                parameters.initialState,
+                "_throw_${throwableType.toString().replace("[/$.]".toRegex(), "_")}",
+                parameters.finalState?.extractFinalParameters(throwable.type.javaName)
+            )
         }
+    }
+
+    protected open fun retrieveFinalInfoAndReport(
+        inst: Instruction,
+        parametersInfo: DescriptorState,
+        state: TraverserState
+    ) {
+        val retValue = when ((inst as? ReturnInst)?.hasReturnValue) {
+            true -> inst.returnValue
+            else -> null
+        }
+
+        val retDescriptor = when (retValue) {
+            is Constant -> descriptor { const(retValue) }
+            else -> state.valueMap[retValue]?.let {
+                parametersInfo.term2DescriptorMapper(it)
+            }
+        }
+        val finalParameters = parametersInfo.finalState?.extractFinalParameters(retDescriptor)
+        report(inst, parametersInfo.initialState, finalParameters = finalParameters)
     }
 
     protected open fun report(
         inst: Instruction,
         parameters: Parameters<Descriptor>,
-        testPostfix: String = ""
+        testPostfix: String = "",
+        finalParameters: FinalParameters<Descriptor>? = null
     ): Boolean {
         val generator = UnsafeGenerator(
             ctx,
             rootMethod,
             rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
         )
-        generator.generate(parameters)
+        generator.generate(parameters, finalParameters)
         val testFile = generator.emit()
         return try {
             compilerHelper.compileFile(testFile)
@@ -1278,7 +1307,7 @@ abstract class SymbolicTraverser(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<Parameters<Descriptor>?> =
+    ): List<DescriptorState?> =
         method.checkAsyncIncremental(ctx, state, queries)
 
     @Suppress("NOTHING_TO_INLINE")

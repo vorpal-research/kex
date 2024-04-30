@@ -8,6 +8,8 @@ interface InstructionTraceCollector {
 
     fun track(value: String, concreteValue: Any?)
 
+    fun resetConverter()
+
     fun methodEnter(
         className: String,
         methodName: String,

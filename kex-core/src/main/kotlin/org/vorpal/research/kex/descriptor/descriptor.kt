@@ -16,11 +16,13 @@ import org.vorpal.research.kex.util.StringInfoContext
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.ir.value.*
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 import ru.spbstu.wheels.joinToString
+import org.vorpal.research.kthelper.toBoolean
 import kotlin.random.Random
 
 sealed class Descriptor(term: Term, type: KexType) {
@@ -212,6 +214,8 @@ sealed class ConstantDescriptor(term: Term, type: KexType) : Descriptor(term, ty
             if (other !is Int) return false
             return this.value == other.value
         }
+
+        fun toBool() = Bool(value.toBoolean())
     }
 
     class Long(val value: kotlin.Long) : ConstantDescriptor(term { generate(KexLong) }, KexLong) {
@@ -893,6 +897,19 @@ open class DescriptorBuilder : StringInfoContext() {
         is Float -> ConstantDescriptor.Float(number)
         is Double -> ConstantDescriptor.Double(number)
         else -> unreachable { log.error("Unknown number $number") }
+    }
+    
+    fun const(constant: Constant) = when (constant) {
+        is BoolConstant -> ConstantDescriptor.Bool(constant.value)
+        is ByteConstant -> ConstantDescriptor.Byte(constant.value)
+        is ShortConstant -> ConstantDescriptor.Short(constant.value)
+        is IntConstant -> ConstantDescriptor.Int(constant.value)
+        is LongConstant -> ConstantDescriptor.Long(constant.value)
+        is CharConstant -> ConstantDescriptor.Char(constant.value)
+        is FloatConstant -> ConstantDescriptor.Float(constant.value)
+        is DoubleConstant -> ConstantDescriptor.Double(constant.value)
+        is StringConstant -> string(constant.value)
+        else -> ConstantDescriptor.Null
     }
 
     fun const(type: KexType, value: String): Descriptor = descriptor {

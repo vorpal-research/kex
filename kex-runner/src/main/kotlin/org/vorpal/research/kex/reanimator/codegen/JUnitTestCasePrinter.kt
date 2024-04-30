@@ -3,6 +3,7 @@ package org.vorpal.research.kex.reanimator.codegen
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.compile.JavaCompilerDriver
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.codegen.javagen.ActionSequence2JavaPrinter
@@ -17,6 +18,7 @@ import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.resolve
 import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
 import kotlin.math.abs
@@ -42,7 +44,12 @@ abstract class TestCasePrinter(
 
     protected fun validateString(string: String) = string.replace(Regex("[^a-zA-Z0-9]"), "")
 
-    abstract fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>)
+    abstract fun print(
+        testName: String,
+        method: Method,
+        actionSequences: Parameters<ActionSequence>,
+        finalInfoSequences: FinalParameters<ActionSequence>? = null
+    )
 
     open fun emit() {
         if (useReanimator && generateTestCases) {
@@ -90,16 +97,21 @@ class JUnitTestCasePrinter(
             "java" -> "$klassName.java"
             else -> klassName
         }
-        testDirectory.resolve(packageName).resolve(targetFileName).toAbsolutePath().toFile().apply {
+        testDirectory.resolve(packageName, targetFileName).toFile().apply {
             parentFile?.mkdirs()
         }
     }
 
     private var isEmpty = true
 
-    override fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>) {
+    override fun print(
+        testName: String,
+        method: Method,
+        actionSequences: Parameters<ActionSequence>,
+        finalInfoSequences: FinalParameters<ActionSequence>?
+    ) {
         isEmpty = false
-        printer.printActionSequence(validateString(testName), method, actionSequences)
+        printer.printActionSequence(validateString(testName), method, actionSequences, finalInfoSequences)
     }
 }
 
@@ -123,12 +135,21 @@ class ExecutorTestCasePrinter(
         const val TEST_METHOD = "test"
     }
 
-    override fun print(testName: String, method: Method, actionSequences: Parameters<ActionSequence>) {
-        printer.printActionSequence(validateString(testName), method, actionSequences)
+    override fun print(
+        testName: String,
+        method: Method,
+        actionSequences: Parameters<ActionSequence>,
+        finalInfoSequences: FinalParameters<ActionSequence>?
+    ) {
+        printer.printActionSequence(validateString(testName), method, actionSequences, finalInfoSequences)
     }
 
-    fun print(method: Method, actionSequences: Parameters<ActionSequence>) {
-        print(TEST_METHOD, method, actionSequences)
+    fun print(
+        method: Method,
+        actionSequences: Parameters<ActionSequence>,
+        finalInfoSequences: FinalParameters<ActionSequence>?
+    ) {
+        print(TEST_METHOD, method, actionSequences, finalInfoSequences)
     }
 
     override fun emit() {

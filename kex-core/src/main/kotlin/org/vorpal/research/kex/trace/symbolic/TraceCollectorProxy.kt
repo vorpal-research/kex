@@ -32,6 +32,8 @@ private class EmptyTraceCollector : InstructionTraceCollector {
 
     override fun track(value: String, concreteValue: Any?) {}
 
+    override fun resetConverter() {}
+
     override fun methodEnter(
         className: String,
         methodName: String,

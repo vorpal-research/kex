@@ -29,6 +29,7 @@ import org.vorpal.research.kthelper.collection.stackOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.toInt
 import org.vorpal.research.kthelper.`try`
+import java.util.*
 
 class SymbolicTraceException(message: String, cause: Throwable) : KtException(message, cause) {
     override fun toString() = "SymbolicTraceException: $message: ${cause?.message}"
@@ -78,7 +79,7 @@ class SymbolicTraceBuilder(
      * mutable backing fields for required fields
      */
     private val cm get() = ctx.cm
-    private val converter = Object2DescriptorConverter()
+    private var converter = Object2DescriptorConverter()
     private val stateBuilder = arrayListOf<Clause>()
     private val traceBuilder = arrayListOf<Instruction>()
     private val pathBuilder = arrayListOf<PathClause>()
@@ -1434,5 +1435,9 @@ class SymbolicTraceBuilder(
         if (from in lengthChecked) {
             lengthChecked += to
         }
+    }
+
+    override fun resetConverter() {
+        converter = Object2DescriptorConverter()
     }
 }

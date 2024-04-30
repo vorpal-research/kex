@@ -66,6 +66,7 @@ class ReflectionUtilsPrinter(
             import("java.lang.reflect.Array")
             import("java.lang.reflect.Modifier")
             import("sun.misc.Unsafe")
+            import("java.lang.reflect.InvocationTargetException")
 
             with(klass) {
                 field("UNSAFE", type("Unsafe")) {
@@ -317,10 +318,14 @@ class ReflectionUtilsPrinter(
                     visibility = Visibility.PUBLIC
                     modifiers += "static"
                     exceptions += "Throwable"
-
-                    +"Method method = klass.getDeclaredMethod(name, argTypes)"
-                    +"method.setAccessible(true)"
-                    +"return method.invoke(instance, args)"
+                    aTry {
+                        +"Method method = klass.getDeclaredMethod(name, argTypes)"
+                        +"method.setAccessible(true)"
+                        +"return method.invoke(instance, args)"
+                    }.catch {
+                        exceptions += type("InvocationTargetException")
+                        +"throw e.getCause()"
+                    }
                 }
             }
         }

@@ -19,6 +19,7 @@ import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPrecondi
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionReceiver
 import org.vorpal.research.kex.asm.analysis.symbolic.ConditionCheckQuery
 import org.vorpal.research.kex.asm.analysis.symbolic.DefaultCallResolver
+import org.vorpal.research.kex.asm.analysis.symbolic.DescriptorState
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicCallResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicInvokeDynamicResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
@@ -30,6 +31,7 @@ import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncrementalAndSlice
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.javagen.ReflectionUtilsPrinter
@@ -227,9 +229,16 @@ abstract class AbstractCrashReproductionChecker<T>(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<Parameters<Descriptor>?> = checkAndBuildPrecondition(method, state, queries)
+    ): List<DescriptorState?> = checkAndBuildPrecondition(method, state, queries).map { params ->
+        params?.let { DescriptorState(it, null) }
+    }
 
-    final override fun report(inst: Instruction, parameters: Parameters<Descriptor>, testPostfix: String): Boolean =
+    final override fun report(
+        inst: Instruction,
+        parameters: Parameters<Descriptor>,
+        testPostfix: String,
+        finalParameters: FinalParameters<Descriptor>?
+    ): Boolean =
         reportAndProducePrecondition(inst, parameters, testPostfix)
 
     abstract suspend fun checkAndBuildPrecondition(
@@ -290,7 +299,7 @@ class DescriptorCrashReproductionChecker(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<Parameters<Descriptor>?> = method.checkAsyncIncremental(ctx, state, queries)
+    ): List<Parameters<Descriptor>?> = method.checkAsyncIncremental(ctx, state, queries).map { it?.initialState }
 
     override fun reportAndProducePrecondition(
         inst: Instruction,
@@ -394,7 +403,7 @@ class ConstraintCrashReproductionChecker(
             preconditionReceiver.addPrecondition(lastPrecondition[parameters]!!)
             return true
         } catch (e: CompilationException) {
-            log.error("Failed to compile test file $testFile")
+            log.error("Failed to compile test file and produce precondition $testFile")
             return false
         }
     }

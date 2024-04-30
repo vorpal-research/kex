@@ -3,6 +3,7 @@ package org.vorpal.research.kex.reanimator
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.random.GenerationException
@@ -15,6 +16,7 @@ import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
 import org.vorpal.research.kex.state.transformer.generateInputByModel
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
 
@@ -27,9 +29,10 @@ class UnsafeGenerator(
     private val printer = ExecutorTestCasePrinter(ctx, method.packageName, testName)
     val testKlassName = printer.fullKlassName
 
-    fun generate(descriptors: Parameters<Descriptor>) = try {
-        val sequences = descriptors.actionSequences
-        printer.print(method, sequences.rtUnmapped)
+    fun generate(parameters: Parameters<Descriptor>, finalParameters: FinalParameters<Descriptor>? = null) = try {
+        val sequences = parameters.actionSequences
+        val finalInfoSequences = finalParameters?.actionSequences
+        printer.print(method, sequences.rtUnmapped, finalInfoSequences?.rtUnmapped)
     } catch (e: GenerationException) {
         log.warn("Generation error when generating action sequences:", e)
         throw e
@@ -42,9 +45,9 @@ class UnsafeGenerator(
     }
 
     fun generate(state: PredicateState, model: SMTModel) {
-        val descriptors =
-            generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-        log.debug("Generated descriptors:\n{}", descriptors)
+        val descriptors = generateFinalDescriptors(method, ctx, model, state)
+            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+        log.debug("Generated descriptors from smt model:\n{}", descriptors)
         generate(descriptors)
     }
 
@@ -54,9 +57,9 @@ class UnsafeGenerator(
         state: PredicateState,
         model: SMTModel
     ): Parameters<Any?> = try {
-        val descriptors =
-            generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-        log.debug("Generated descriptors:\n{}", descriptors)
+        val descriptors = generateFinalDescriptors(method, ctx, model, state)
+            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+        log.debug("Generated descriptors from smt model and method:\n{}", descriptors)
         val sequences = descriptors.actionSequences
         printer.print(testName, method, sequences.rtUnmapped)
         generateInputByModel(ctx, method, state, model)
@@ -88,4 +91,17 @@ class UnsafeGenerator(
             val staticFields = statics.mapTo(mutableSetOf()) { it.actionSequence }
             return Parameters(thisSequence, argSequences, staticFields)
         }
+
+    private val FinalParameters<Descriptor>.actionSequences: FinalParameters<ActionSequence>
+        get() {
+            val instance = this.instance?.let { asGenerator.generate(it) }
+            val args = this.args.map { asGenerator.generate(it) }
+            return when {
+                this.isException -> FinalParameters(instance, args, exceptionType)
+                this.isSuccess -> FinalParameters(instance, args, asGenerator.generate(returnValue))
+                else -> unreachable { log.error("Unexpected type of final parameters: $this") }
+            }
+        }
+
 }
+

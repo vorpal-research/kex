@@ -5,6 +5,7 @@ import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorRtMapper
 import org.vorpal.research.kex.ktype.KexRtManager
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.parameters.filterIgnoredStatic
@@ -24,6 +25,7 @@ import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.`try`
 import java.nio.file.Path
@@ -45,6 +47,26 @@ val Parameters<ActionSequence>.rtUnmapped: Parameters<ActionSequence>
         val args = arguments.map { mapper.map(it) }
         val statics = statics.mapTo(mutableSetOf()) { mapper.map(it) }
         return Parameters(instance, args, statics)
+    }
+
+val FinalParameters<ActionSequence>.rtUnmapped: FinalParameters<ActionSequence>
+    get() {
+        val mapper = ActionSequenceRtMapper(KexRtManager.Mode.UNMAP)
+        return when {
+            this.isSuccess -> FinalParameters(
+                instance?.let { mapper.map(it) },
+                args.map { mapper.map(it) },
+                returnValueUnsafe?.let { mapper.map(it) }
+            )
+
+            this.isException -> FinalParameters(
+                instance?.let { mapper.map(it) },
+                args.map { mapper.map(it) },
+                exceptionType
+            )
+
+            else -> unreachable { log.error("Unexpected type of final parameters: $this") }
+        }
     }
 
 class Reanimator(

@@ -758,6 +758,7 @@ class SymbolicTraceInstrumenter(
                     )
                 )
             )
+            add(resetCollector())
         }
         inst.insertBefore(instrumented.mapLocation())
     }
@@ -862,6 +863,11 @@ class SymbolicTraceInstrumenter(
                 )
             )
         )
+    }
+
+    private fun resetCollector(): Instruction {
+        val resetMethod = collectorClass.getMethod("resetConverter", types.voidType)
+        return collectorClass.interfaceCall(resetMethod, traceCollector, listOf())
     }
 
     private fun addNullityConstraint(inst: Instruction, value: Value): List<Instruction> = buildList {

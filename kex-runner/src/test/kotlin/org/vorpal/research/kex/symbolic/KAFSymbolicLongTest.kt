@@ -13,12 +13,15 @@ import kotlin.time.ExperimentalTime
 class KAFSymbolicLongTest : SymbolicTest("kaf-symbolic") {
     @Test
     fun lesson2() {
-        assertCoverage(cm["org/vorpal/research/kex/test/concolic/kaf/Lesson2"], 1.0)
+        withConfigOption("testGen", "generateAssertions", "false") {
+            assertCoverage(cm["org/vorpal/research/kex/test/concolic/kaf/Lesson2"], 1.0)
+        }
     }
 
     @Test
     fun lesson6() {
-        // TODO: investigate test failure (with only 99% coverage) on CI
-        assertCoverage(cm["org/vorpal/research/kex/test/concolic/kaf/Lesson6"], 1.0, 0.05)
+        withConfigOption("testGen", "generateAssertions", "false") {
+            assertCoverage(cm["org/vorpal/research/kex/test/concolic/kaf/Lesson6"], 1.0, 0.05)
+        }
     }
 }
