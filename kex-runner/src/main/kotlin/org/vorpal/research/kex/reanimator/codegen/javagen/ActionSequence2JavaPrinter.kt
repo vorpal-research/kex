@@ -3,9 +3,11 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.asm.util.accessModifier
+import org.vorpal.research.kex.assertions.ExecutionFinalInfo
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.parameters.Parameters
+
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ArrayClassConstantGetter
@@ -136,7 +138,8 @@ open class ActionSequence2JavaPrinter(
     override fun printActionSequence(
         testName: String,
         method: org.vorpal.research.kfg.ir.Method,
-        actionSequences: Parameters<ActionSequence>
+        actionSequences: Parameters<ActionSequence>,
+        finalInfoSequences: ExecutionFinalInfo<ActionSequence>?
     ) {
         cleanup()
         val actionSequence = buildMethodCall(method, actionSequences)

@@ -87,11 +87,27 @@ class JavaBuilder(val pkg: String = "") {
             subStatements += StringStatement(this)
         }
 
+        fun aFor(iterateStatement: String, body: ForStatement.() -> Unit): ForStatement {
+            val forStatement = ForStatement(iterateStatement = StringConditionStatement(iterateStatement))
+            forStatement.body()
+            subStatements += forStatement
+            return forStatement
+        }
+
         fun aDo(body: DoWhileStatement.() -> Unit): DoWhileStatement {
             val doStatement = DoWhileStatement()
             doStatement.body()
             subStatements += doStatement
             return doStatement
+        }
+
+        fun anAssertThrows(exception: String, lambdaStatement: LambdaStatement): AssertThrowsStatement =
+            AssertThrowsStatement(StringType(exception), lambdaStatement).also { subStatements += it }
+
+        fun aLambda(body: LambdaStatement.() -> Unit): LambdaStatement {
+            val lambdaStatement = LambdaStatement()
+            lambdaStatement.body()
+            return lambdaStatement
         }
 
         fun aTry(body: TryCatchStatement.() -> Unit): TryCatchStatement {
@@ -172,6 +188,28 @@ class JavaBuilder(val pkg: String = "") {
             ifElse(StringConditionStatement(condition), body)
     }
 
+    // TODO: add iterateStatement as Data Class
+    data class ForStatement(
+        override val subStatements: MutableList<JavaStatement> = mutableListOf(),
+        var iterateStatement: StringConditionStatement
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}for (${iterateStatement.print(0)}) {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            appendLine("${level.asOffset}}")
+        }
+
+        fun aFor(iterateStatement: StringConditionStatement) {
+            this.iterateStatement = iterateStatement
+        }
+
+        fun aFor(iterateStatement: String) {
+            this.iterateStatement = StringConditionStatement(iterateStatement)
+        }
+    }
+
     data class DoWhileStatement(
         override val subStatements: MutableList<JavaStatement> = mutableListOf(),
         var condition: ConditionalStatement = StringConditionStatement("")
@@ -190,6 +228,31 @@ class JavaBuilder(val pkg: String = "") {
 
         fun aWhile(condition: String) {
             this.condition = StringConditionStatement(condition)
+        }
+    }
+
+    data class LambdaStatement(
+        val arguments: MutableList<JavaFunction.JavaArgument> = mutableListOf(),
+        override val subStatements: MutableList<JavaStatement> = mutableListOf()
+    ) : ControlStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}(${arguments.joinToString(", ")}) -> {")
+            subStatements.forEach {
+                appendLine(it.print(level + 1))
+            }
+            appendLine("${level.asOffset}}")
+        }
+    }
+
+    data class AssertThrowsStatement(
+        val exception: Type,
+        val lambdaStatement: LambdaStatement
+    ) : JavaStatement {
+        override fun print(level: Int) = buildString {
+            appendLine("${level.asOffset}$exception thrown = assertThrows(")
+            appendLine("${(level+1).asOffset}$exception.class,")
+            append(lambdaStatement.print(level+1))
+            append("${level.asOffset});")
         }
     }
 
@@ -225,7 +288,7 @@ class JavaBuilder(val pkg: String = "") {
     ) : ControlStatement {
 
         override fun print(level: Int) = buildString {
-            appendLine("${level.asOffset} try {")
+            appendLine("${level.asOffset}try {")
             subStatements.forEach {
                 appendLine(it.print(level + 1))
             }

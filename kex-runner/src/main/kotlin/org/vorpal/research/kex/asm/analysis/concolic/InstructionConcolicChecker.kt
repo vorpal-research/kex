@@ -1,12 +1,7 @@
 package org.vorpal.research.kex.asm.analysis.concolic
 
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.yield
+
+import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -15,6 +10,7 @@ import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelectorMa
 import org.vorpal.research.kex.asm.analysis.concolic.coverage.CoverageGuidedSelectorManager
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
+import org.vorpal.research.kex.assertions.extractFinalInfo
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -39,6 +35,7 @@ import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.deleteIfExists
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -139,7 +136,26 @@ class InstructionConcolicChecker(
         val testFile = generator.emit()
 
         compilerHelper.compileFile(testFile)
-        collectTrace(generator.testKlassName)
+        val result = collectTrace(generator.testKlassName)
+        CoroutineScope(Dispatchers.Default).launch {
+            try {
+                if (result is ExecutionCompletedResult) {
+                    val testWithAssertionsGenerator =
+                        UnsafeGenerator(ctx, method, testNameGenerator.generateName(method, parameters))
+                    val finalInfoDescriptors = extractFinalInfo(result, method)
+                    testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
+                    withContext(Dispatchers.IO) {
+                        testWithAssertionsGenerator.emit()
+                    }
+                    testFile.deleteIfExists()
+                }
+            } catch (e: Throwable) {
+                log.debug("Tests with assertion generation failed with exception:")
+                log.debug(e.stackTrace)
+            }
+        }
+
+        result
     }
 
     private suspend fun collectTrace(klassName: String): ExecutionResult {

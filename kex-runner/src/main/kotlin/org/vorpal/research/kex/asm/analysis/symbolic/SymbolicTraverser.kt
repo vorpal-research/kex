@@ -14,9 +14,13 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
 import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncremental
+import org.vorpal.research.kex.assertions.ExecutionFinalInfo
+import org.vorpal.research.kex.assertions.extractExceptionFinalInfo
+import org.vorpal.research.kex.assertions.extractSuccessFinalInfo
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.DescriptorBuilder
 import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexType
@@ -756,7 +760,7 @@ abstract class SymbolicTraverser(
                         UpdateAndReportQuery(
                             persistentSymbolicState(),
                             { state -> state },
-                            { _, parameters -> report(inst, parameters) }
+                            { state, parameters -> retrieveFinalInfoAndReport(inst, parameters, state) }
                         )
                     )
                 )
@@ -1210,12 +1214,12 @@ abstract class SymbolicTraverser(
         throwable: Term
     ) {
         val params = check(rootMethod, state.symbolicState) ?: return
-        throwExceptionAndReport(state, params, inst, throwable)
+        throwExceptionAndReport(state, ParametersDescription(params, null), inst, throwable)
     }
 
     protected open suspend fun throwExceptionAndReport(
         state: TraverserState,
-        parameters: Parameters<Descriptor>,
+        parametersDescription: ParametersDescription,
         inst: Instruction,
         throwable: Term
     ) {
@@ -1244,21 +1248,44 @@ abstract class SymbolicTraverser(
                 ) to catchBlock
             }
 
-            else -> report(inst, parameters, "_throw_${throwableType.toString().replace("[/$.]".toRegex(), "_")}")
+            else -> {
+                parametersDescription.initialState?.let {
+                    val executionFinalInfo = parametersDescription.finalState?.extractExceptionFinalInfo(throwable.type.javaName)
+                    report(inst, it, "_throw_${throwableType.toString().replace("[/$.]".toRegex(), "_")}", executionFinalInfo)
+                }
+            }
         }
+    }
+
+    protected open fun retrieveFinalInfoAndReport(
+        inst: Instruction,
+        parametersInfo: ParametersDescription,
+        state: TraverserState
+    ) {
+        val retValue = if ((inst as? ReturnInst)?.hasReturnValue == true) inst.returnValue else null
+
+        val retDescriptor: Descriptor? = if (retValue is Constant) {
+            DescriptorBuilder().const(retValue)
+        } else {
+            val retTerm = state.valueMap.entries.firstOrNull { it.key.name == retValue?.name }?.value
+            parametersInfo.memoryMap?.get(retTerm)
+        }
+        val executionFinalInfo = parametersInfo.finalState?.extractSuccessFinalInfo(retDescriptor)
+        parametersInfo.initialState?.let { report(inst, it, executionFinalInfo = executionFinalInfo) }
     }
 
     protected open fun report(
         inst: Instruction,
         parameters: Parameters<Descriptor>,
-        testPostfix: String = ""
+        testPostfix: String = "",
+        executionFinalInfo: ExecutionFinalInfo<Descriptor>? = null
     ): Boolean {
         val generator = UnsafeGenerator(
             ctx,
             rootMethod,
             rootMethod.klassName + testPostfix + testIndex.getAndIncrement()
         )
-        generator.generate(parameters)
+        generator.generate(parameters, executionFinalInfo)
         val testFile = generator.emit()
         return try {
             compilerHelper.compileFile(testFile)
@@ -1278,7 +1305,7 @@ abstract class SymbolicTraverser(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<Parameters<Descriptor>?> =
+    ): List<ParametersDescription> =
         method.checkAsyncIncremental(ctx, state, queries)
 
     @Suppress("NOTHING_TO_INLINE")

@@ -4,6 +4,7 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.TimeoutCancellationException
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExceptionPrecondition
+import org.vorpal.research.kex.asm.analysis.symbolic.ParametersDescription
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -13,17 +14,14 @@ import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.parameters.filterIgnoredStatic
+import org.vorpal.research.kex.parameters.filterStaticFinals
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.AsyncIncrementalChecker
 import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.state.transformer.SymbolicStateForwardSlicer
-import org.vorpal.research.kex.state.transformer.collectArguments
-import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
-import org.vorpal.research.kex.state.transformer.generateInitialDescriptorsAndAA
-import org.vorpal.research.kex.state.transformer.toTypeMap
+import org.vorpal.research.kex.state.transformer.*
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
@@ -64,6 +62,8 @@ suspend fun Method.checkAsync(
     if (result !is Result.SatResult) {
         return null
     }
+
+    val finalState = generateFinalDescriptors(this, ctx, result.model, checker.state)
 
     return try {
         generateInitialDescriptors(this, ctx, result.model, checker.state)
@@ -121,7 +121,7 @@ suspend fun Method.checkAsyncIncremental(
     state: SymbolicState,
     queries: List<SymbolicState>,
     enableInlining: Boolean = false
-): List<Parameters<Descriptor>?> {
+): List<ParametersDescription> {
     val checker = AsyncIncrementalChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
@@ -144,17 +144,24 @@ suspend fun Method.checkAsyncIncremental(
         when (result) {
             is Result.SatResult -> try {
                 val fullPS = checker.state + checker.queries[index].hardConstraints
-                generateInitialDescriptors(this, ctx, result.model, fullPS)
+                val initialDescriptors =  generateInitialDescriptors(this, ctx, result.model, fullPS)
                     .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
                         log.debug { "Generated params:\n$it" }
                     }
                     .filterIgnoredStatic()
+
+                var (finalDescriptors, memoryMap) = generateFinalDescriptorsWithMemoryMap(this, ctx, result.model, fullPS)
+                finalDescriptors = finalDescriptors
+                    .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                    .filterStaticFinals(ctx.cm)
+                    .filterIgnoredStatic()
+                ParametersDescription(initialDescriptors, finalDescriptors, memoryMap)
             } catch (e: Throwable) {
                 log.error("Error during descriptor generation: ", e)
-                null
+                ParametersDescription(null, null)
             }
 
-            else -> null
+            else -> ParametersDescription(null, null)
         }
     }
 }

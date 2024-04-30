@@ -21,6 +21,7 @@ import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.ConstIntTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
@@ -77,6 +78,27 @@ class SMTModelALiasAnalysis<T>(
     }
 }
 
+fun generateFinalDescriptorsWithMemoryMap(
+    method: Method,
+    ctx: ExecutionContext,
+    model: SMTModel,
+    state: PredicateState
+): Pair<Parameters<Descriptor>, Map<Term, Descriptor>> {
+    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(model, ctx))
+    generator.apply(state)
+
+    return Pair(
+        Parameters(
+            generator.instance,
+            generator.args.mapIndexed { index, arg ->
+                arg ?: descriptor { default(method.argTypes[index].kexType.rtMapped) }
+            },
+            generator.staticFields
+        ),
+        generator.memory
+    )
+}
+
 fun generateFinalDescriptors(
     method: Method,
     ctx: ExecutionContext,
@@ -85,6 +107,7 @@ fun generateFinalDescriptors(
 ): Parameters<Descriptor> {
     val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(model, ctx))
     generator.apply(state)
+
     return Parameters(
         generator.instance,
         generator.args.mapIndexed { index, arg ->

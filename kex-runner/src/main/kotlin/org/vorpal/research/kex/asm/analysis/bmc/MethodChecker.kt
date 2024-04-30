@@ -103,8 +103,6 @@ open class MethodChecker(
         val domTree = DominatorTreeBuilder(method.body).build()
         val order: SearchStrategy = getSearchStrategy(method)
 
-        initializeGenerator(method)
-
         for (block in order) {
             if (block.terminator is UnreachableInst) {
                 unreachableBlocks += block
@@ -141,9 +139,6 @@ open class MethodChecker(
 
             if (coverageResult is Result.UnsatResult) unreachableBlocks += block
         }
-
-        val testFile = generator.emit()
-        tryOrNull { compilerHelper.compileFile(testFile) }
     }
 
     protected open fun coverBlock(method: Method, block: BasicBlock): Result {
@@ -159,6 +154,7 @@ open class MethodChecker(
         when (result) {
             is Result.SatResult -> {
                 val (instance, args) = try {
+                    initializeGenerator(method)
                     generator.generate("test_${block.validName}", method, checker.state, result.model)
                 } catch (e: GenerationException) {
                     log.warn(e.message)
@@ -167,6 +163,8 @@ open class MethodChecker(
 
                 try {
                     collectTrace(method, instance, args)
+                    val testFile = generator.emit()
+                    tryOrNull { compilerHelper.compileFile(testFile) }
                 } catch (e: TimeoutException) {
                     throw e
                 } catch (e: Exception) {
