@@ -17,6 +17,8 @@ import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncremental
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.DescriptorContext
+import org.vorpal.research.kex.descriptor.FullDescriptorContext
 import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
@@ -36,7 +38,6 @@ import org.vorpal.research.kex.state.term.StaticClassRefTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.state.transformer.DescriptorState
 import org.vorpal.research.kex.state.transformer.isThis
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PathClauseType
@@ -1214,12 +1215,16 @@ abstract class SymbolicTraverser(
         throwable: Term
     ) {
         val params = check(rootMethod, state.symbolicState) ?: return
-        throwExceptionAndReport(state, DescriptorState(params, null), inst, throwable)
+        throwExceptionAndReport(state, FullDescriptorContext(params.toState(), null), inst, throwable)
     }
+
+    @Suppress("UnusedReceiverParameter")
+    // not implemented because it is only necessary for the deprecated API
+    private fun Parameters<Descriptor>.toState(): DescriptorContext = TODO()
 
     protected open suspend fun throwExceptionAndReport(
         state: TraverserState,
-        parameters: DescriptorState,
+        parameters: FullDescriptorContext,
         inst: Instruction,
         throwable: Term
     ) {
@@ -1250,18 +1255,19 @@ abstract class SymbolicTraverser(
 
             else -> report(
                 inst,
-                parameters.initialState,
+                parameters.initial.parameters,
                 "_throw_${throwableType.toString().replace("[/$.]".toRegex(), "_")}",
-                parameters.finalState?.extractFinalParameters(throwable.type.javaName)
+                parameters.final?.parameters?.extractFinalParameters(throwable.type.javaName)
             )
         }
     }
 
     protected open fun retrieveFinalInfoAndReport(
         inst: Instruction,
-        parametersInfo: DescriptorState,
+        parametersInfo: FullDescriptorContext,
         state: TraverserState
     ) {
+        val finalState = parametersInfo.final ?: return
         val retValue = when ((inst as? ReturnInst)?.hasReturnValue) {
             true -> inst.returnValue
             else -> null
@@ -1270,11 +1276,14 @@ abstract class SymbolicTraverser(
         val retDescriptor = when (retValue) {
             is Constant -> descriptor { const(retValue) }
             else -> state.valueMap[retValue]?.let {
-                parametersInfo.term2DescriptorMapper(it)
+                finalState.termToDescriptor[it]
             }
         }
-        val finalParameters = parametersInfo.finalState?.extractFinalParameters(retDescriptor)
-        report(inst, parametersInfo.initialState, finalParameters = finalParameters)
+        report(
+            inst,
+            finalState.parameters,
+            finalParameters = finalState.parameters.extractFinalParameters(retDescriptor)
+        )
     }
 
     protected open fun report(
@@ -1308,7 +1317,7 @@ abstract class SymbolicTraverser(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<DescriptorState?> =
+    ): List<FullDescriptorContext?> =
         method.checkAsyncIncremental(ctx, state, queries)
 
     @Suppress("NOTHING_TO_INLINE")

@@ -3,10 +3,10 @@ package org.vorpal.research.kex.mocking
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.DescriptorContext
 import org.vorpal.research.kex.descriptor.MockDescriptor
 import org.vorpal.research.kex.descriptor.any
 import org.vorpal.research.kex.descriptor.transform
-import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.map
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
@@ -64,48 +64,70 @@ fun setupMocks(
     }
 }
 
-
-interface NonMockedDescriptors {
-    val descriptors: Parameters<Descriptor>
-    val termToDescriptor: Map<Term, Descriptor>
-    val allDescriptors: Iterable<Descriptor>
-
-    fun generateAllDescriptors()
-}
-
-fun NonMockedDescriptors.performMocking(
+fun DescriptorContext.performMocking(
     ctx: ExecutionContext,
     state: SymbolicState,
     method: Method
-): Parameters<Descriptor> {
+): DescriptorContext {
     if (!kexConfig.isMockingEnabled) {
-        return descriptors
+        return this
     }
 
     val expectedClasses = method.argTypes
         .map { (it as? ClassType)?.klass }
-        .zip(descriptors.arguments)
+        .zip(parameters.arguments)
         .filter { (klass, _) -> klass != null }
         .associate { (klass, descriptor) -> descriptor to klass!! }
 
-    val mockMaker = kexConfig.getMockMaker(ctx).filterNot { desc -> desc == descriptors.instance }
+    val mockMaker = kexConfig.getMockMaker(ctx).filterNot { desc -> desc == parameters.instance }
     if (!kexConfig.isExpectMocks) {
         val visited = mutableSetOf<Descriptor>()
-        if (descriptors.asList.none { it.isRequireMocks(mockMaker, expectedClasses, visited) }) {
-            return descriptors
+        if (parameters.asList.none { it.isRequireMocks(mockMaker, expectedClasses, visited) }) {
+            return this
         }
     }
-    generateAllDescriptors()
+    generateAll()
     val visited = mutableSetOf<Descriptor>()
     if (allDescriptors.none { it.isRequireMocks(mockMaker, expectedClasses, visited) }) {
-        return descriptors
+        return this
     }
 
-    val descriptorToMock = createDescriptorToMock(allDescriptors, mockMaker, expectedClasses)
-    val withMocks = descriptors.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
-    val methodCalls = state.methodCalls()
-    setupMocks(ctx.types, methodCalls, termToDescriptor, descriptorToMock)
-    return withMocks
+    return transform {
+        val descriptorToMock = createDescriptorToMock(allDescriptors, mockMaker, expectedClasses)
+        val withMocks = parameters.map { descriptor -> descriptorToMock[descriptor] ?: descriptor }
+        val methodCalls = state.methodCalls()
+        setupMocks(ctx.types, methodCalls, termToDescriptor, descriptorToMock)
+        withMocks
+    }
+}
+
+fun DescriptorContext.withoutMocksOrNull(
+    ctx: ExecutionContext,
+    method: Method
+): DescriptorContext? {
+    if (!kexConfig.isMockingEnabled) {
+        return this
+    }
+
+    val expectedClasses = method.argTypes
+        .map { (it as? ClassType)?.klass }
+        .zip(parameters.arguments)
+        .filter { (klass, _) -> klass != null }
+        .associate { (klass, descriptor) -> descriptor to klass!! }
+
+    val mockMaker = kexConfig.getMockMaker(ctx).filterNot { desc -> desc == parameters.instance }
+    if (!kexConfig.isExpectMocks) {
+        val visited = mutableSetOf<Descriptor>()
+        if (parameters.asList.none { it.isRequireMocks(mockMaker, expectedClasses, visited) }) {
+            return this
+        }
+    }
+    generateAll()
+    val visited = mutableSetOf<Descriptor>()
+    return when {
+        allDescriptors.none { it.isRequireMocks(mockMaker, expectedClasses, visited) } -> this
+        else -> null
+    }
 }
 
 private fun SymbolicState.methodCalls(): List<CallPredicate> {

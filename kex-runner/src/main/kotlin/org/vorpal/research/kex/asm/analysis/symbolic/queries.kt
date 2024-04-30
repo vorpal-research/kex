@@ -1,11 +1,11 @@
 package org.vorpal.research.kex.asm.analysis.symbolic
 
-import org.vorpal.research.kex.state.transformer.DescriptorState
+import org.vorpal.research.kex.descriptor.FullDescriptorContext
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 
 internal typealias UpdateAction = suspend (TraverserState) -> TraverserState
-internal typealias ReportAction = suspend (TraverserState, DescriptorState) -> Unit
+internal typealias ReportAction = suspend (TraverserState, FullDescriptorContext) -> Unit
 
 sealed class SingleQuery {
     abstract val query: PersistentSymbolicState

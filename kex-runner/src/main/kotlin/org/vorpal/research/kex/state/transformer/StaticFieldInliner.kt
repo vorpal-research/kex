@@ -123,6 +123,7 @@ class StaticFieldInliner(
                 is Result.SatResult -> {
                     log.debug("Model: {}", result.model)
                     generateFinalDescriptors(staticInit, ctx, result.model, checker.state)
+                        .parameters
                 }
 
                 else -> return null

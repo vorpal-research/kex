@@ -4,9 +4,26 @@ package org.vorpal.research.kex.descriptor
 
 import org.vorpal.research.kex.asm.manager.instantiationManager
 import org.vorpal.research.kex.asm.util.AccessModifier
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexJavaClass
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexNull
+import org.vorpal.research.kex.ktype.KexReference
+import org.vorpal.research.kex.ktype.KexRtManager
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.KexRtManager.rtUnmapped
+import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.ktype.KexString
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.basic
 import org.vorpal.research.kex.state.emptyState
@@ -16,13 +33,22 @@ import org.vorpal.research.kex.util.StringInfoContext
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.*
+import org.vorpal.research.kfg.ir.value.BoolConstant
+import org.vorpal.research.kfg.ir.value.ByteConstant
+import org.vorpal.research.kfg.ir.value.CharConstant
+import org.vorpal.research.kfg.ir.value.Constant
+import org.vorpal.research.kfg.ir.value.DoubleConstant
+import org.vorpal.research.kfg.ir.value.FloatConstant
+import org.vorpal.research.kfg.ir.value.IntConstant
+import org.vorpal.research.kfg.ir.value.LongConstant
+import org.vorpal.research.kfg.ir.value.ShortConstant
+import org.vorpal.research.kfg.ir.value.StringConstant
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.toBoolean
 import org.vorpal.research.kthelper.tryOrNull
 import ru.spbstu.wheels.joinToString
-import org.vorpal.research.kthelper.toBoolean
 import kotlin.random.Random
 
 sealed class Descriptor(term: Term, type: KexType) {
@@ -898,7 +924,7 @@ open class DescriptorBuilder : StringInfoContext() {
         is Double -> ConstantDescriptor.Double(number)
         else -> unreachable { log.error("Unknown number $number") }
     }
-    
+
     fun const(constant: Constant) = when (constant) {
         is BoolConstant -> ConstantDescriptor.Bool(constant.value)
         is ByteConstant -> ConstantDescriptor.Byte(constant.value)
@@ -1053,3 +1079,19 @@ class DescriptorRtMapper(private val mode: KexRtManager.Mode) : DescriptorBuilde
         }
     }
 }
+
+
+interface DescriptorContext {
+    val parameters: Parameters<Descriptor>
+    val termToDescriptor: Map<Term, Descriptor>
+    val allDescriptors: Iterable<Descriptor>
+
+    fun generateAll()
+
+    fun transform(transformation: (Parameters<Descriptor>) -> Parameters<Descriptor>): DescriptorContext
+}
+
+data class FullDescriptorContext(
+    val initial: DescriptorContext,
+    val final: DescriptorContext?,
+)

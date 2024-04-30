@@ -94,6 +94,7 @@ class Reanimator(
         model: SMTModel
     ) = try {
         val descriptors = generateFinalDescriptors(method, ctx, model, state)
+            .parameters
             .filterStaticFinals(cm)
             .filterIgnoredStatic()
             .concreteParameters(cm, ctx.accessLevel, ctx.random).rtMapped

@@ -8,10 +8,12 @@ import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.FullDescriptorContext
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.mocking.performMocking
+import org.vorpal.research.kex.mocking.withoutMocksOrNull
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.parameters.filterIgnoredStatic
@@ -22,10 +24,9 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.term.term
-import org.vorpal.research.kex.state.transformer.DescriptorState
 import org.vorpal.research.kex.state.transformer.SymbolicStateForwardSlicer
 import org.vorpal.research.kex.state.transformer.collectArguments
-import org.vorpal.research.kex.state.transformer.generateFinalDescriptorsWithMemoryMap
+import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
 import org.vorpal.research.kex.state.transformer.generateInitialDescriptors
 import org.vorpal.research.kex.state.transformer.generateInitialDescriptorsAndAA
 import org.vorpal.research.kex.state.transformer.toTypeMap
@@ -75,6 +76,7 @@ suspend fun Method.checkAsync(
     return try {
         generateInitialDescriptors(this, ctx, result.model, checker.state)
             .performMocking(ctx, state, this)
+            .parameters
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
             .also { log.debug { "Generated params:\n$it" } }
             .filterIgnoredStatic()
@@ -110,18 +112,20 @@ suspend fun Method.checkAsyncAndSlice(
             result.model,
             checker.state
         )
-        val filteredParams =
-            params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-                .also {
-                    log.debug { "Generated params:\n$it" }
-                }
-                .filterIgnoredStatic()
+        val filteredParams = params
+            .performMocking(ctx, state, this)
+            .parameters
+            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+            .also { log.debug { "Generated params:\n$it" } }
+            .filterIgnoredStatic()
 
         val (thisTerm, argTerms) = collectArguments(checker.state)
-        val termParams =
-            Parameters(thisTerm, this@checkAsyncAndSlice.argTypes.mapIndexed { index, type ->
+        val termParams = Parameters(
+            thisTerm,
+            this@checkAsyncAndSlice.argTypes.mapIndexed { index, type ->
                 argTerms[index] ?: term { arg(type.kexType, index) }
-            })
+            }
+        )
 
         filteredParams to ConstraintExceptionPrecondition(
             termParams,
@@ -139,7 +143,7 @@ suspend fun Method.checkAsyncIncremental(
     state: SymbolicState,
     queries: List<SymbolicState>,
     enableInlining: Boolean = false
-): List<DescriptorState?> {
+): List<FullDescriptorContext?> {
     val checker = AsyncIncrementalChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
@@ -165,27 +169,25 @@ suspend fun Method.checkAsyncIncremental(
                 val fullPS = checker.state + checker.queries[index].hardConstraints
                 val initialDescriptors = generateInitialDescriptors(this, ctx, result.model, fullPS)
                     .performMocking(ctx, state, this)
-                    .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random).also {
-                        log.debug { "Generated params:\n$it" }
+                    .transform {
+                        it.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                            .also { log.debug { "Generated params:\n$it" } }
+                            .filterIgnoredStatic()
                     }
-                    .filterIgnoredStatic()
 
                 when {
                     kexConfig.getBooleanValue("testGen", "generateAssertions", false) -> {
-                        var (finalDescriptors, memoryMap) = generateFinalDescriptorsWithMemoryMap(
-                            this,
-                            ctx,
-                            result.model,
-                            fullPS
-                        )
-                        finalDescriptors = finalDescriptors
-                            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-                            .filterStaticFinals(ctx.cm)
-                            .filterIgnoredStatic()
-                        DescriptorState(initialDescriptors, finalDescriptors) { memoryMap[it] }
+                        val finalDescriptors = generateFinalDescriptors(this, ctx, result.model, fullPS)
+                            .withoutMocksOrNull(ctx, this)
+                            ?.transform {
+                                it.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                                    .filterStaticFinals(ctx.cm)
+                                    .filterIgnoredStatic()
+                            }
+                        FullDescriptorContext(initialDescriptors, finalDescriptors)
                     }
 
-                    else -> DescriptorState(initialDescriptors, null)
+                    else -> FullDescriptorContext(initialDescriptors, null)
                 }
             } catch (e: Throwable) {
                 log.error("Error during descriptor generation: ", e)
@@ -204,7 +206,7 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
     state: SymbolicState,
     queries: List<SymbolicState>,
     enableInlining: Boolean = false
-): List<Pair<Parameters<Descriptor>, ConstraintExceptionPrecondition>?> {
+): List<Pair<FullDescriptorContext, ConstraintExceptionPrecondition>?> {
     val checker = AsyncIncrementalChecker(this, ctx)
     val clauses = state.clauses.asState()
     val query = state.path.asState()
@@ -234,10 +236,13 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
                     result.model,
                     fullPS
                 )
-                val filteredParams =
-                    params.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                val filteredParams = params
+                    .performMocking(ctx, state, this)
+                    .transform {
+                        it.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
                         .also { log.debug { "Generated params:\n$it" } }
                         .filterIgnoredStatic()
+                    }
 
                 val (thisTerm, argTerms) = collectArguments(fullPS)
                 val termParams = Parameters(
@@ -247,7 +252,7 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
                     }
                 )
 
-                filteredParams to ConstraintExceptionPrecondition(
+                FullDescriptorContext(filteredParams, null) to ConstraintExceptionPrecondition(
                     termParams,
                     SymbolicStateForwardSlicer(
                         termParams.asList.toSet(),

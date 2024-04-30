@@ -3,12 +3,12 @@ package org.vorpal.research.kex.state.transformer
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.descriptor.ConstantDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.DescriptorContext
 import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexReference
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.mocking.NonMockedDescriptors
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.smt.FinalDescriptorReanimator
 import org.vorpal.research.kex.smt.InitialDescriptorReanimator
@@ -86,42 +86,22 @@ class SMTModelAliasAnalysis<T>(
     }
 }
 
-fun generateFinalDescriptorsWithMemoryMap(
+fun generateFinalDescriptors(
     method: Method,
     ctx: ExecutionContext,
     model: SMTModel,
     state: PredicateState
-): Pair<Parameters<Descriptor>, Map<Term, Descriptor>> {
+): DescriptorContext {
     val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(model, ctx))
     generator.apply(state)
-
-    return Pair(
+    return GeneratorDescriptorContext(
         Parameters(
             generator.instance,
             generator.args.mapIndexed { index, arg ->
                 arg ?: descriptor { default(method.argTypes[index].kexType.rtMapped) }
             },
             generator.staticFields
-        ),
-        generator.memory
-    )
-}
-
-fun generateFinalDescriptors(
-    method: Method,
-    ctx: ExecutionContext,
-    model: SMTModel,
-    state: PredicateState
-): Parameters<Descriptor> {
-    val generator = DescriptorGenerator(method, ctx, model, FinalDescriptorReanimator(model, ctx))
-    generator.apply(state)
-
-    return Parameters(
-        generator.instance,
-        generator.args.mapIndexed { index, arg ->
-            arg ?: descriptor { default(method.argTypes[index].kexType.rtMapped) }
-        },
-        generator.staticFields
+        ), generator
     )
 }
 
@@ -154,33 +134,32 @@ fun generateFinalTypeInfoMap(
 }
 
 
-private class InitialDescriptors(
-    override val descriptors: Parameters<Descriptor>,
-    private val generator: DescriptorGenerator,
-) : NonMockedDescriptors {
+class GeneratorDescriptorContext(
+    override val parameters: Parameters<Descriptor>,
+    private val generator: AbstractGenerator<Descriptor>,
+) : DescriptorContext {
     override val termToDescriptor: Map<Term, Descriptor> get() = generator.memory
     override val allDescriptors: Iterable<Descriptor> get() = generator.allValues
 
-    override fun generateAllDescriptors() {
+    override fun generateAll() {
         generator.generateAll()
     }
-}
 
-data class DescriptorState(
-    val initialState: Parameters<Descriptor>,
-    val finalState: Parameters<Descriptor>?,
-    val term2DescriptorMapper: (Term) -> Descriptor? = { null },
-)
+    override fun transform(transformation: (Parameters<Descriptor>) -> Parameters<Descriptor>) =
+        GeneratorDescriptorContext(
+            transformation(parameters), generator
+        )
+}
 
 fun generateInitialDescriptors(
     method: Method,
     ctx: ExecutionContext,
     model: SMTModel,
     state: PredicateState
-): NonMockedDescriptors {
+): DescriptorContext {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
-    return InitialDescriptors(
+    return GeneratorDescriptorContext(
         Parameters(
             generator.instance,
             generator.args.mapIndexed { index, arg ->
@@ -197,14 +176,16 @@ fun generateInitialDescriptorsAndAA(
     ctx: ExecutionContext,
     model: SMTModel,
     state: PredicateState
-): Pair<Parameters<Descriptor>, AliasAnalysis> {
+): Pair<DescriptorContext, AliasAnalysis> {
     val generator = DescriptorGenerator(method, ctx, model, InitialDescriptorReanimator(model, ctx))
     generator.apply(state)
-    return Parameters(
-        generator.instance,
-        generator.args.mapIndexed { index, arg ->
-            arg ?: descriptor { default(method.argTypes[index].kexType) }
-        },
-        generator.staticFields,
+    return GeneratorDescriptorContext(
+        Parameters(
+            generator.instance,
+            generator.args.mapIndexed { index, arg ->
+                arg ?: descriptor { default(method.argTypes[index].kexType) }
+            },
+            generator.staticFields,
+        ), generator
     ) to SMTModelAliasAnalysis(generator)
 }

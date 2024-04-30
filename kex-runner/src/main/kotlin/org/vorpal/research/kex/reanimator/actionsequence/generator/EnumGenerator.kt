@@ -59,6 +59,7 @@ private fun symbolicComputeEnumConstants(ctx: GeneratorContext, enumType: KexTyp
             is Result.SatResult -> {
                 log.debug("Model: {}", result.model)
                 generateFinalDescriptors(staticInit, context, result.model, checker.state)
+                    .parameters
             }
 
             else -> null

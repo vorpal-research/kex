@@ -30,12 +30,12 @@ import org.vorpal.research.kex.asm.analysis.util.checkAsyncIncrementalAndSlice
 import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.FullDescriptorContext
 import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.javagen.ReflectionUtilsPrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
-import org.vorpal.research.kex.state.transformer.DescriptorState
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
@@ -64,6 +64,7 @@ import org.vorpal.research.kfg.nullptrClass
 import org.vorpal.research.kfg.runtimeException
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.collection.mapTo
 import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Files
 import kotlin.coroutines.coroutineContext
@@ -229,9 +230,7 @@ abstract class AbstractCrashReproductionChecker<T>(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<DescriptorState?> = checkAndBuildPrecondition(method, state, queries).map { params ->
-        params?.let { DescriptorState(it, null) }
-    }
+    ): List<FullDescriptorContext?> = checkAndBuildPrecondition(method, state, queries)
 
     final override fun report(
         inst: Instruction,
@@ -245,7 +244,7 @@ abstract class AbstractCrashReproductionChecker<T>(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<Parameters<Descriptor>?>
+    ): List<FullDescriptorContext?>
 
     abstract fun reportAndProducePrecondition(
         inst: Instruction,
@@ -299,7 +298,7 @@ class DescriptorCrashReproductionChecker(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<Parameters<Descriptor>?> = method.checkAsyncIncremental(ctx, state, queries).map { it?.initialState }
+    ): List<FullDescriptorContext?> = method.checkAsyncIncremental(ctx, state, queries)
 
     override fun reportAndProducePrecondition(
         inst: Instruction,
@@ -378,9 +377,11 @@ class ConstraintCrashReproductionChecker(
         method: Method,
         state: SymbolicState,
         queries: List<SymbolicState>
-    ): List<Parameters<Descriptor>?> {
+    ): List<FullDescriptorContext?> {
         val result = method.checkAsyncIncrementalAndSlice(ctx, state, queries)
-        lastPrecondition.putAll(result.filterNotNull().toMap())
+        lastPrecondition.putAll(
+            result.filterNotNull().mapTo(mutableMapOf()) { it.first.initial.parameters to it.second }
+        )
         return result.map { it?.first }
     }
 
