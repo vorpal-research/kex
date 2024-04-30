@@ -3,10 +3,8 @@ package org.vorpal.research.kex.reanimator
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
 import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.parameters.ExceptionFinalParameters
 import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.parameters.SuccessFinalParameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.random.GenerationException
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
@@ -18,6 +16,7 @@ import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.transformer.generateFinalDescriptors
 import org.vorpal.research.kex.state.transformer.generateInputByModel
 import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 import java.nio.file.Path
 
@@ -97,12 +96,10 @@ class UnsafeGenerator(
         get() {
             val instance = this.instance?.let { asGenerator.generate(it) }
             val args = this.args.map { asGenerator.generate(it) }
-            return when (this) {
-                is ExceptionFinalParameters ->
-                    ExceptionFinalParameters(instance, args, this.javaClass)
-
-                is SuccessFinalParameters ->
-                    SuccessFinalParameters(instance, args, this.retValue?.let { asGenerator.generate(it) })
+            return when {
+                this.isException -> FinalParameters(instance, args, exceptionType)
+                this.isSuccess -> FinalParameters(instance, args, asGenerator.generate(returnValue))
+                else -> unreachable { log.error("Unexpected type of final parameters: $this") }
             }
         }
 

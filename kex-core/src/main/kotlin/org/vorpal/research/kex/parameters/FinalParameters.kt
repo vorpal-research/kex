@@ -15,51 +15,78 @@ import org.vorpal.research.kfg.ir.value.Constant
 import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kfg.type.BoolType
 import org.vorpal.research.kfg.type.SystemTypeNames
+import org.vorpal.research.kthelper.assert.asserted
 
-sealed class FinalParameters<T> {
-    abstract val instance: T?
-    abstract val args: List<T>
-
-    val hasRetValue: Boolean
-        get() = this is SuccessFinalParameters && retValue != null
+class FinalParameters<T> private constructor(
+    val instance: T?,
+    val args: List<T>,
+    val returnValueUnsafe: T?,
+    val exceptionTypeUnsafe: String?
+) {
     val isException: Boolean
-        get() = this is ExceptionFinalParameters
+        get() = exceptionTypeUnsafe != null
+    val isSuccess: Boolean
+        get() = !isException
+    val hasReturnValue: Boolean
+        get() = returnValueUnsafe != null
 
-    abstract fun flatten(): Collection<T>
-}
+    val exceptionType: String
+        get() = asserted(isException) { exceptionTypeUnsafe!! }
+    val returnValue: T
+        get() = asserted(hasReturnValue) { returnValueUnsafe!! }
+    val asList: List<T>
+        get() = listOfNotNull(instance) + args + listOfNotNull(returnValueUnsafe)
 
-class SuccessFinalParameters<T>(
-    override val instance: T?,
-    override val args: List<T>,
-    val retValue: T?
-) : FinalParameters<T>() {
-    override fun flatten(): Collection<T> {
-        val result = mutableListOf<T>()
-        instance?.let { result += it }
-        result += args
-        retValue?.let { result += it }
+    constructor(instance: T?, args: List<T>, exceptionType: String) :
+            this(instance, args, null, exceptionType)
+
+    constructor(instance: T?, args: List<T>, returnValue: T?) :
+            this(instance, args, returnValue, null)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as FinalParameters<*>
+
+        if (instance != other.instance) return false
+        if (args != other.args) return false
+        if (returnValueUnsafe != other.returnValueUnsafe) return false
+        if (exceptionTypeUnsafe != other.exceptionTypeUnsafe) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = instance?.hashCode() ?: 0
+        result = 31 * result + args.hashCode()
+        result = 31 * result + (returnValueUnsafe?.hashCode() ?: 0)
+        result = 31 * result + (exceptionTypeUnsafe?.hashCode() ?: 0)
         return result
+    }
+
+    override fun toString(): String = buildString {
+        append("FinalParameters(instance=")
+        append(instance)
+        append(", args=")
+        append(args)
+        append(", returnValueUnsafe=")
+        append(returnValueUnsafe)
+        append(", exceptionTypeUnsafe=")
+        append(exceptionTypeUnsafe)
+        append(")")
     }
 }
 
-class ExceptionFinalParameters<T>(
-    override val instance: T?,
-    override val args: List<T>,
-    val javaClass: String
-) : FinalParameters<T>() {
-    override fun flatten(): Collection<T> {
-        val result = mutableListOf<T>()
-        instance?.let { result += it }
-        result += args
-        return result
-    }
-}
+val <T> FinalParameters<T>?.isSuccessOrFalse: Boolean get() = this?.isSuccess ?: false
+val <T> FinalParameters<T>?.isExceptionOrFalse: Boolean get() = this?.isException ?: false
+val <T> FinalParameters<T>?.hasReturnValueOrFalse: Boolean get() = this?.hasReturnValue ?: false
 
-fun Parameters<Descriptor>.extractExceptionFinalParameters(exceptionJavaName: String): ExceptionFinalParameters<Descriptor> =
-    ExceptionFinalParameters(instance, arguments, exceptionJavaName)
+fun Parameters<Descriptor>.extractFinalParameters(exceptionJavaName: String): FinalParameters<Descriptor> =
+    FinalParameters(instance, arguments, exceptionJavaName)
 
-fun Parameters<Descriptor>.extractSuccessFinalParameters(returnValueDescriptor: Descriptor?) =
-    SuccessFinalParameters(instance, arguments, returnValueDescriptor)
+fun Parameters<Descriptor>.extractFinalParameters(returnValueDescriptor: Descriptor?) =
+    FinalParameters(instance, arguments, returnValueDescriptor)
 
 fun extractFinalParameters(executionResult: ExecutionResult, method: Method): FinalParameters<Descriptor>? =
     when (executionResult) {
@@ -80,7 +107,7 @@ fun extractFinalParameters(executionResult: ExecutionResult, method: Method): Fi
                     if ("org.vorpal.research.kex" in exceptionClassName) {
                         throw IllegalArgumentException("Exception $exceptionDescriptor is from kex package")
                     }
-                    ExceptionFinalParameters(instance, args, exceptionClassName)
+                    FinalParameters(instance, args, exceptionClassName)
                 }
 
                 is SuccessResult -> {
@@ -107,7 +134,7 @@ fun extractFinalParameters(executionResult: ExecutionResult, method: Method): Fi
                         }
                     }
 
-                    SuccessFinalParameters(instance, args, retDescriptor)
+                    FinalParameters(instance, args, retDescriptor)
                 }
             }
         }

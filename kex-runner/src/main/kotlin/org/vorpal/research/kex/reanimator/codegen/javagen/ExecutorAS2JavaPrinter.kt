@@ -12,10 +12,11 @@ import org.vorpal.research.kex.ktype.KexLong
 import org.vorpal.research.kex.ktype.KexShort
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
-import org.vorpal.research.kex.parameters.ExceptionFinalParameters
 import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.parameters.SuccessFinalParameters
+import org.vorpal.research.kex.parameters.hasReturnValueOrFalse
+import org.vorpal.research.kex.parameters.isExceptionOrFalse
+import org.vorpal.research.kex.parameters.isSuccessOrFalse
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ConstructorCall
@@ -93,23 +94,19 @@ class ExecutorAS2JavaPrinter(
         for (cs in parameters.asList)
             resolveTypes(cs)
 
-        val exception = (finalParameters as? ExceptionFinalParameters)
-        val exceptionClassName = exception?.javaClass?.substringAfterLast('.')
-
         with(builder) {
-
             import("org.junit.Before")
             import("java.lang.Class")
             import("java.lang.reflect.Method")
             import("java.lang.reflect.Constructor")
             import("java.lang.reflect.Field")
             import("java.lang.reflect.Array")
-            exception?.let {
-                import(it.javaClass)
+            finalParameters?.exceptionTypeUnsafe?.let {
+                import(it)
             }
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
             importStatic("org.junit.Assert.assertTrue")
-            if (finalParameters as? SuccessFinalParameters != null) {
+            if (finalParameters?.isSuccess == true) {
                 importStatic("${equalityUtils.klass.pkg}.${equalityUtils.klass.name}.*")
             }
 
@@ -123,8 +120,8 @@ class ExecutorAS2JavaPrinter(
                         }
                     }
                     val terms = parameters.arguments.toMutableSet()
-                    if (finalParameters is SuccessFinalParameters) {
-                        terms += finalParameters.flatten()
+                    if (finalParameters.isSuccessOrFalse) {
+                        terms += finalParameters!!.asList
                     }
 
                     terms.forEach { sequence ->
@@ -185,13 +182,17 @@ class ExecutorAS2JavaPrinter(
             for (cs in parameters.asList)
                 cs.printAsJava()
 
-            if (finalParameters is SuccessFinalParameters) {
-                finalParameters.flatten().forEach {
+            if (finalParameters.isSuccessOrFalse) {
+                finalParameters!!.asList.forEach {
                     it.printAsJava()
                 }
             }
 
-            if (surroundInTryCatch) statement("} catch (${exceptionClassName ?: "Throwable"} e) {}")
+            val catchExceptionType = when {
+                finalParameters.isExceptionOrFalse -> finalParameters!!.exceptionType.substringAfterLast('.')
+                else -> "Throwable"
+            }
+            if (surroundInTryCatch) statement("} catch ($catchExceptionType e) {}")
         }
 
         printedStacks.clear()
@@ -233,12 +234,6 @@ class ExecutorAS2JavaPrinter(
         finalParameters: FinalParameters<ActionSequence>?,
         methodBuilder: JavaBuilder.ControlStatement
     ) = with(methodBuilder) {
-        val hasException = finalParameters is ExceptionFinalParameters
-        val hasReturnValue = finalParameters is SuccessFinalParameters && finalParameters.hasRetValue
-
-        val exception = (finalParameters as? ExceptionFinalParameters)
-        val exceptionClassName = exception?.javaClass?.substringAfterLast('.')
-
         +"Class<?> klass = Class.forName(\"${method.klass.canonicalDesc}\")"
         +"Class<?>[] argTypes = new Class<?>[${method.argTypes.size}]"
         for ((index, type) in method.argTypes.withIndex()) {
@@ -256,7 +251,7 @@ class ExecutorAS2JavaPrinter(
                 append("(klass, argTypes, args)")
             }
 
-            hasReturnValue -> buildString {
+            finalParameters.hasReturnValueOrFalse -> buildString {
                 append("Object retValue = ")
                 append(reflectionUtils.callMethod.name)
                 append("(klass, \"")
@@ -275,18 +270,18 @@ class ExecutorAS2JavaPrinter(
                 append(", args)")
             }
         }
-        if (hasException) {
+        if (finalParameters.isExceptionOrFalse) {
             aTry {
                 +methodInvocation
                 +"assertTrue(false)"
             }.catch {
-                exceptions += JavaBuilder.StringType(exceptionClassName!!)
+                exceptions += JavaBuilder.StringType(finalParameters!!.exceptionType.substringAfterLast('.'))
             }
         } else {
             +methodInvocation
         }
-        if (finalParameters is SuccessFinalParameters) {
-            finalParameters.instance?.let { instanceInfo ->
+        if (finalParameters.isSuccessOrFalse) {
+            finalParameters!!.instance?.let { instanceInfo ->
                 val instanceName = if (method.isConstructor) "instance" else parameters.instance?.stackName
                 if (!instanceInfo.isConstantValue && instanceName != null) {
                     +buildAssert(instanceInfo.javaClass, instanceName, instanceInfo.stackName)
@@ -297,8 +292,8 @@ class ExecutorAS2JavaPrinter(
                     +buildAssert(arg.javaClass, arg.stackName, finalParameters.args[index].stackName)
                 }
             }
-            (finalParameters as? SuccessFinalParameters)?.retValue?.let { retValueInfo ->
-                +buildAssert(retValueInfo.javaClass, "retValue", retValueInfo.stackName)
+            finalParameters.returnValueUnsafe?.let {
+                +buildAssert(it.javaClass, "retValue", it.stackName)
             }
         }
     }

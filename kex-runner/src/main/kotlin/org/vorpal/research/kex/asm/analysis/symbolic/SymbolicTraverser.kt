@@ -24,8 +24,7 @@ import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.parameters.extractExceptionFinalParameters
-import org.vorpal.research.kex.parameters.extractSuccessFinalParameters
+import org.vorpal.research.kex.parameters.extractFinalParameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.klassName
 import org.vorpal.research.kex.state.predicate.inverse
@@ -1252,7 +1251,7 @@ abstract class SymbolicTraverser(
                 inst,
                 parameters.initialState,
                 "_throw_${throwableType.toString().replace("[/$.]".toRegex(), "_")}",
-                parameters.finalState?.extractExceptionFinalParameters(throwable.type.javaName)
+                parameters.finalState?.extractFinalParameters(throwable.type.javaName)
             )
         }
     }
@@ -1273,7 +1272,7 @@ abstract class SymbolicTraverser(
                 parametersInfo.term2DescriptorMapper(it)
             }
         }
-        val finalParameters = parametersInfo.finalState?.extractSuccessFinalParameters(retDescriptor)
+        val finalParameters = parametersInfo.finalState?.extractFinalParameters(retDescriptor)
         report(inst, parametersInfo.initialState, finalParameters = finalParameters)
     }
 
