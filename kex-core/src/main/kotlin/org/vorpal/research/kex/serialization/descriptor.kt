@@ -11,7 +11,14 @@ import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.vorpal.research.kex.descriptor.*
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
+import org.vorpal.research.kex.descriptor.ClassDescriptor
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.FieldContainingDescriptor
+import org.vorpal.research.kex.descriptor.MockDescriptor
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexClass
 import org.vorpal.research.kex.ktype.KexType
@@ -82,7 +89,7 @@ internal sealed class DescriptorWrapper {
             if (id in output) return
             val instance = descriptor { mock(type as KexClass) }.also {
                 output[id] = it
-            } as MockDescriptor
+            }
             instance.extraInterfaces.addAll(extraInterfaces)
 
             for ((field, fieldId) in fields) {
@@ -125,7 +132,7 @@ internal sealed class DescriptorWrapper {
             if (id in output) return
             val array = descriptor { array(length, (type as KexArray).element) }.also {
                 output[id] = it
-            } as ArrayDescriptor
+            }
             for ((index, elementId) in elements) {
                 map.getValue(elementId).toDescriptor(map, output)
                 array[index] = output[elementId]!!

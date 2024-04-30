@@ -247,7 +247,7 @@ class ReflectionEnumGenerator(private val fallback: Generator) : Generator {
             desc["clazz" to KexJavaClass()] = clazz
             desc["override" to KexBool] = const(true)
             desc
-        } as ObjectDescriptor
+        }
         list += when (descriptor) {
             is ClassDescriptor -> {
                 valuesFieldDescriptor["name" to KexString()] = descriptor { string("\$VALUES") }

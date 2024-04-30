@@ -26,9 +26,14 @@ import org.vorpal.research.kex.reanimator.actionsequence.ExternalConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
 import org.vorpal.research.kex.reanimator.actionsequence.InnerClassConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.MockList
+import org.vorpal.research.kex.reanimator.actionsequence.MockNewInstance
+import org.vorpal.research.kex.reanimator.actionsequence.MockSetField
+import org.vorpal.research.kex.reanimator.actionsequence.MockSetupMethod
 import org.vorpal.research.kex.reanimator.actionsequence.NewArray
 import org.vorpal.research.kex.reanimator.actionsequence.PrimaryValue
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionArrayWrite
+import org.vorpal.research.kex.reanimator.actionsequence.ReflectionCall
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetField
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetStaticField
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
@@ -41,8 +46,16 @@ import org.vorpal.research.kex.reanimator.actionsequence.StringValue
 import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.ArrayType
+import org.vorpal.research.kfg.type.BoolType
+import org.vorpal.research.kfg.type.ByteType
+import org.vorpal.research.kfg.type.CharType
 import org.vorpal.research.kfg.type.ClassType
+import org.vorpal.research.kfg.type.DoubleType
+import org.vorpal.research.kfg.type.FloatType
+import org.vorpal.research.kfg.type.IntType
+import org.vorpal.research.kfg.type.LongType
 import org.vorpal.research.kfg.type.PrimitiveType
+import org.vorpal.research.kfg.type.ShortType
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.assert.unreachable
@@ -62,6 +75,7 @@ class ExecutorAS2JavaPrinter(
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private val equalityUtils = EqualityUtilsPrinter.equalityUtils(packageName)
     private val reflectionUtils = ReflectionUtilsPrinter.reflectionUtils(packageName)
+    @Suppress("unused")
     private val mockUtils by lazy {
         MockUtilsPrinter.mockUtils(packageName)
             .also { builder.importStatic("$packageName.MockUtils.*") }
@@ -162,12 +176,12 @@ class ExecutorAS2JavaPrinter(
                                 }
                             } ?: unreachable { log.error("Unexpected call in reflection list {}", sequence) }
 
-                            is MockList -> arg.mockCalls.firstNotNullOfOrNull {
+                            is MockList -> sequence.mockCalls.firstNotNullOfOrNull {
                                 when (it) {
                                     is MockNewInstance -> it.klass.asType
                                     else -> null
                                 }
-                            } ?: unreachable { log.error { "Unexpected call in arg" } }
+                            } ?: unreachable { log.error { "Unexpected call in mock list" } }
 
                             is PrimaryValue<*> -> return@forEach
                             is StringValue -> return@forEach

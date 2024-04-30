@@ -89,6 +89,6 @@ class MethodGenerator(private val fallback: Generator) : Generator {
             `object`(classClass).also { klass ->
                 klass["name", stringClass] = nameDescriptor
             }
-        } as ObjectDescriptor
+        }
     }
 }

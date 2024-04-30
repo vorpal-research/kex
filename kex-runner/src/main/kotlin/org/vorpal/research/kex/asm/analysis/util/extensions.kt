@@ -12,6 +12,7 @@ import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.ktype.KexRtManager.isJavaRt
 import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
+import org.vorpal.research.kex.mocking.performMocking
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.parameters.filterIgnoredStatic
