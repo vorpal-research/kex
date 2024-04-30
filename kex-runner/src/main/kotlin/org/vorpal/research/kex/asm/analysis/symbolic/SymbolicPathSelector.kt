@@ -26,9 +26,9 @@ class BFS : SymbolicPathSelector {
 }
 
 /**
- * Implements n-subpath algorithm, which makes path decisions based on the frequency of visits to paths of length n
+ * Implements n-subPath algorithm, which makes path decisions based on the frequency of visits to paths of length n
  */
-class SGS(val n: Int = 2) : SymbolicPathSelector {
+class SGS(private val n: Int = 2) : SymbolicPathSelector {
     private val eSVector = mutableSetOf<ExecutionState>()
     private val pathVisits = mutableMapOf<List<BasicBlock>, Int>()
 
@@ -68,9 +68,9 @@ class SGS(val n: Int = 2) : SymbolicPathSelector {
 }
 
 /**
- * Implements bfs algorithm, which takes into account frequency of visits to paths of length n from n-subpath
+ * Implements bfs algorithm, which takes into account frequency of visits to paths of length n from n-subPath
  */
-class PriorityBFS(val n: Int = 2) : SymbolicPathSelector {
+class PriorityBFS(private val n: Int = 2) : SymbolicPathSelector {
     private val eSVector = mutableSetOf<ExecutionState>()
     private val p = mutableMapOf<List<BasicBlock>, Int>()
 

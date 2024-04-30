@@ -13,6 +13,8 @@ import kotlin.time.ExperimentalTime
 class SetSymbolicLongTest : SymbolicTest("set-symbolic") {
     @Test
     fun setConcolicTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/concolic/SetConcolicTests"], 1.0, eps = 0.1)
+        withConfigOption("testGen", "generateAssertions", "false") {
+            assertCoverage(cm["org/vorpal/research/kex/test/concolic/SetConcolicTests"], 1.0, eps = 0.1)
+        }
     }
 }

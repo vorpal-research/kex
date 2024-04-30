@@ -2,13 +2,13 @@ package org.vorpal.research.kex.reanimator
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.assertions.ExecutionExceptionFinalInfo
-import org.vorpal.research.kex.assertions.ExecutionFinalInfo
-import org.vorpal.research.kex.assertions.ExecutionSuccessFinalInfo
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorRtMapper
 import org.vorpal.research.kex.ktype.KexRtManager
+import org.vorpal.research.kex.parameters.ExceptionFinalParameters
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
+import org.vorpal.research.kex.parameters.SuccessFinalParameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.parameters.filterIgnoredStatic
 import org.vorpal.research.kex.parameters.filterStaticFinals
@@ -50,16 +50,21 @@ val Parameters<ActionSequence>.rtUnmapped: Parameters<ActionSequence>
         return Parameters(instance, args, statics)
     }
 
-val ExecutionFinalInfo<ActionSequence>.rtUnmapped: ExecutionFinalInfo<ActionSequence>
+val FinalParameters<ActionSequence>.rtUnmapped: FinalParameters<ActionSequence>
     get() {
         val mapper = ActionSequenceRtMapper(KexRtManager.Mode.UNMAP)
         return when (this) {
-            is ExecutionSuccessFinalInfo -> {
-                ExecutionSuccessFinalInfo(instance?.let { mapper.map(it) }, args.map { mapper.map(it) }, retValue?.let { mapper.map(it) })
-            }
-            is ExecutionExceptionFinalInfo -> {
-                ExecutionExceptionFinalInfo(instance?.let { mapper.map(it) }, args.map { mapper.map(it) }, javaClass)
-            }
+            is SuccessFinalParameters -> SuccessFinalParameters(
+                instance?.let { mapper.map(it) },
+                args.map { mapper.map(it) },
+                retValue?.let { mapper.map(it) }
+            )
+
+            is ExceptionFinalParameters -> ExceptionFinalParameters(
+                instance?.let { mapper.map(it) },
+                args.map { mapper.map(it) },
+                javaClass
+            )
         }
     }
 

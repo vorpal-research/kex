@@ -24,7 +24,7 @@ import kotlin.random.Random
 
 val instantiationManager: ClassInstantiationManager get() = StringClassInstantiationManagerImpl
 
-class NoConcreteInstanceException(val klass: Class) : Exception()
+class NoConcreteInstanceException(val klass: Class) : Exception("No concrete instance of class $klass")
 
 interface ClassInstantiationManager {
     fun isDirectlyInstantiable(klass: Class, accessLevel: AccessModifier): Boolean

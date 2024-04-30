@@ -6,14 +6,14 @@ import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 
-data class ParametersDescription(
-    val initialState: Parameters<Descriptor>?,
+data class DescriptorState(
+    val initialState: Parameters<Descriptor>,
     val finalState: Parameters<Descriptor>?,
-    val memoryMap: Map<Term, Descriptor>? = null
+    val term2DescriptorMapper: (Term) -> Descriptor? = { null },
 )
 
 internal typealias UpdateAction = suspend (TraverserState) -> TraverserState
-internal typealias ReportAction = suspend (TraverserState, ParametersDescription) -> Unit
+internal typealias ReportAction = suspend (TraverserState, DescriptorState) -> Unit
 
 sealed class SingleQuery {
     abstract val query: PersistentSymbolicState

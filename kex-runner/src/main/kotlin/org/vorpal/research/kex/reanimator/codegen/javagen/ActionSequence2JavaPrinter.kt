@@ -3,11 +3,10 @@ package org.vorpal.research.kex.reanimator.codegen.javagen
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.util.Visibility
 import org.vorpal.research.kex.asm.util.accessModifier
-import org.vorpal.research.kex.assertions.ExecutionFinalInfo
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
-
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ArrayClassConstantGetter
@@ -73,19 +72,17 @@ import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.TypeVariable
 import java.lang.reflect.WildcardType
-
-private val testTimeout by lazy {
-    kexConfig.getIntValue("testGen", "testTimeout", 10)
-}
+import kotlin.time.Duration.Companion.seconds
 
 // TODO: this is work of satan, refactor this damn thing
-@Suppress("MemberVisibilityCanBePrivate")
+@Suppress("MemberVisibilityCanBePrivate", "LoggingSimilarMessage")
 open class ActionSequence2JavaPrinter(
     val ctx: ExecutionContext,
     final override val packageName: String,
     final override val klassName: String
 ) : ActionSequencePrinter {
     protected val generateSetup = kexConfig.getBooleanValue("testGen", "generateSetup", false)
+    protected val testTimeout = kexConfig.getIntValue("testGen", "testTimeout", 10).seconds
     protected val printedStacks = mutableSetOf<String>()
     protected val builder = JavaBuilder(packageName)
     protected val klass = builder.run { klass(packageName, klassName) }
@@ -109,7 +106,7 @@ open class ActionSequence2JavaPrinter(
 
                 field("globalTimeout", type("Timeout")) {
                     visibility = Visibility.PUBLIC
-                    initializer = "new Timeout($testTimeout, TimeUnit.SECONDS)"
+                    initializer = "new Timeout(${testTimeout.inWholeSeconds}, TimeUnit.SECONDS)"
                     annotations += "Rule"
                 }
 
@@ -138,11 +135,11 @@ open class ActionSequence2JavaPrinter(
     override fun printActionSequence(
         testName: String,
         method: org.vorpal.research.kfg.ir.Method,
-        actionSequences: Parameters<ActionSequence>,
-        finalInfoSequences: ExecutionFinalInfo<ActionSequence>?
+        parameters: Parameters<ActionSequence>,
+        finalParameters: FinalParameters<ActionSequence>?
     ) {
         cleanup()
-        val actionSequence = buildMethodCall(method, actionSequences)
+        val actionSequence = buildMethodCall(method, parameters)
         with(builder) {
             with(klass) {
                 current = method(testName) {

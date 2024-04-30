@@ -20,7 +20,9 @@ import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.kexHome
 import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
 import org.vorpal.research.kex.util.outputDirectory
+import org.vorpal.research.kthelper.buildProcess
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.nullFile
 import java.nio.file.Path
 
 @ExperimentalSerializationApi
@@ -83,24 +85,24 @@ class ExecutorMaster(
             log.debug("Worker $id connected")
         }
 
-        private fun createProcess(): Process {
-            val pb = ProcessBuilder(
-                getJavaPath().toString(),
-                *workerJvmParams,
-                "-Djava.security.manager",
-                "-Djava.security.policy==${executorPolicyPath}",
-                "-Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener",
-                *getJvmModuleParams().toTypedArray(),
-                "-classpath", workerClassPath.joinToString(getPathSeparator()),
-                executorKlass,
-                "--output", "${outputDir.toAbsolutePath()}",
-                "--config", executorConfigPath.toString(),
-                "--option", "kex:log:${outputDir.resolve("kex-executor-worker$id.log").toAbsolutePath()}",
-                "--classpath", kfgClassPath.joinToString(getPathSeparator()),
-                "--port", "${connection.workerPort}"
-            ).inheritIO()
-            log.debug("Starting worker process with command: '${pb.command().joinToString(" ")}'")
-            return pb.start()
+        private fun createProcess(): Process = buildProcess(
+            getJavaPath().toString(),
+            *workerJvmParams,
+            "-Djava.security.manager",
+            "-Djava.security.policy==${executorPolicyPath}",
+            "-Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener",
+            *getJvmModuleParams().toTypedArray(),
+            "-classpath", workerClassPath.joinToString(getPathSeparator()),
+            executorKlass,
+            "--output", "${outputDir.toAbsolutePath()}",
+            "--config", executorConfigPath.toString(),
+            "--option", "kex:log:${outputDir.resolve("kex-executor-worker$id.log").toAbsolutePath()}",
+            "--classpath", kfgClassPath.joinToString(getPathSeparator()),
+            "--port", "${connection.workerPort}"
+        ) {
+            redirectInput(nullFile())
+            redirectOutput(nullFile())
+            log.debug("Starting worker process with command: '${command().joinToString(" ")}'")
         }
 
         suspend fun processTask(clientConnection: Master2ClientConnection): Boolean {

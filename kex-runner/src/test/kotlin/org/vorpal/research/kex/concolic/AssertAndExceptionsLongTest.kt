@@ -10,7 +10,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalSerializationApi
 @InternalSerializationApi
 @DelicateCoroutinesApi
-class AssertAndExceptionsTest : ConcolicTest("assert-and-exceptions")  {
+class AssertAndExceptionsLongTest : ConcolicTest("assert-and-exceptions")  {
     @Test
     fun assertAndExceptionsTest1() {
         assertCoverage(cm["org/vorpal/research/kex/test/concolic/AssertAndExceptionsTests1"], 1.0, 0.1)

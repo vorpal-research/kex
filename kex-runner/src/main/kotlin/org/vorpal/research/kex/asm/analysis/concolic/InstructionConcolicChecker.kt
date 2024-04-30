@@ -1,7 +1,17 @@
 package org.vorpal.research.kex.asm.analysis.concolic
 
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.yield
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import org.vorpal.research.kex.ExecutionContext
@@ -10,12 +20,12 @@ import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelectorMa
 import org.vorpal.research.kex.asm.analysis.concolic.coverage.CoverageGuidedSelectorManager
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
-import org.vorpal.research.kex.assertions.extractFinalInfo
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.asDescriptors
+import org.vorpal.research.kex.parameters.extractFinalParameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.ExecutorTestCasePrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
@@ -137,21 +147,23 @@ class InstructionConcolicChecker(
 
         compilerHelper.compileFile(testFile)
         val result = collectTrace(generator.testKlassName)
-        CoroutineScope(Dispatchers.Default).launch {
-            try {
-                if (result is ExecutionCompletedResult) {
-                    val testWithAssertionsGenerator =
-                        UnsafeGenerator(ctx, method, testNameGenerator.generateName(method, parameters))
-                    val finalInfoDescriptors = extractFinalInfo(result, method)
-                    testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
-                    withContext(Dispatchers.IO) {
-                        testWithAssertionsGenerator.emit()
+        if (kexConfig.getBooleanValue("testGen", "generateAssertions", false)) {
+            CoroutineScope(Dispatchers.Default).launch {
+                try {
+                    if (result is ExecutionCompletedResult) {
+                        val testWithAssertionsGenerator =
+                            UnsafeGenerator(ctx, method, testNameGenerator.generateName(method, parameters))
+                        val finalInfoDescriptors = extractFinalParameters(result, method)
+                        testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
+                        withContext(Dispatchers.IO) {
+                            testWithAssertionsGenerator.emit()
+                        }
+                        testFile.deleteIfExists()
                     }
-                    testFile.deleteIfExists()
+                } catch (e: Throwable) {
+                    log.debug("Tests with assertion generation failed with exception:")
+                    log.debug(e.stackTrace)
                 }
-            } catch (e: Throwable) {
-                log.debug("Tests with assertion generation failed with exception:")
-                log.debug(e.stackTrace)
             }
         }
 

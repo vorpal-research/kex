@@ -17,7 +17,9 @@ import org.vorpal.research.kex.util.getJvmModuleParams
 import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.kexHome
 import org.vorpal.research.kex.util.outputDirectory
+import org.vorpal.research.kthelper.buildProcess
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.nullFile
 import ru.spbstu.wheels.mapToArray
 import java.nio.file.Paths
 import kotlin.concurrent.thread
@@ -57,7 +59,7 @@ internal object ExecutorMasterController : AutoCloseable {
         )
 
         val kfgClassPath = ctx.classPath
-        val pb = ProcessBuilder(
+        process = buildProcess(
             getJavaPath().toString(),
             "-Djava.security.manager", "-Djava.security.policy==${executorPolicyPath}",
             "-Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener",
@@ -71,9 +73,11 @@ internal object ExecutorMasterController : AutoCloseable {
             "--kfgClassPath", kfgClassPath.joinToString(getPathSeparator()),
             "--workerClassPath", workerClassPath.joinToString(getPathSeparator()),
             "--numOfWorkers", "$numberOfWorkers"
-        ).inheritIO()
-        log.debug("Starting executor master process with command: '${pb.command().joinToString(" ")}'")
-        process = pb.start()
+        ) {
+            redirectOutput(nullFile())
+            redirectError(nullFile())
+            log.debug("Starting executor master process with command: '${command().joinToString(" ")}'")
+        }
         runBlocking {
             controllerSocket.init()
         }

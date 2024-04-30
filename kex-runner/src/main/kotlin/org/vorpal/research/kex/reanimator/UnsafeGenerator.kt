@@ -2,11 +2,11 @@ package org.vorpal.research.kex.reanimator
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.state.PredicateStateAnalysis
-import org.vorpal.research.kex.assertions.ExecutionExceptionFinalInfo
-import org.vorpal.research.kex.assertions.ExecutionFinalInfo
-import org.vorpal.research.kex.assertions.ExecutionSuccessFinalInfo
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.parameters.ExceptionFinalParameters
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
+import org.vorpal.research.kex.parameters.SuccessFinalParameters
 import org.vorpal.research.kex.parameters.concreteParameters
 import org.vorpal.research.kex.random.GenerationException
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
@@ -30,9 +30,9 @@ class UnsafeGenerator(
     private val printer = ExecutorTestCasePrinter(ctx, method.packageName, testName)
     val testKlassName = printer.fullKlassName
 
-    fun generate(descriptors: Parameters<Descriptor>, finalInfoDescriptors: ExecutionFinalInfo<Descriptor>? = null) = try {
-        val sequences = descriptors.actionSequences
-        val finalInfoSequences = finalInfoDescriptors?.actionSequences
+    fun generate(parameters: Parameters<Descriptor>, finalParameters: FinalParameters<Descriptor>? = null) = try {
+        val sequences = parameters.actionSequences
+        val finalInfoSequences = finalParameters?.actionSequences
         printer.print(method, sequences.rtUnmapped, finalInfoSequences?.rtUnmapped)
     } catch (e: GenerationException) {
         log.warn("Generation error when generating action sequences:", e)
@@ -46,9 +46,9 @@ class UnsafeGenerator(
     }
 
     fun generate(state: PredicateState, model: SMTModel) {
-        val descriptors =
-            generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-        log.debug("Generated descriptors:\n{}", descriptors)
+        val descriptors = generateFinalDescriptors(method, ctx, model, state)
+            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+        log.debug("Generated descriptors from smt model:\n{}", descriptors)
         generate(descriptors)
     }
 
@@ -58,9 +58,9 @@ class UnsafeGenerator(
         state: PredicateState,
         model: SMTModel
     ): Parameters<Any?> = try {
-        val descriptors =
-            generateFinalDescriptors(method, ctx, model, state).concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-        log.debug("Generated descriptors:\n{}", descriptors)
+        val descriptors = generateFinalDescriptors(method, ctx, model, state)
+            .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+        log.debug("Generated descriptors from smt model and method:\n{}", descriptors)
         val sequences = descriptors.actionSequences
         printer.print(testName, method, sequences.rtUnmapped)
         generateInputByModel(ctx, method, state, model)
@@ -93,15 +93,16 @@ class UnsafeGenerator(
             return Parameters(thisSequence, argSequences, staticFields)
         }
 
-    private val ExecutionFinalInfo<Descriptor>.actionSequences : ExecutionFinalInfo<ActionSequence>
-        get()  {
+    private val FinalParameters<Descriptor>.actionSequences: FinalParameters<ActionSequence>
+        get() {
             val instance = this.instance?.let { asGenerator.generate(it) }
             val args = this.args.map { asGenerator.generate(it) }
-            return when(this) {
-                is ExecutionExceptionFinalInfo ->
-                    ExecutionExceptionFinalInfo(instance, args, this.javaClass)
-                is ExecutionSuccessFinalInfo ->
-                    ExecutionSuccessFinalInfo(instance, args, this.retValue?.let { asGenerator.generate(it) })
+            return when (this) {
+                is ExceptionFinalParameters ->
+                    ExceptionFinalParameters(instance, args, this.javaClass)
+
+                is SuccessFinalParameters ->
+                    SuccessFinalParameters(instance, args, this.retValue?.let { asGenerator.generate(it) })
             }
         }
 

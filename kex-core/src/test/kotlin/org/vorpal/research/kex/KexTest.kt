@@ -56,11 +56,15 @@ abstract class KexTest(testDirectoryName: String) {
         return psa
     }
 
+    inline fun withConfigOption(section: String, option: String, value: String, body: () -> Unit) =
+        withConfigOptions(listOf(Triple(section, option, value)), body)
 
-    inline fun withConfigOption(section: String, option: String, value: String, body: () -> Unit) {
-        val oldValue = kexConfig.getStringValue(section, option)
-        RuntimeConfig.setValue(section, option, value)
+    inline fun withConfigOptions(options: List<Triple<String, String, String>>, body: () -> Unit) {
+        val oldValues = options.associateWith { (section, option, _) -> kexConfig.getStringValue(section, option) }
+        options.forEach { (section, option, value) -> RuntimeConfig.setValue(section, option, value) }
         body()
-        RuntimeConfig.setValue(section, option, oldValue.toString())
+        oldValues.forEach { (section, option, _), oldValue ->
+            RuntimeConfig.setValue(section, option, oldValue.toString())
+        }
     }
 }

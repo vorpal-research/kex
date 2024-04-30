@@ -1,10 +1,9 @@
 package org.vorpal.research.kex.reanimator.codegen.kotlingen
 
 import org.vorpal.research.kex.ExecutionContext
-import org.vorpal.research.kex.assertions.ExecutionFinalInfo
 import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.Parameters
-
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.ArrayClassConstantGetter
@@ -110,13 +109,13 @@ open class ActionSequence2KotlinPrinter(
     override fun printActionSequence(
         testName: String,
         method: org.vorpal.research.kfg.ir.Method,
-        actionSequences: Parameters<ActionSequence>,
-        finalInfoSequences: ExecutionFinalInfo<ActionSequence>?
+        parameters: Parameters<ActionSequence>,
+        finalParameters: FinalParameters<ActionSequence>?
     ) {
         resolvedTypes.clear()
         actualTypes.clear()
         printedStacks.clear()
-        val actionSequence = buildMethodCall(method, actionSequences)
+        val actionSequence = buildMethodCall(method, parameters)
         with(builder) {
             with(klass) {
                 current = method(testName) {
