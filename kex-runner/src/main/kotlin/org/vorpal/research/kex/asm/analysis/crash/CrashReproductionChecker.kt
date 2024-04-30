@@ -19,7 +19,6 @@ import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPrecondi
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ExceptionPreconditionReceiver
 import org.vorpal.research.kex.asm.analysis.symbolic.ConditionCheckQuery
 import org.vorpal.research.kex.asm.analysis.symbolic.DefaultCallResolver
-import org.vorpal.research.kex.asm.analysis.symbolic.DescriptorState
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicCallResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicInvokeDynamicResolver
 import org.vorpal.research.kex.asm.analysis.symbolic.SymbolicPathSelector
@@ -36,6 +35,7 @@ import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.reanimator.UnsafeGenerator
 import org.vorpal.research.kex.reanimator.codegen.javagen.ReflectionUtilsPrinter
 import org.vorpal.research.kex.reanimator.codegen.klassName
+import org.vorpal.research.kex.state.transformer.DescriptorState
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState

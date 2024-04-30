@@ -4,7 +4,6 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.TimeoutCancellationException
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.analysis.crash.precondition.ConstraintExceptionPrecondition
-import org.vorpal.research.kex.asm.analysis.symbolic.DescriptorState
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.util.AccessModifier
 import org.vorpal.research.kex.config.kexConfig
@@ -23,6 +22,7 @@ import org.vorpal.research.kex.smt.Result
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateQuery
 import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.state.transformer.DescriptorState
 import org.vorpal.research.kex.state.transformer.SymbolicStateForwardSlicer
 import org.vorpal.research.kex.state.transformer.collectArguments
 import org.vorpal.research.kex.state.transformer.generateFinalDescriptorsWithMemoryMap

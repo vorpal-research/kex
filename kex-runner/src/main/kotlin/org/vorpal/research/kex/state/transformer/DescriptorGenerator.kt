@@ -22,7 +22,6 @@ import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.term.ConstIntTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kfg.ir.Method
-import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
@@ -79,7 +78,7 @@ class DescriptorGenerator(
     }
 }
 
-class SMTModelALiasAnalysis<T>(
+class SMTModelAliasAnalysis<T>(
     private val generator: AbstractGenerator<T>
 ) : AliasAnalysis {
     override fun mayAlias(lhv: Term, rhv: Term): Boolean {
@@ -167,6 +166,12 @@ private class InitialDescriptors(
     }
 }
 
+data class DescriptorState(
+    val initialState: Parameters<Descriptor>,
+    val finalState: Parameters<Descriptor>?,
+    val term2DescriptorMapper: (Term) -> Descriptor? = { null },
+)
+
 fun generateInitialDescriptors(
     method: Method,
     ctx: ExecutionContext,
@@ -201,5 +206,5 @@ fun generateInitialDescriptorsAndAA(
             arg ?: descriptor { default(method.argTypes[index].kexType) }
         },
         generator.staticFields,
-    ) to SMTModelALiasAnalysis(generator)
+    ) to SMTModelAliasAnalysis(generator)
 }

@@ -1,16 +1,8 @@
 package org.vorpal.research.kex.asm.analysis.symbolic
 
-import org.vorpal.research.kex.descriptor.Descriptor
-import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.transformer.DescriptorState
 import org.vorpal.research.kex.trace.symbolic.PersistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
-
-data class DescriptorState(
-    val initialState: Parameters<Descriptor>,
-    val finalState: Parameters<Descriptor>?,
-    val term2DescriptorMapper: (Term) -> Descriptor? = { null },
-)
 
 internal typealias UpdateAction = suspend (TraverserState) -> TraverserState
 internal typealias ReportAction = suspend (TraverserState, DescriptorState) -> Unit

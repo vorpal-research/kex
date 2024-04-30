@@ -36,6 +36,7 @@ import org.vorpal.research.kex.state.term.StaticClassRefTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.state.term.TermBuilder
 import org.vorpal.research.kex.state.term.term
+import org.vorpal.research.kex.state.transformer.DescriptorState
 import org.vorpal.research.kex.state.transformer.isThis
 import org.vorpal.research.kex.trace.symbolic.PathClause
 import org.vorpal.research.kex.trace.symbolic.PathClauseType
