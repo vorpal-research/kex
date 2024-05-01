@@ -2,7 +2,6 @@
 
 package org.vorpal.research.kex.jacoco
 
-import com.jetbrains.rd.util.string.printToString
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.ICounter
@@ -14,7 +13,6 @@ import org.jacoco.core.instr.Instrumenter
 import org.jacoco.core.internal.analysis.PackageCoverageImpl
 import org.jacoco.core.runtime.LoggerRuntime
 import org.jacoco.core.runtime.RuntimeData
-
 import org.junit.runner.Result
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.minimization.GreedyTestReductionImpl
@@ -85,6 +83,7 @@ open class CoverageReporter(
     val cm: ClassManager,
     containers: List<Container> = listOf()
 ) {
+    protected val logJUnit = kexConfig.getBooleanValue("testGen", "logJUnit", false)
     protected val jacocoInstrumentedDir: Path = kexConfig.outputDirectory.resolve(
         kexConfig.getPathValue("testGen", "jacocoDir", "jacoco/")
     ).also {
@@ -259,9 +258,11 @@ open class CoverageReporter(
             val returnValue = jcClass.getMethod("run", computerClass, Class::class.java.asArray())
                 .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
 
-            log.debug("Failures:")
-            (returnValue as? Result)?.failures?.forEach {
-                log.debug(it.trace)
+            if (logJUnit) {
+                log.debug("Failures:")
+                (returnValue as? Result)?.failures?.forEach {
+                    log.debug(it.trace)
+                }
             }
             val executionData = ExecutionDataStore()
             data.collect(executionData, SessionInfoStore(), false)
