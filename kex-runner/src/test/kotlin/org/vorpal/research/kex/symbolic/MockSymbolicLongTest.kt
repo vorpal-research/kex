@@ -11,12 +11,13 @@ import kotlin.time.ExperimentalTime
 @InternalSerializationApi
 @DelicateCoroutinesApi
 class MockSymbolicLongTest : SymbolicTest("mock-symbolic") {
-    val prefix = "org/vorpal/research/kex/test/concolic/mock/"
+    private val prefix = "org/vorpal/research/kex/test/concolic/mock/"
 
     @Test
     fun mockTest() {
         assertCoverage(cm[prefix + "MockTests"], 1.0)
     }
+
     @Test
     fun mockReturnsMockTest() {
         assertCoverage(cm[prefix + "MockReturnsMockTests"], 1.0)
@@ -49,14 +50,13 @@ class MockSymbolicLongTest : SymbolicTest("mock-symbolic") {
     }
 
     @Test
-    fun mockGenericsTests(){
+    fun mockGenericsTests() {
         assertCoverage(cm[prefix + "MockGenericsTests"], 1.0)
     }
 
     @Test
-    fun mockSetTests(){
+    fun mockSetTests() {
         // unstable test. Anything can happen
-        val eps = 0.5
-        assertCoverage(cm[prefix + "MockSetTests"], 1.0, eps)
+        assertCoverage(cm[prefix + "MockSetTests"], 1.0, 0.5)
     }
 }
