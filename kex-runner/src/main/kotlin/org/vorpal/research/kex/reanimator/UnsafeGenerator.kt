@@ -100,7 +100,12 @@ class UnsafeGenerator(
             val args = this.args.map { asGenerator.generate(it) }
             return when {
                 this.isException -> FinalParameters(instance, args, exceptionType)
-                this.isSuccess -> FinalParameters(instance, args, asGenerator.generate(returnValue))
+                this.isSuccess -> FinalParameters(
+                    instance,
+                    args,
+                    returnValueUnsafe?.let { asGenerator.generate(returnValue) }
+                )
+
                 else -> unreachable { log.error("Unexpected type of final parameters: $this") }
             }
         }

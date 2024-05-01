@@ -1218,9 +1218,11 @@ abstract class SymbolicTraverser(
         throwExceptionAndReport(state, FullDescriptorContext(params.toState(), null), inst, throwable)
     }
 
-    @Suppress("UnusedReceiverParameter")
-    // not implemented because it is only necessary for the deprecated API
-    private fun Parameters<Descriptor>.toState(): DescriptorContext = TODO()
+    @Suppress("UnusedReceiverParameter", "DeprecatedCallableAddReplaceWith")
+    @Deprecated("Use incremental API")
+    private fun Parameters<Descriptor>.toState(): DescriptorContext = unreachable {
+        log.error("`Parameters<Descriptor>.toState(): DescriptorContext` is not implemented, because it is only necessary for deprecated API")
+    }
 
     protected open suspend fun throwExceptionAndReport(
         state: TraverserState,
@@ -1267,7 +1269,6 @@ abstract class SymbolicTraverser(
         parametersInfo: FullDescriptorContext,
         state: TraverserState
     ) {
-        val finalState = parametersInfo.final ?: return
         val retValue = when ((inst as? ReturnInst)?.hasReturnValue) {
             true -> inst.returnValue
             else -> null
@@ -1276,13 +1277,13 @@ abstract class SymbolicTraverser(
         val retDescriptor = when (retValue) {
             is Constant -> descriptor { const(retValue) }
             else -> state.valueMap[retValue]?.let {
-                finalState.termToDescriptor[it]
+                parametersInfo.final?.termToDescriptor?.get(it)
             }
         }
         report(
             inst,
-            finalState.parameters,
-            finalParameters = finalState.parameters.extractFinalParameters(retDescriptor)
+            parametersInfo.initial.parameters,
+            finalParameters = parametersInfo.final?.parameters?.extractFinalParameters(retDescriptor)
         )
     }
 
