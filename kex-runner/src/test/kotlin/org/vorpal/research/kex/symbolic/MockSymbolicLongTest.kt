@@ -45,7 +45,7 @@ class MockSymbolicLongTest : SymbolicTest("mock-symbolic") {
 
     @Test
     fun mockListTests() {
-        assertCoverage(cm[prefix + "MockListTests"], 1.0, 0.0)
+        assertCoverage(cm[prefix + "MockListTests"], 1.0, 0.10)
     }
 
     @Test
