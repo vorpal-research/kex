@@ -161,8 +161,7 @@ class InstructionConcolicChecker(
                         testFile.deleteIfExists()
                     }
                 } catch (e: Throwable) {
-                    log.debug("Tests with assertion generation failed with exception:")
-                    log.debug(e.stackTrace)
+                    log.debug("Tests with assertion generation failed with exception:", e)
                 }
             }
         }

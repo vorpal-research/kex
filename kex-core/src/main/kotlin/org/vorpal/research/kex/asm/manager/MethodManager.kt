@@ -164,12 +164,12 @@ object MethodManager {
 
         fun kexAssertNull(cm: ClassManager) = cm[assertIntrinsics].getMethod(
             "kexAssertNull",
-            cm.type.voidType, cm.type.objectType
+            cm.type.objectType, cm.type.objectType
         )
 
         fun kexAssertNotNull(cm: ClassManager) = cm[assertIntrinsics].getMethod(
             "kexAssertNotNull",
-            cm.type.voidType, cm.type.objectType
+            cm.type.objectType, cm.type.objectType
         )
 
         fun kexAssertWithId(cm: ClassManager) = cm[assertIntrinsics].getMethod(
