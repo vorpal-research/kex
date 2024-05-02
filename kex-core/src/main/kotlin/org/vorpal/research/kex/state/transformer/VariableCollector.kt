@@ -17,6 +17,14 @@ val Term.isVariable: Boolean
         else -> false
     }
 
+val Term.isValue: Boolean
+    get() = when (this) {
+        is ArgumentTerm -> true
+        is ValueTerm -> true
+        is ReturnValueTerm -> true
+        else -> false
+    }
+
 class VariableCollector : Transformer<VariableCollector> {
     val variables = linkedSetOf<Term>()
 

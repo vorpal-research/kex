@@ -51,6 +51,44 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, Incr
                 assume { assumption equality true }
             }
 
+            kim.kexAssumePositive(method.cm) -> {
+                val operand = call.arguments[0]
+                assume { (operand gt 0) equality true }
+            }
+
+            kim.kexAssumePositiveOrZero(method.cm) -> {
+                val operand = call.arguments[0]
+                assume { (operand ge 0) equality true }
+            }
+
+            kim.kexAssumeNegative(method.cm) -> {
+                val operand = call.arguments[0]
+                assume { (operand lt 0) equality true }
+            }
+
+            kim.kexAssumeNegativeOrZero(method.cm) -> {
+                val operand = call.arguments[0]
+                assume { (operand le 0) equality true }
+            }
+
+            kim.kexAssumeEqual(method.cm) -> {
+                val lhv = call.arguments[0]
+                val rhv = call.arguments[1]
+                assume { (lhv eq rhv) equality true }
+            }
+
+            kim.kexAssumeNotEqual(method.cm) -> {
+                val lhv = call.arguments[0]
+                val rhv = call.arguments[1]
+                assume { (lhv eq rhv) equality false }
+            }
+
+            kim.kexAssumeEqualCharArrays(method.cm) -> {
+                val lhv = call.arguments[0]
+                val rhv = call.arguments[1]
+                assume { (lhv eq rhv) equality true }
+            }
+
             kim.kexNotNull(method.cm) -> {
                 val value = call.arguments[0]
                 val term = term { generate(KexBool) }
@@ -63,6 +101,16 @@ class KexIntrinsicsAdapter : RecollectingTransformer<KexIntrinsicsAdapter>, Incr
             kim.kexAssert(method.cm) -> {
                 val assertion = call.arguments[0]
                 require { assertion equality true }
+            }
+
+            kim.kexAssertNull(method.cm) -> {
+                val operand = call.arguments[0]
+                assume { (operand eq null) equality true }
+            }
+
+            kim.kexAssertNotNull(method.cm) -> {
+                val operand = call.arguments[0]
+                assume { (operand eq null) equality false }
             }
 
             else -> nothing()

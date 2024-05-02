@@ -88,7 +88,7 @@ object MethodManager {
     }
 
     object KexIntrinsicManager {
-        private val supportedVersions = mutableSetOf("0.1.0")
+        private val supportedVersions = mutableSetOf("0.1.2")
         private const val assertIntrinsics = "org/vorpal/research/kex/intrinsics/AssertIntrinsics"
         private const val collectionIntrinsics = "org/vorpal/research/kex/intrinsics/CollectionIntrinsics"
         private const val unknownIntrinsics = "org/vorpal/research/kex/intrinsics/UnknownIntrinsics"
@@ -117,7 +117,42 @@ object MethodManager {
             cm.type.voidType, cm.type.boolType
         )
 
-        fun kexNotNull(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+        fun kexAssumePositive(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexAssumePositive",
+            cm.type.voidType, cm.type.intType
+        )
+
+        fun kexAssumePositiveOrZero(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexAssumePositiveOrZero",
+            cm.type.voidType, cm.type.intType
+        )
+
+        fun kexAssumeNegative(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexAssumeNegative",
+            cm.type.voidType, cm.type.intType
+        )
+
+        fun kexAssumeNegativeOrZero(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexAssumeNegativeOrZero",
+            cm.type.voidType, cm.type.intType
+        )
+
+        fun kexAssumeEqual(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexAssumeEqual",
+            cm.type.voidType, cm.type.intType, cm.type.intType
+        )
+
+        fun kexAssumeNotEqual(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexAssumeNotEqual",
+            cm.type.voidType, cm.type.intType, cm.type.intType
+        )
+
+        fun kexAssumeEqualCharArrays(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexAssumeEqual",
+            cm.type.voidType, cm.type.charType.asArray, cm.type.charType.asArray
+        )
+
+         fun kexNotNull(cm: ClassManager) = cm[assertIntrinsics].getMethod(
             "kexNotNull",
             cm.type.objectType, cm.type.objectType
         )
@@ -125,6 +160,16 @@ object MethodManager {
         fun kexAssert(cm: ClassManager) = cm[assertIntrinsics].getMethod(
             "kexAssert",
             cm.type.voidType, cm.type.boolType
+        )
+
+        fun kexAssertNull(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexAssertNull",
+            cm.type.voidType, cm.type.objectType
+        )
+
+        fun kexAssertNotNull(cm: ClassManager) = cm[assertIntrinsics].getMethod(
+            "kexAssertNotNull",
+            cm.type.voidType, cm.type.objectType
         )
 
         fun kexAssertWithId(cm: ClassManager) = cm[assertIntrinsics].getMethod(
