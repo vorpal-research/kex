@@ -65,6 +65,7 @@ import org.vorpal.research.kex.state.transformer.TermRemapper
 import org.vorpal.research.kex.state.transformer.TypeInfo
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
+import org.vorpal.research.kex.state.transformer.Unifier
 import org.vorpal.research.kex.state.transformer.collectArguments
 import org.vorpal.research.kex.state.transformer.collectFieldAccesses
 import org.vorpal.research.kex.state.transformer.collectFieldTerms
@@ -129,6 +130,7 @@ class GeneratorContext(
         +RecursiveInliner(psa) { index, psa ->
             ConcreteImplInliner(types, typeInfoMap + staticTypeInfo, psa, inlineIndex = index)
         }
+        +Unifier()
         +ClassAdapter(cm)
         +StaticFieldInliner(context, psa)
         +IntrinsicAdapter

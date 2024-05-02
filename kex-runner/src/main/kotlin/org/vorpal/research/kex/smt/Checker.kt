@@ -37,6 +37,7 @@ import org.vorpal.research.kex.state.transformer.StringMethodAdapter
 import org.vorpal.research.kex.state.transformer.TermCollector
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
+import org.vorpal.research.kex.state.transformer.Unifier
 import org.vorpal.research.kex.state.transformer.collectRequiredTerms
 import org.vorpal.research.kex.state.transformer.collectVariables
 import org.vorpal.research.kex.state.transformer.transform
@@ -83,6 +84,7 @@ class Checker(
             ConcreteImplInliner(method.cm.type, TypeInfoMap(), psa, inlineIndex = index)
         }
         +StaticFieldInliner(ctx, psa)
+        +Unifier()
         +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
@@ -109,6 +111,7 @@ class Checker(
             ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
         }
         +StaticFieldInliner(ctx, psa)
+        +Unifier()
         +ClassAdapter(ctx.cm)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()

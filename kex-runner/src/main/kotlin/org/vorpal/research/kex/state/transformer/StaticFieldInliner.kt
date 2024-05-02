@@ -69,6 +69,7 @@ class StaticFieldInliner(
             +RecursiveInliner(psa) { index, psa ->
                 ConcreteImplInliner(ctx.types, TypeInfoMap(), psa, inlineIndex = index)
             }
+            +Unifier()
             +ClassAdapter(ctx.cm)
             +IntrinsicAdapter
             +KexIntrinsicsAdapter()

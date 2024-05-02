@@ -28,6 +28,7 @@ import org.vorpal.research.kex.state.transformer.StaticFieldWDescriptorInliner
 import org.vorpal.research.kex.state.transformer.StringMethodAdapter
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
+import org.vorpal.research.kex.state.transformer.Unifier
 import org.vorpal.research.kex.state.transformer.toTypeMap
 import org.vorpal.research.kex.state.transformer.transformIncremental
 import org.vorpal.research.kfg.ir.Method
@@ -75,6 +76,7 @@ class AsyncIncrementalChecker(
                 )
             }
         }
+        +Unifier()
         +ClassAdapter(ctx.cm)
 //        +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter

@@ -38,6 +38,7 @@ import org.vorpal.research.kex.state.transformer.StringMethodAdapter
 import org.vorpal.research.kex.state.transformer.TermCollector
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
+import org.vorpal.research.kex.state.transformer.Unifier
 import org.vorpal.research.kex.state.transformer.collectRequiredTerms
 import org.vorpal.research.kex.state.transformer.collectVariables
 import org.vorpal.research.kex.state.transformer.domain.tryAbstractDomainSolve
@@ -46,8 +47,6 @@ import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.tryOrNull
-import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate")
 class AsyncChecker(
@@ -94,6 +93,7 @@ class AsyncChecker(
                 )
             }
         }
+        +Unifier()
         +ClassAdapter(ctx.cm)
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +IntrinsicAdapter
@@ -172,15 +172,6 @@ class AsyncChecker(
             }
         }
 
-        tryOrNull {
-            File("states.txt").appendText(
-                buildString {
-                    appendLine("Formulae:")
-                    append(state)
-                    appendLine()
-                }
-            )
-        }
         val result = AsyncSMTProxySolver(ctx).use {
             it.isPathPossibleAsync(state, query)
         }

@@ -14,6 +14,7 @@ import org.vorpal.research.kex.state.transformer.KexRtAdapter
 import org.vorpal.research.kex.state.transformer.MethodInliner
 import org.vorpal.research.kex.state.transformer.StringMethodAdapter
 import org.vorpal.research.kex.state.transformer.TypeNameAdapter
+import org.vorpal.research.kex.state.transformer.Unifier
 import org.vorpal.research.kex.state.transformer.collectFieldAccesses
 import org.vorpal.research.kex.state.transformer.transform
 import org.vorpal.research.kfg.ClassManager
@@ -53,6 +54,7 @@ class MethodFieldAccessCollector(val ctx: ExecutionContext, val psa: PredicateSt
         +AnnotationAdapter(method, AnnotationManager.defaultLoader)
         +KexRtAdapter(ctx.cm)
         +MethodInliner(psa)
+        +Unifier()
         +ClassAdapter(cm)
         +ClassMethodAdapter(cm)
         +ConstEnumAdapter(ctx)
