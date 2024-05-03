@@ -8,16 +8,13 @@ import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kthelper.collection.mapNotNullTo
-import org.vorpal.research.kthelper.logging.log
 
 class Unifier : Transformer<Unifier>, IncrementalTransformer {
     private var values = mutableMapOf<Term, Term>()
 
     override fun apply(ps: PredicateState): PredicateState {
         val filtered = super.apply(ps)
-        return TermRemapper(values).apply(filtered).also {
-            log.error("Reduced state size from ${ps.size} to ${it.size}")
-        }
+        return TermRemapper(values).apply(filtered)
     }
 
     override fun transformChoiceState(ps: ChoiceState): PredicateState {
