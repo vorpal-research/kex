@@ -1,49 +1,37 @@
 package org.vorpal.research.kex.state.transformer
 
-import org.vorpal.research.kex.state.ChoiceState
 import org.vorpal.research.kex.state.IncrementalPredicateState
 import org.vorpal.research.kex.state.PredicateState
 import org.vorpal.research.kex.state.predicate.EqualityPredicate
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.PredicateType
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kthelper.collection.mapNotNullTo
 
 class Unifier : Transformer<Unifier>, IncrementalTransformer {
-    private var values = mutableMapOf<Term, Term>()
+    private var values = linkedMapOf<Term, MutableSet<Term>>()
 
     override fun apply(ps: PredicateState): PredicateState {
-        val filtered = super.apply(ps)
-        return TermRemapper(values).apply(filtered)
-    }
-
-    override fun transformChoiceState(ps: ChoiceState): PredicateState {
-        val oldValues = values
-        val newValues = mutableSetOf<Map<Term, Term>>()
-        val allKeys = mutableSetOf<Term>()
-        for (choice in ps.choices) {
-            values = oldValues.toMutableMap()
-            transform(choice)
-            newValues += values
-            allKeys += values.keys
+        super.apply(ps)
+        val filtered = ps.filterNot { predicate ->
+            predicate.type is PredicateType.State
+                    && predicate is EqualityPredicate
+                    && predicate.lhv.isValue
+                    && predicate.rhv.isValue
+                    && values.getOrDefault(predicate.lhv, emptySet()).size == 1
         }
-        values = allKeys.mapNotNullTo(mutableMapOf()) { key ->
-            newValues.mapTo(mutableSetOf()) { it[key] }.singleOrNull()?.let {
-                key to it
+        val mappings = buildMap {
+            for ((term, candidates) in this@Unifier.values) {
+                val candidate = candidates.singleOrNull() ?: continue
+                this[term] = this.getOrDefault(candidate, candidate)
             }
         }
-
-        return super.transformChoiceState(ps)
+        return TermRemapper(mappings).apply(filtered)
     }
 
     override fun transformEqualityPredicate(predicate: EqualityPredicate): Predicate {
-        if (predicate.type !is PredicateType.State) return predicate
-
         if (predicate.lhv.isValue && predicate.rhv.isValue) {
-            values[predicate.lhv] = values.getOrDefault(predicate.rhv, predicate.rhv)
-            return nothing()
+            values.getOrPut(predicate.lhv, ::mutableSetOf) += predicate.rhv
         }
-
         return super.transformEqualityPredicate(predicate)
     }
 
