@@ -22,6 +22,7 @@ import org.vorpal.research.kfg.type.arrayListType
 import org.vorpal.research.kfg.type.objectType
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.log
 
 class KexHashMapGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext
@@ -94,7 +95,9 @@ class KexHashMapGenerator(val fallback: Generator) : Generator {
         }
         outerSetAS += ExternalMethodCall(creationMethod, outerMapAS, emptyList())
 
-        val iteratorMethod = creationMethod.klass.getMethod("iterator", cm[SystemTypeNames.iteratorClass].asType)
+        val collectionClass = (creationMethod.returnType as? ClassType)?.klass
+            ?: unreachable { log.error("Unexpected return type of method $creationMethod") }
+        val iteratorMethod = collectionClass.getMethod("iterator", cm[SystemTypeNames.iteratorClass].asType)
         actionSequence += ExternalMethodCall(iteratorMethod, outerSetAS, emptyList())
 
         actionSequence
