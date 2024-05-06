@@ -20,9 +20,11 @@ import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.buildProcess
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.nullFile
+import org.vorpal.research.kthelper.terminateOrKill
 import ru.spbstu.wheels.mapToArray
 import java.nio.file.Paths
 import kotlin.concurrent.thread
+import kotlin.time.Duration.Companion.milliseconds
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -32,7 +34,8 @@ internal object ExecutorMasterController : AutoCloseable {
 
     init {
         Runtime.getRuntime().addShutdownHook(thread(start = false) {
-            if (::process.isInitialized && process.isAlive) process.destroy()
+            if (::process.isInitialized && process.isAlive)
+                process.terminateOrKill(attempts = 10U, waitTime = 500.milliseconds)
         })
     }
 
@@ -88,10 +91,9 @@ internal object ExecutorMasterController : AutoCloseable {
     }
 
     override fun close() {
-        process.destroy()
-        if (process.isAlive) {
-            process.destroyForcibly()
-        }
+        log.debug("Terminating executor controller process")
+        process.terminateOrKill(attempts = 10U, waitTime = 500.milliseconds)
+        log.debug("Executor controller terminated: ${process.isAlive}")
         controllerSocket.close()
     }
 }

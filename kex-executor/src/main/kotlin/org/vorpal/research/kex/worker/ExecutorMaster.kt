@@ -23,7 +23,10 @@ import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.buildProcess
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.nullFile
+import org.vorpal.research.kthelper.terminate
+import org.vorpal.research.kthelper.terminateOrKill
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.milliseconds
 
 @ExperimentalSerializationApi
 @InternalSerializationApi
@@ -76,7 +79,7 @@ class ExecutorMaster(
             workerConnection = when (val tempConnection = connection.receiveWorkerConnection()) {
                 null -> {
                     log.debug("Worker $id connection timeout")
-                    process.destroy()
+                    process.terminateOrKill(attempts = 10U, waitTime = 500.milliseconds)
                     return@runBlocking
                 }
 
@@ -130,7 +133,10 @@ class ExecutorMaster(
                     }
                 }
             } catch (e: Throwable) {
-                process.destroy()
+                process.terminate(attempts = 10U)
+                if (process.isAlive) {
+                    process.destroyForcibly()
+                }
                 log.debug("Worker failed with an error", e)
                 json.encodeToString(ExecutionFailedResult::class.serializer(), ExecutionFailedResult(e.message ?: ""))
             }
@@ -140,10 +146,9 @@ class ExecutorMaster(
 
         fun destroy() {
             workerConnection.close()
-            process.destroy()
-            if (process.isAlive) {
-                process.destroyForcibly()
-            }
+            log.debug("Terminating worker process $id")
+            process.terminateOrKill(attempts = 10U, waitTime = 500.milliseconds)
+            log.debug("Worker process $id terminated: ${process.isAlive}")
         }
     }
 
