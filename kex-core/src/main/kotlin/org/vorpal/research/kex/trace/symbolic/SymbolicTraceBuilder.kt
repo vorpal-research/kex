@@ -6,18 +6,77 @@ import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.asm.manager.MethodManager
 import org.vorpal.research.kex.asm.state.asTermExpr
 import org.vorpal.research.kex.asm.transform.SymbolicTraceInstrumenter
-import org.vorpal.research.kex.descriptor.*
-import org.vorpal.research.kex.ktype.*
+import org.vorpal.research.kex.descriptor.ConstantDescriptor
+import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
+import org.vorpal.research.kex.descriptor.ObjectDescriptor
+import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.ktype.KexBool
+import org.vorpal.research.kex.ktype.KexByte
+import org.vorpal.research.kex.ktype.KexChar
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexDouble
+import org.vorpal.research.kex.ktype.KexFloat
+import org.vorpal.research.kex.ktype.KexInt
+import org.vorpal.research.kex.ktype.KexInteger
+import org.vorpal.research.kex.ktype.KexLong
+import org.vorpal.research.kex.ktype.KexReal
+import org.vorpal.research.kex.ktype.KexShort
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.state.predicate.Predicate
 import org.vorpal.research.kex.state.predicate.path
 import org.vorpal.research.kex.state.predicate.state
-import org.vorpal.research.kex.state.term.*
+import org.vorpal.research.kex.state.term.ConstClassTerm
+import org.vorpal.research.kex.state.term.ConstStringTerm
+import org.vorpal.research.kex.state.term.NullTerm
+import org.vorpal.research.kex.state.term.StaticClassRefTerm
+import org.vorpal.research.kex.state.term.Term
+import org.vorpal.research.kex.state.term.term
 import org.vorpal.research.kex.state.transformer.TermRenamer
-import org.vorpal.research.kex.util.*
-import org.vorpal.research.kfg.ir.*
-import org.vorpal.research.kfg.ir.value.*
-import org.vorpal.research.kfg.ir.value.instruction.*
+import org.vorpal.research.kex.util.cmp
+import org.vorpal.research.kex.util.isOuterThis
+import org.vorpal.research.kex.util.isSubtypeOfCached
+import org.vorpal.research.kex.util.next
+import org.vorpal.research.kex.util.parseValue
+import org.vorpal.research.kex.util.parseValueOrNull
+import org.vorpal.research.kfg.ir.BasicBlock
+import org.vorpal.research.kfg.ir.Class
+import org.vorpal.research.kfg.ir.ConcreteClass
+import org.vorpal.research.kfg.ir.Method
+import org.vorpal.research.kfg.ir.MethodDescriptor
+import org.vorpal.research.kfg.ir.value.Argument
+import org.vorpal.research.kfg.ir.value.Constant
+import org.vorpal.research.kfg.ir.value.NameMapperContext
+import org.vorpal.research.kfg.ir.value.NullConstant
+import org.vorpal.research.kfg.ir.value.ThisRef
+import org.vorpal.research.kfg.ir.value.Value
+import org.vorpal.research.kfg.ir.value.instruction.ArrayLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.ArrayStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.BinaryInst
+import org.vorpal.research.kfg.ir.value.instruction.BranchInst
+import org.vorpal.research.kfg.ir.value.instruction.CallInst
+import org.vorpal.research.kfg.ir.value.instruction.CastInst
+import org.vorpal.research.kfg.ir.value.instruction.CatchInst
+import org.vorpal.research.kfg.ir.value.instruction.CmpInst
+import org.vorpal.research.kfg.ir.value.instruction.EnterMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.ExitMonitorInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldLoadInst
+import org.vorpal.research.kfg.ir.value.instruction.FieldStoreInst
+import org.vorpal.research.kfg.ir.value.instruction.Handle
+import org.vorpal.research.kfg.ir.value.instruction.InstanceOfInst
+import org.vorpal.research.kfg.ir.value.instruction.Instruction
+import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
+import org.vorpal.research.kfg.ir.value.instruction.JumpInst
+import org.vorpal.research.kfg.ir.value.instruction.NewArrayInst
+import org.vorpal.research.kfg.ir.value.instruction.NewInst
+import org.vorpal.research.kfg.ir.value.instruction.PhiInst
+import org.vorpal.research.kfg.ir.value.instruction.ReturnInst
+import org.vorpal.research.kfg.ir.value.instruction.SwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.TableSwitchInst
+import org.vorpal.research.kfg.ir.value.instruction.ThrowInst
+import org.vorpal.research.kfg.ir.value.instruction.UnaryInst
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kfg.type.Type
 import org.vorpal.research.kfg.type.parseDescOrNull
@@ -29,7 +88,6 @@ import org.vorpal.research.kthelper.collection.stackOf
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.toInt
 import org.vorpal.research.kthelper.`try`
-import java.util.*
 
 class SymbolicTraceException(message: String, cause: Throwable) : KtException(message, cause) {
     override fun toString() = "SymbolicTraceException: $message: ${cause?.message}"
@@ -928,19 +986,23 @@ class SymbolicTraceBuilder(
 
         val predicate = state(kfgValue.location) {
             val lambdaBases = kfgValue.bootstrapMethodArgs.filterIsInstance<Handle>()
-            ktassert(lambdaBases.size == 1) { log.error("Unknown number of bases of ${kfgValue.print()}") }
-            val lambdaBase = lambdaBases.first()
-            val argParameters = lambdaBase.method.argTypes.withIndex().map { arg(it.value.kexType, it.index) }
-            val lambdaParameters = lambdaBase.method.argTypes.withIndex().map { (index, type) ->
-                term { value(type.kexType, "labmda_${lambdaBase.method.name}_$index") }
-            }
+            when (lambdaBases.size) {
+                1 -> {
+                    val lambdaBase = lambdaBases.first()
+                    val argParameters = lambdaBase.method.argTypes.withIndex().map { arg(it.value.kexType, it.index) }
+                    val lambdaParameters = lambdaBase.method.argTypes.withIndex().map { (index, type) ->
+                        term { value(type.kexType, "labmda_${lambdaBase.method.name}_$index") }
+                    }
 
-            val expr = lambdaBase.method.asTermExpr()
-                ?: return@safeCall log.error("Could not process ${kfgValue.print()}")
+                    val expr = lambdaBase.method.asTermExpr()
+                        ?: return@safeCall log.error("Could not process ${kfgValue.print()}")
 
-            termValue equality lambda(kfgValue.type.kexType, lambdaParameters) {
-                TermRenamer(".labmda.${lambdaBase.method.name}", argParameters.zip(lambdaParameters).toMap())
-                    .transformTerm(expr)
+                    termValue equality lambda(kfgValue.type.kexType, lambdaParameters) {
+                        TermRenamer(".labmda.${lambdaBase.method.name}", argParameters.zip(lambdaParameters).toMap())
+                            .transformTerm(expr)
+                    }
+                }
+                else -> termValue equality undef(termValue.type)
             }
         }
 

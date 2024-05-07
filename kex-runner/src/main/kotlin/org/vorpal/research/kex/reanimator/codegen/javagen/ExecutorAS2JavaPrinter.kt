@@ -75,6 +75,7 @@ class ExecutorAS2JavaPrinter(
     private val testParams = mutableListOf<JavaBuilder.JavaClass.JavaField>()
     private val equalityUtils = EqualityUtilsPrinter.equalityUtils(packageName)
     private val reflectionUtils = ReflectionUtilsPrinter.reflectionUtils(packageName)
+
     @Suppress("unused")
     private val mockUtils by lazy {
         MockUtilsPrinter.mockUtils(packageName)
@@ -429,8 +430,9 @@ class ExecutorAS2JavaPrinter(
             when (mockCall) {
                 is MockNewInstance -> result += printMockNewInstance(owner, mockCall)
                 is MockSetupMethod -> mockCall.returnValues.forEach {
-                    printDeclarations(it,result)
+                    printDeclarations(it, result)
                 }
+
                 is MockSetField -> printDeclarations(mockCall.value, result)
             }
         }
@@ -457,8 +459,8 @@ class ExecutorAS2JavaPrinter(
             is ReflectionNewInstance -> result += printReflectionNewInstance(owner, api)
             is ReflectionNewArray -> result += printReflectionNewArray(owner, api)
             is ReflectionGetField -> result += printReflectionGetField(owner, api)
-                    is ReflectionGetStaticField -> result += printReflectionGetStaticField(owner, api)
-                    is ReflectionSetField -> printDeclarations(api.value, result)
+            is ReflectionGetStaticField -> result += printReflectionGetStaticField(owner, api)
+            is ReflectionSetField -> printDeclarations(api.value, result)
             is ReflectionSetStaticField -> printDeclarations(api.value, result)
             is ReflectionArrayWrite -> printDeclarations(api.value, result)
         }
@@ -623,9 +625,8 @@ class ExecutorAS2JavaPrinter(
         owner: ActionSequence,
         call: ReflectionSetField
     ): List<String> {
-        val setFieldMethod =
-            call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
-                ?: reflectionUtils.setField
+        val setFieldMethod = call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
+            ?: reflectionUtils.setField
         return listOf("${setFieldMethod.name}(${owner.name}, ${owner.name}.getClass(), \"${call.field.name}\", ${call.value.stackName})")
     }
 
@@ -633,9 +634,8 @@ class ExecutorAS2JavaPrinter(
         owner: ActionSequence,
         call: ReflectionSetStaticField
     ): List<String> {
-        val setFieldMethod =
-            call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
-                ?: reflectionUtils.setField
+        val setFieldMethod = call.field.type.kexType.primitiveName?.let { reflectionUtils.setPrimitiveFieldMap[it]!! }
+            ?: reflectionUtils.setField
         return listOf("${setFieldMethod.name}(null, Class.forName(\"${call.field.klass.canonicalDesc}\"), \"${call.field.name}\", ${call.value.stackName})")
     }
 
@@ -693,7 +693,11 @@ class ExecutorAS2JavaPrinter(
         builder.import("org.mockito.Mockito")
         val actualType = ASClass(ctx.types.objectType)
         val kfgClass = call.klass
-        val extraInterfaces = if (call.extraInterfaces.isEmpty()) "" else call.extraInterfaces.joinToString(prefix=", Mockito.withSettings().extraInterfaces(", postfix=")", separator = ", "){
+        val extraInterfaces = if (call.extraInterfaces.isEmpty()) "" else call.extraInterfaces.joinToString(
+            prefix = ", Mockito.withSettings().extraInterfaces(",
+            postfix = ")",
+            separator = ", "
+        ) {
             "Class.forName(\"${it.canonicalDesc}\")"
         }
         return listOf(

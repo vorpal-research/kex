@@ -20,6 +20,7 @@ import org.vorpal.research.kex.asm.analysis.concolic.cgs.ContextGuidedSelectorMa
 import org.vorpal.research.kex.asm.analysis.concolic.coverage.CoverageGuidedSelectorManager
 import org.vorpal.research.kex.asm.analysis.util.analyzeOrTimeout
 import org.vorpal.research.kex.asm.analysis.util.checkAsync
+import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -145,7 +146,12 @@ class InstructionConcolicChecker(
         generator.generate(parameters)
         val testFile = generator.emit()
 
-        compilerHelper.compileFile(testFile)
+        try {
+            compilerHelper.compileFile(testFile)
+        } catch (e: CompilationException) {
+            testFile.deleteIfExists()
+            throw e
+        }
         val result = collectTrace(generator.testKlassName)
         if (kexConfig.getBooleanValue("testGen", "generateAssertions", false)) {
             CoroutineScope(Dispatchers.Default).launch {
