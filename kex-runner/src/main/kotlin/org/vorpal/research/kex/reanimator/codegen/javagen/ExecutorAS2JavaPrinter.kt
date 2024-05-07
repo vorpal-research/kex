@@ -44,6 +44,7 @@ import org.vorpal.research.kex.reanimator.actionsequence.ReflectionSetStaticFiel
 import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
 import org.vorpal.research.kex.reanimator.actionsequence.StringValue
 import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
+import org.vorpal.research.kex.util.javaString
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.BoolType
@@ -132,10 +133,9 @@ class ExecutorAS2JavaPrinter(
             }
             importStatic("${reflectionUtils.klass.pkg}.${reflectionUtils.klass.name}.*")
             importStatic("org.junit.Assert.assertTrue")
-            if (finalParameters?.isSuccess == true) {
+            if (finalParameters.isSuccessOrFalse) {
                 importStatic("${equalityUtils.klass.pkg}.${equalityUtils.klass.name}.*")
             }
-
 
             with(klass) {
                 if (generateSetup) {
@@ -222,7 +222,9 @@ class ExecutorAS2JavaPrinter(
             }
 
             val catchExceptionType = when {
-                finalParameters.isExceptionOrFalse -> finalParameters!!.exceptionType.substringAfterLast('.')
+                finalParameters.isExceptionOrFalse -> finalParameters!!.exceptionType.substringAfterLast('.').also {
+                    builder.import(finalParameters.exceptionType)
+                }
                 else -> "Throwable"
             }
             if (surroundInTryCatch) statement("} catch ($catchExceptionType e) {}")
@@ -308,7 +310,9 @@ class ExecutorAS2JavaPrinter(
                 +methodInvocation
                 +"assertTrue(false)"
             }.catch {
-                exceptions += JavaBuilder.StringType(finalParameters!!.exceptionType.substringAfterLast('.'))
+                val exceptionType = finalParameters!!.exceptionType.javaString
+                builder.import(exceptionType)
+                exceptions += JavaBuilder.StringType(exceptionType.substringAfterLast('.'))
             }
         } else {
             +methodInvocation

@@ -9,7 +9,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -45,6 +44,7 @@ import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.deleteIfExists
 import kotlin.time.Duration.Companion.seconds
@@ -155,18 +155,22 @@ class InstructionConcolicChecker(
         val result = collectTrace(generator.testKlassName)
         if (kexConfig.getBooleanValue("testGen", "generateAssertions", false)) {
             CoroutineScope(Dispatchers.Default).launch {
+                var testWithAssertions: Path? = null
                 try {
                     if (result is ExecutionCompletedResult) {
-                        val testWithAssertionsGenerator =
-                            UnsafeGenerator(ctx, method, testNameGenerator.generateName(method, parameters))
+                        val testWithAssertionsGenerator = UnsafeGenerator(
+                            ctx, method, testNameGenerator.generateName(method, parameters)
+                        )
                         val finalInfoDescriptors = extractFinalParameters(result, method)
                         testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
-                        withContext(Dispatchers.IO) {
-                            testWithAssertionsGenerator.emit()
-                        }
+                        testWithAssertions = testWithAssertionsGenerator.emit()
+                        compilerHelper.compileFile(testWithAssertions)
+
+                        // delete the original test in the end, only if there were no errors with assertions
                         testFile.deleteIfExists()
                     }
                 } catch (e: Throwable) {
+                    testWithAssertions?.deleteIfExists()
                     log.debug("Tests with assertion generation failed with exception:", e)
                 }
             }
