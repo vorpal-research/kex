@@ -77,6 +77,7 @@ suspend fun Method.checkAsync(
         generateInitialDescriptors(this, ctx, result.model, checker.state)
             .performMocking(ctx, state, this)
             .parameters
+            .filterStaticFinals(ctx.cm)
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
             .also { log.debug { "Generated params:\n$it" } }
             .filterIgnoredStatic()
@@ -115,6 +116,7 @@ suspend fun Method.checkAsyncAndSlice(
         val filteredParams = params
             .performMocking(ctx, state, this)
             .parameters
+            .filterStaticFinals(ctx.cm)
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
             .also { log.debug { "Generated params:\n$it" } }
             .filterIgnoredStatic()
@@ -171,6 +173,7 @@ suspend fun Method.checkAsyncIncremental(
                     .performMocking(ctx, state, this)
                     .transform {
                         it.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+                            .filterStaticFinals(ctx.cm)
                             .also { log.debug { "Generated params:\n$it" } }
                             .filterIgnoredStatic()
                     }
@@ -240,8 +243,9 @@ suspend fun Method.checkAsyncIncrementalAndSlice(
                     .performMocking(ctx, state, this)
                     .transform {
                         it.concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
-                        .also { log.debug { "Generated params:\n$it" } }
-                        .filterIgnoredStatic()
+                            .filterStaticFinals(ctx.cm)
+                            .also { log.debug { "Generated params:\n$it" } }
+                            .filterIgnoredStatic()
                     }
 
                 val (thisTerm, argTerms) = collectArguments(fullPS)
