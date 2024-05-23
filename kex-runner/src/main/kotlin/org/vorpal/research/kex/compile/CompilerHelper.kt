@@ -6,7 +6,7 @@ import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.getJunit
 import org.vorpal.research.kex.util.getMockito
 import org.vorpal.research.kex.util.testcaseDirectory
-import ru.spbstu.wheels.mapToArray
+import org.vorpal.research.kthelper.collection.mapToArray
 import java.nio.file.Path
 
 class CompilerHelper(val ctx: ExecutionContext) {

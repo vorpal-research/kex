@@ -3,8 +3,8 @@ package org.vorpal.research.kex.util
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.mocking.isMockitoJava8WorkaroundEnabled
 import org.vorpal.research.kthelper.logging.info
-import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.tryOrNull
 
 sealed class ClassLoaderWithMockitoWorkaround(parent: ClassLoader = getSystemClassLoader()) :
@@ -22,9 +22,7 @@ sealed class ClassLoaderWithMockitoWorkaround(parent: ClassLoader = getSystemCla
         }
     }
 
-    private fun applyJava8MockitoWorkaround(): Boolean {
-        return tryOrNull {
-            definePackage("org.mockito.codegen", "", "", "", "", "", "", null)
-        } != null
-    }
+    private fun applyJava8MockitoWorkaround(): Boolean = tryOrNull {
+        definePackage("org.mockito.codegen", "", "", "", "", "", "", null)
+    } != null
 }

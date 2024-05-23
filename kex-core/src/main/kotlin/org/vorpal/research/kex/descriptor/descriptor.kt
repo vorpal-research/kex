@@ -375,7 +375,7 @@ sealed class AbstractFieldContainingDescriptor(
         return fieldsQuery(set)
     }
 
-    protected fun fieldsQuery(set: MutableSet<Descriptor>) = basic {
+    private fun fieldsQuery(set: MutableSet<Descriptor>) = basic {
         axiom { term inequality null }
         for ((field, value) in fields) {
             val fieldTerm = term.field(field.second, field.first)

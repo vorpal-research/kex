@@ -6,9 +6,9 @@ import org.vorpal.research.kex.trace.AbstractTrace
 import org.vorpal.research.kfg.ir.BasicBlock
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.ktassert
+import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
-import ru.spbstu.wheels.mapToArray
 import java.util.*
 
 data class BlockInfo internal constructor(

@@ -19,7 +19,7 @@ import org.vorpal.research.kfg.ir.value.instruction.HandleBsmArgument
 import org.vorpal.research.kfg.ir.value.instruction.InvokeDynamicInst
 import org.vorpal.research.kfg.stringClass
 import org.vorpal.research.kfg.type.ClassType
-import ru.spbstu.wheels.mapToArray
+import org.vorpal.research.kthelper.collection.mapToArray
 
 
 interface SymbolicCallResolver {

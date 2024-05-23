@@ -24,8 +24,8 @@ import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
+import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.log
-import ru.spbstu.wheels.mapToArray
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess

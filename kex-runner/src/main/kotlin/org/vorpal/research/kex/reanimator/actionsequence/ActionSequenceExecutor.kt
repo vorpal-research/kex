@@ -10,10 +10,10 @@ import org.vorpal.research.kex.util.isFinal
 import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kex.util.runWithTimeout
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.error
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
-import ru.spbstu.wheels.mapToArray
 import java.lang.reflect.Array
 import java.lang.reflect.Field
 

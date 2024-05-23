@@ -11,9 +11,9 @@ import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kfg.type.Type
+import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.collection.queueOf
 import org.vorpal.research.kthelper.logging.log
-import ru.spbstu.wheels.mapToArray
 
 sealed class ActionSequence(val name: String) {
     open val isConstantValue: Boolean get() = false

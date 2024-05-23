@@ -7,7 +7,7 @@ import org.vorpal.research.kfg.ir.value.NameMapper
 import org.vorpal.research.kfg.ir.value.Value
 import org.vorpal.research.kfg.type.parseStringToType
 import org.vorpal.research.kfg.visitor.MethodVisitor
-import ru.spbstu.wheels.mapToArray
+import org.vorpal.research.kthelper.collection.mapToArray
 
 @JvmInline
 value class ValueWrapper(

@@ -24,7 +24,7 @@ import org.vorpal.research.kex.state.term.ValueTerm
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kfg.ir.Location
-import ru.spbstu.wheels.mapToArray
+import org.vorpal.research.kthelper.collection.mapToArray
 
 fun FieldTerm.unmappedKfgField(cm: ClassManager): Field {
     val kfgKlass = cm[this.klass]

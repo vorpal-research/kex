@@ -18,10 +18,10 @@ import org.vorpal.research.kex.util.getPathSeparator
 import org.vorpal.research.kex.util.kexHome
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kthelper.buildProcess
+import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.nullFile
 import org.vorpal.research.kthelper.terminateOrKill
-import ru.spbstu.wheels.mapToArray
 import java.nio.file.Paths
 import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.milliseconds

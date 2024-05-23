@@ -10,7 +10,7 @@ import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.parseStringToType
-import ru.spbstu.wheels.mapToArray
+import org.vorpal.research.kthelper.collection.mapToArray
 
 sealed class AnalysisLevel {
     abstract val pkg: Package

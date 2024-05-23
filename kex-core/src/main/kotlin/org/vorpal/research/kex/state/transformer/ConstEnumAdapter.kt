@@ -25,7 +25,7 @@ import org.vorpal.research.kex.util.loadClass
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.logging.log
-import org.vorpal.research.kthelper.tryOrNull
+import org.vorpal.research.kthelper.safeTry
 
 val ignores by lazy {
     kexConfig.getMultipleStringValue("inliner", "ignoreStatic")
@@ -151,9 +151,9 @@ class ConstEnumAdapter(
 
     override fun apply(ps: PredicateState): PredicateState = apply(ps, findAccessedEnums(ps))
 
-    private fun apply(ps: PredicateState, enumClasses: Set<KexType>) = tryOrNull {
+    private fun apply(ps: PredicateState, enumClasses: Set<KexType>) = safeTry {
         mapEnumTerms(ps, enumClasses).simplify()
-    } ?: ps
+    }.getOrDefault(ps)
 
     override fun apply(state: IncrementalPredicateState): IncrementalPredicateState {
         val enumConstantsMap = buildSet {
