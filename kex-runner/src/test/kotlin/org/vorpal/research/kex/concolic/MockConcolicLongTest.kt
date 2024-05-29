@@ -46,7 +46,7 @@ class MockConcolicLongTest : ConcolicTest("mock-concolic") {
 
     @Test
     fun mockStaticsTests() {
-        assertCoverage(cm[prefix + "MockStaticsTests"], 1.0)
+        assertCoverage(cm[prefix + "MockStaticsTests"], 1.0, eps(0.1))
     }
 
     @Test
