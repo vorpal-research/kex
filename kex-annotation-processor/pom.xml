@@ -5,7 +5,7 @@
     <parent>
         <artifactId>kex</artifactId>
         <groupId>org.vorpal.research</groupId>
-        <version>0.0.5</version>
+        <version>0.0.6</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <packaging>jar</packaging>

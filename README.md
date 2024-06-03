@@ -55,7 +55,7 @@ Docker images with the latest version installed. Example:
 
 ```bash
 docker run -v ~/myproject:/home/myproject -v ~/kex-output:/home/kex-output \
- abdullin/kex-standalone:0.0.5 --classpath /home/myproject/target/myproject.jar \
+ abdullin/kex-standalone:0.0.6 --classpath /home/myproject/target/myproject.jar \
  --target myproject.\* --output /home/kex-output --mode concolic
 ```
 
