@@ -161,6 +161,7 @@ class InstructionConcolicChecker(
                         val testWithAssertionsGenerator = UnsafeGenerator(
                             ctx, method, testNameGenerator.generateName(method, parameters)
                         )
+                        // TODO: handle kex-rt mapped classes correctly
                         val finalInfoDescriptors = extractFinalParameters(result, method)
                         testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
                         testWithAssertions = testWithAssertionsGenerator.emit()
