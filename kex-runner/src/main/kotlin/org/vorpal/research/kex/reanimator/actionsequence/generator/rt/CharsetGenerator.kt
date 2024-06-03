@@ -1,4 +1,4 @@
-package org.vorpal.research.kex.reanimator.actionsequence.generator
+package org.vorpal.research.kex.reanimator.actionsequence.generator.rt
 
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
@@ -6,6 +6,8 @@ import org.vorpal.research.kex.ktype.KexString
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.StaticFieldGetter
+import org.vorpal.research.kex.reanimator.actionsequence.generator.Generator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.GeneratorContext
 import org.vorpal.research.kfg.type.SystemTypeNames
 import org.vorpal.research.kthelper.logging.log
 

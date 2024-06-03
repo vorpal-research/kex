@@ -10,7 +10,7 @@ import org.vorpal.research.kfg.collectionClass
 import org.vorpal.research.kfg.ir.Class
 
 // difference from any generator -- ignore all external and recursive ctors
-class CollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
+class ReanimatingCollectionGenerator(fallback: Generator) : AnyGenerator(fallback) {
     companion object {
         private val ignoredMethods = setOf(
             "trimToSize",

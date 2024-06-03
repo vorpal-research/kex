@@ -8,6 +8,7 @@ import org.vorpal.research.kex.descriptor.ClassDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.Object2DescriptorConverter
 import org.vorpal.research.kex.descriptor.descriptor
+import org.vorpal.research.kex.ktype.KexRtManager.isKexRt
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.smt.Checker
 import org.vorpal.research.kex.smt.Result
@@ -39,8 +40,10 @@ val ignores by lazy {
 
 class StaticFieldInliner(
     val ctx: ExecutionContext,
-    val psa: PredicateStateAnalysis
+    val inlinedFields: Set<Field>,
 ) : RecollectingTransformer<StaticFieldInliner> {
+    private val psa = PredicateStateAnalysis(ctx.cm)
+
     companion object {
         private val staticFinalFields = mutableMapOf<Field, Descriptor>()
         private val failedClasses = mutableSetOf<Class>()
@@ -146,23 +149,12 @@ class StaticFieldInliner(
     val cm get() = ctx.cm
 
     override fun apply(ps: PredicateState): PredicateState = `try` {
-        val staticInitializers = TermCollector.getFullTermSet(ps)
-            .asSequence()
-            .filterIsInstance<FieldLoadTerm>()
-            .mapNotNullTo(mutableSetOf()) {
-                val field = it.field as FieldTerm
-                tryOrNull { field.unmappedKfgField(cm) }?.let { kfgField ->
-                    if (kfgField.isStatic && kfgField.isFinal) {
-                        kfgField
-                    } else {
-                        null
-                    }
-                }
-            }
-            .filterNotTo(mutableSetOf()) { field -> ignores.any { filter -> filter.matches(field.klass) } }
-        for (field in staticInitializers) {
+        for (field in inlinedFields) {
             val descriptor = getStaticField(ctx, psa, field)
-            currentBuilder += descriptor.query
+            currentBuilder += descriptor.initializerState
+            currentBuilder += state {
+                staticRef(field.klass).field(field.type.kexType, field.name).initialize(descriptor.term)
+            }
         }
         super.apply(ps)
     }.getOrElse {
@@ -216,16 +208,20 @@ class StaticFieldWDescriptorInliner(
                 }
             }
             .filterNotTo(mutableSetOf()) { field -> ignores.any { filter -> filter.matches(field.klass) } }
+        val kexRtFields = staticFields.filterTo(mutableSetOf()) { it.klass.isKexRt }
         for (field in staticFields) {
+            if (field in kexRtFields) continue
+
             val descriptor = getStaticField(ctx, field) ?: continue
             currentBuilder += descriptor.initializerState
             currentBuilder += state {
                 staticRef(field.klass).field(field.type.kexType, field.name).initialize(descriptor.term)
             }
         }
-        super.apply(ps)
+        val inlined = super.apply(ps)
+        StaticFieldInliner(ctx, kexRtFields).apply(inlined)
     }.getOrElse {
-        log.error("Failed to inline static fields in $ps")
+        log.error("Failed to inline static fields in $ps, error:", it)
         ps
     }
 

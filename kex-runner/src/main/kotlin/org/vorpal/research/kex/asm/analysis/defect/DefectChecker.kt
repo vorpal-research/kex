@@ -39,7 +39,7 @@ import org.vorpal.research.kex.state.transformer.RecursiveConstructorInliner
 import org.vorpal.research.kex.state.transformer.RecursiveInliner
 import org.vorpal.research.kex.state.transformer.ReflectionInfoAdapter
 import org.vorpal.research.kex.state.transformer.Slicer
-import org.vorpal.research.kex.state.transformer.StaticFieldInliner
+import org.vorpal.research.kex.state.transformer.StaticFieldWDescriptorInliner
 import org.vorpal.research.kex.state.transformer.StensgaardAA
 import org.vorpal.research.kex.state.transformer.TermCollector
 import org.vorpal.research.kex.state.transformer.TypeInfoMap
@@ -273,7 +273,7 @@ class DefectChecker(
         +RecursiveInliner(psa) { index, psa ->
             ConcreteImplInliner(method.cm.type, typeInfoMap, psa, inlineIndex = index)
         }
-        +StaticFieldInliner(ctx, psa)
+        +StaticFieldWDescriptorInliner(ctx)
         +RecursiveConstructorInliner(psa)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()

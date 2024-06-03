@@ -12,7 +12,7 @@ import org.vorpal.research.kfg.mapClass
 
 // difference from any generator -- ignore all external and recursive ctors
 // and ignore all methods
-class MapGenerator(fallback: Generator) : AnyGenerator(fallback) {
+class ReanimatingMapGenerator(fallback: Generator) : AnyGenerator(fallback) {
 
     override fun supports(descriptor: Descriptor): Boolean {
         val type = descriptor.type

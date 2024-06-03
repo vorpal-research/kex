@@ -6,6 +6,13 @@ import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.UnknownSequence
+import org.vorpal.research.kex.reanimator.actionsequence.generator.kexrt.KexRtGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.CharsetGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.ClassGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.CollectionGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.FieldGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.StringGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.UnmodifiableCollectionGenerator
 import org.vorpal.research.kthelper.KtException
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.debug
@@ -34,10 +41,11 @@ class ActionSequenceGenerator(override val context: GeneratorContext) : Generato
         typeGenerators += EnumGenerator(this)
         typeGenerators += KtObjectGenerator(this)
         typeGenerators += InnerClassGenerator(this)
+        typeGenerators += CollectionGenerator(this)
         typeGenerators += KexRtGenerator(this)
         typeGenerators += UnmodifiableCollectionGenerator(this)
-        typeGenerators += CollectionGenerator(this)
-        typeGenerators += MapGenerator(this)
+        typeGenerators += ReanimatingCollectionGenerator(this)
+        typeGenerators += ReanimatingMapGenerator(this)
         typeGenerators += AnyGenerator(this)
     }
 

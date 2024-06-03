@@ -11,6 +11,12 @@ import org.vorpal.research.kex.reanimator.actionsequence.ReflectionCall
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetField
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionGetStaticField
 import org.vorpal.research.kex.reanimator.actionsequence.ReflectionList
+import org.vorpal.research.kex.reanimator.actionsequence.generator.kexrt.KexRtGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.CharsetGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.ClassGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.CollectionGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.FieldGenerator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.rt.StringGenerator
 import org.vorpal.research.kex.util.getFieldSafe
 import org.vorpal.research.kfg.ir.Field
 import org.vorpal.research.kthelper.assert.unreachable
@@ -32,6 +38,7 @@ class ConcolicSequenceGenerator(override val context: GeneratorContext) : Genera
         typeGenerators += MethodGenerator(this)
         typeGenerators += FieldGenerator(this)
         typeGenerators += ReflectionEnumGenerator(this)
+        typeGenerators += CollectionGenerator(this)
         typeGenerators += KexRtGenerator(this)
         typeGenerators += MockGenerator(this)
         typeGenerators += UnknownGenerator(this)

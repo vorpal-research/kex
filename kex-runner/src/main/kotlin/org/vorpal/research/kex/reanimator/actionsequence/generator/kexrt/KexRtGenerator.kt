@@ -1,7 +1,9 @@
-package org.vorpal.research.kex.reanimator.actionsequence.generator
+package org.vorpal.research.kex.reanimator.actionsequence.generator.kexrt
 
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
+import org.vorpal.research.kex.reanimator.actionsequence.generator.Generator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.GeneratorContext
 
 class KexRtGenerator(val fallback: Generator) : Generator {
     override val context: GeneratorContext

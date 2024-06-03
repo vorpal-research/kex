@@ -59,7 +59,7 @@ import org.vorpal.research.kex.state.transformer.NullityInfoAdapter
 import org.vorpal.research.kex.state.transformer.Optimizer
 import org.vorpal.research.kex.state.transformer.RecursiveInliner
 import org.vorpal.research.kex.state.transformer.ReflectionInfoAdapter
-import org.vorpal.research.kex.state.transformer.StaticFieldInliner
+import org.vorpal.research.kex.state.transformer.StaticFieldWDescriptorInliner
 import org.vorpal.research.kex.state.transformer.StringMethodAdapter
 import org.vorpal.research.kex.state.transformer.TermRemapper
 import org.vorpal.research.kex.state.transformer.TypeInfo
@@ -132,7 +132,7 @@ class GeneratorContext(
         }
         +Unifier()
         +ClassAdapter(cm)
-        +StaticFieldInliner(context, psa)
+        +StaticFieldWDescriptorInliner(context)
         +IntrinsicAdapter
         +KexIntrinsicsAdapter()
         +EqualsTransformer()

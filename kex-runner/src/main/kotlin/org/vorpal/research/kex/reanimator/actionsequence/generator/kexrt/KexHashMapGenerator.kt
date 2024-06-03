@@ -1,4 +1,4 @@
-package org.vorpal.research.kex.reanimator.actionsequence.generator
+package org.vorpal.research.kex.reanimator.actionsequence.generator.kexrt
 
 import org.vorpal.research.kex.descriptor.ArrayDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
@@ -13,6 +13,8 @@ import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
 import org.vorpal.research.kex.reanimator.actionsequence.DefaultConstructorCall
 import org.vorpal.research.kex.reanimator.actionsequence.ExternalMethodCall
 import org.vorpal.research.kex.reanimator.actionsequence.MethodCall
+import org.vorpal.research.kex.reanimator.actionsequence.generator.Generator
+import org.vorpal.research.kex.reanimator.actionsequence.generator.GeneratorContext
 import org.vorpal.research.kfg.collectionClass
 import org.vorpal.research.kfg.ir.ConcreteClass
 import org.vorpal.research.kfg.setClass
