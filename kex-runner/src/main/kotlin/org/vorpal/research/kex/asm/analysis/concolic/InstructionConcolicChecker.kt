@@ -23,6 +23,7 @@ import org.vorpal.research.kex.compile.CompilationException
 import org.vorpal.research.kex.compile.CompilerHelper
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.descriptor.Descriptor
+import org.vorpal.research.kex.mocking.filterMocks
 import org.vorpal.research.kex.parameters.Parameters
 import org.vorpal.research.kex.parameters.asDescriptors
 import org.vorpal.research.kex.parameters.extractFinalParameters
@@ -163,6 +164,7 @@ class InstructionConcolicChecker(
                         )
 
                         val finalInfoDescriptors = extractFinalParameters(result, method)
+                            ?.filterMocks()
                         testWithAssertionsGenerator.generate(parameters, finalInfoDescriptors)
                         testWithAssertions = testWithAssertionsGenerator.emit()
                         compilerHelper.compileFile(testWithAssertions)

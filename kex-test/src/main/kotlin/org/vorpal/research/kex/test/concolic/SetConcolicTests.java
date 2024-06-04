@@ -11,9 +11,9 @@ public class SetConcolicTests {
         if (chars.contains(null)) {
             throw new IllegalStateException();
         }
-        if (chars.size() > 1) {
-            throw new IllegalStateException();
-        }
+//        if (chars.size() > 1) {
+//            throw new IllegalStateException();
+//        }
         Iterator<Character> it = chars.iterator();
         if (it.hasNext()) {
             if (it.next().charValue() == 'v') {

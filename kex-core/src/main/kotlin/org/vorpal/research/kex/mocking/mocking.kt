@@ -2,23 +2,85 @@ package org.vorpal.research.kex.mocking
 
 import org.vorpal.research.kex.ExecutionContext
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.descriptor.ArrayDescriptor
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.DescriptorContext
+import org.vorpal.research.kex.descriptor.FieldContainingDescriptor
 import org.vorpal.research.kex.descriptor.MockDescriptor
 import org.vorpal.research.kex.descriptor.any
+import org.vorpal.research.kex.descriptor.descriptor
 import org.vorpal.research.kex.descriptor.transform
+import org.vorpal.research.kex.ktype.KexArray
+import org.vorpal.research.kex.ktype.KexClass
+import org.vorpal.research.kex.ktype.KexReference
+import org.vorpal.research.kex.ktype.KexType
+import org.vorpal.research.kex.parameters.FinalParameters
 import org.vorpal.research.kex.parameters.map
 import org.vorpal.research.kex.state.predicate.CallPredicate
 import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.Term
 import org.vorpal.research.kex.trace.symbolic.SymbolicState
+import org.vorpal.research.kex.util.containsMockitoMock
 import org.vorpal.research.kex.util.isMockingEnabled
+import org.vorpal.research.kex.util.removeMockitoMockSuffix
 import org.vorpal.research.kfg.ir.Class
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.ClassType
 import org.vorpal.research.kfg.type.TypeFactory
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
+
+fun FinalParameters<Descriptor>.filterMocks(
+): FinalParameters<Descriptor> {
+    val visited = mutableSetOf<Descriptor>()
+    return this.map { it.filterMockedTypes(visited) ?: descriptor { default(it.type) } }
+}
+
+internal val KexType.isMockitoMock: Boolean
+    get() = this.toString().containsMockitoMock
+
+internal fun KexType.removeMockitoMocks(): KexType = when (this) {
+    is KexClass -> KexClass(this.name.removeMockitoMockSuffix())
+    is KexArray -> KexArray(this.element.removeMockitoMocks())
+    is KexReference -> KexReference(this.reference.removeMockitoMocks())
+    else -> this
+}
+
+internal fun Descriptor.filterMockedTypes(
+    visited: MutableSet<Descriptor>,
+): Descriptor? = when (this) {
+    in visited -> this
+    is FieldContainingDescriptor<*> -> when {
+        this.type.isMockitoMock -> null
+        else -> {
+            visited += this
+            for ((field, value) in this.fields) {
+                val mapped = value.filterMockedTypes(visited)
+                if (mapped == null) {
+                    fields.remove(field)
+                } else {
+                    fields[field] = mapped
+                }
+            }
+            this
+        }
+    }
+
+    is ArrayDescriptor -> {
+        visited += this
+        for ((index, element) in this.elements) {
+            val mapped = element.filterMockedTypes(visited)
+            if (mapped == null) {
+                elements.remove(index)
+            } else {
+                this[index] = mapped
+            }
+        }
+        this
+    }
+
+    else -> this
+}
 
 fun Descriptor.isRequireMocks(
     mockMaker: MockMaker,

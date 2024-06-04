@@ -11,6 +11,7 @@ import java.util.Iterator;
 public class MockSetTests {
     public void testMockSetEasy(HashSet<ToMock> set) {
         Iterator<ToMock> iterator = set.iterator();
+        if (!iterator.hasNext()) return;
         if (iterator.next().foo() == 42) {
             AssertIntrinsics.kexAssert(true);
         } else {
@@ -20,6 +21,7 @@ public class MockSetTests {
 
     public void testMockSetMedium(HashSet<ToMock> set) {
         Iterator<ToMock> iterator = set.iterator();
+        if (!iterator.hasNext()) return;
         HashSet<Integer> values = new HashSet<>();
         values.add(iterator.next().foo());
         if (values.contains(35)) {
@@ -29,22 +31,24 @@ public class MockSetTests {
         }
     }
 
-/* // Uncomment if tests above pass
-    public void testNoMockSetHard(HashSet<ToMock> set) {
-        Iterator<ToMock> iterator = set.iterator();
-        HashSet<Integer> values = new HashSet<>();
-        values.add(iterator.next().foo());
-        values.add(iterator.next().foo());
-        if (values.contains(35)) {
-            if (values.contains(22)) {
-                AssertIntrinsics.kexAssert(true);
-            } else {
-                AssertIntrinsics.kexAssert(true);
-
-            }
-        } else {
-            AssertIntrinsics.kexAssert(true);
-        }
-    }
-*/
+//    public void testNoMockSetHard(HashSet<ToMock> set) {
+//        Iterator<ToMock> iterator = set.iterator();
+//        if (!iterator.hasNext()) return;
+//
+//        HashSet<Integer> values = new HashSet<>();
+//        values.add(iterator.next().foo());
+//
+//        if (!iterator.hasNext()) return;
+//        values.add(iterator.next().foo());
+//        if (values.contains(35)) {
+//            if (values.contains(22)) {
+//                AssertIntrinsics.kexAssert(true);
+//            } else {
+//                AssertIntrinsics.kexAssert(true);
+//
+//            }
+//        } else {
+//            AssertIntrinsics.kexAssert(true);
+//        }
+//    }
 }
