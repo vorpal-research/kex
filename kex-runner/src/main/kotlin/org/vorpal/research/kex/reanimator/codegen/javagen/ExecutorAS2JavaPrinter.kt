@@ -116,6 +116,9 @@ class ExecutorAS2JavaPrinter(
         for (cs in parameters.asList)
             resolveTypes(cs)
 
+        for (cs in finalParameters?.asList.orEmpty())
+            resolveTypes(cs)
+
         with(builder) {
             import("org.junit.Before")
             import("java.lang.Class")

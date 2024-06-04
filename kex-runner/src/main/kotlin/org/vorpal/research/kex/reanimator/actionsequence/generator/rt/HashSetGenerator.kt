@@ -2,7 +2,6 @@ package org.vorpal.research.kex.reanimator.actionsequence.generator.rt
 
 import org.vorpal.research.kex.descriptor.Descriptor
 import org.vorpal.research.kex.descriptor.ObjectDescriptor
-import org.vorpal.research.kex.ktype.KexNull
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.reanimator.actionsequence.ActionList
 import org.vorpal.research.kex.reanimator.actionsequence.ActionSequence
@@ -53,7 +52,7 @@ class HashSetGenerator(val fallback: Generator) : Generator {
             }
             else -> {
                 val mapAS = fallback.generate(table, generationDepth)
-                val keySet = ActionList(term { generate(KexNull()) }.name)
+                val keySet = ActionList(term { generate(context.cm.setClass.kexType) }.name)
                 keySet += ExternalMethodCall(
                     context.cm.mapClass.getMethod("keySet", context.cm.setClass.asType),
                     mapAS,

@@ -1,10 +1,10 @@
 package org.vorpal.research.kex.test.javadebug;
 
-import java.util.HashMap;
+import java.util.HashSet;
 
 @SuppressWarnings("ALL")
 public class JavaTest {
-    public int foo(HashMap<Integer, Integer> list) {
+    public int foo(HashSet<Integer> list) {
         if (list.size() == 1) {
             System.out.println("a");
         }

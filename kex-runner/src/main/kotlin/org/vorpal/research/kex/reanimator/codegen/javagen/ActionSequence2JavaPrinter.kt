@@ -760,6 +760,7 @@ open class ActionSequence2JavaPrinter(
                     )
                 } = ${type.cast(rest)} $instance.${method.name}($args)"
             } else {
+                resolvedTypes[owner] = actualType
                 actualTypes[owner] = actualType
                 "${
                     printVarDeclaration(
