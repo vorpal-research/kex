@@ -8,7 +8,7 @@
     <groupId>org.vorpal.research</groupId>
     <artifactId>kex</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.6</version>
+    <version>0.0.7</version>
     <modules>
         <module>kex-test</module>
         <module>kex-core</module>
