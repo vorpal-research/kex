@@ -1,8 +1,20 @@
+[![JDK 8 CI](https://github.com/vorpal-research/kex/actions/workflows/jdk8-ci.yml/badge.svg)](https://github.com/vorpal-research/kex/actions/workflows/jdk8-ci.yml)
+[![JDK 11 CI](https://github.com/vorpal-research/kex/actions/workflows/jdk11-ci.yml/badge.svg)](https://github.com/vorpal-research/kex/actions/workflows/jdk11-ci.yml)
+[![JDK 17 CI](https://github.com/vorpal-research/kex/actions/workflows/jdk17-ci.yml/badge.svg)](https://github.com/vorpal-research/kex/actions/workflows/jdk17-ci.yml)
+
 # Kex
 
 Kex is a platform for analysis of Java bytecode.
 
 # Build
+
+## Prerequisits
+
+* JDK 8, 11 or 17 (other versions are not tested)
+* OS: Linux, Windows or Mac
+* Arch: amd64, x86_64, ARM (Mac only)
+
+## Build
 
 * build jar with all the dependencies:
     ```
