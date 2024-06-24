@@ -184,8 +184,10 @@ class SymbolicTraceBuilder(
 
     private fun safeCall(body: () -> Unit) = `try` {
         body()
-    }.getOrThrow {
-        SymbolicTraceException("", it)
+        checkTimeout()
+    }.getOrElse {
+        checkTimeout()
+        throw SymbolicTraceException("", it)
     }
 
     private val Instruction.nextOriginal: Instruction?
@@ -454,6 +456,7 @@ class SymbolicTraceBuilder(
     }
 
     private fun postProcess(clause: Clause) {
+        checkTimeout()
         stateBuilder += clause
         traceBuilder += clause.instruction
         updateCatches(clause.instruction)
