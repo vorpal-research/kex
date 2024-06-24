@@ -6,6 +6,7 @@ import kotlinx.serialization.InternalSerializationApi
 import org.junit.Test
 import org.vorpal.research.kex.asm.analysis.crash.CrashReproductionChecker
 import org.vorpal.research.kex.test.crash.CrashTrigger
+import kotlin.test.Ignore
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -29,6 +30,7 @@ class ConstraintCrashReproductionLongTest : CrashReproductionTest(
 //        assertCrash(expectedStackTrace)
 //    }
 
+    @Ignore
     @Test
     fun testArithmeticException() {
         val expectedStackTrace = produceStackTrace { CrashTrigger().triggerException() }

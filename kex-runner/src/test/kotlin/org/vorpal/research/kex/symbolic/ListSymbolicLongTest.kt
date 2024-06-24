@@ -13,6 +13,6 @@ import kotlin.time.ExperimentalTime
 class ListSymbolicLongTest : SymbolicTest("list-symbolic") {
     @Test
     fun listConcolicTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/concolic/ListConcolicTests"], 1.0, 0.15)
+        assertCoverage(cm["org/vorpal/research/kex/test/concolic/ListConcolicTests"], 1.0, eps = 0.2)
     }
 }

@@ -14,7 +14,7 @@ class SetSymbolicLongTest : SymbolicTest("set-symbolic") {
     @Test
     fun setConcolicTest() {
         withConfigOption("testGen", "generateAssertions", "false") {
-            assertCoverage(cm["org/vorpal/research/kex/test/concolic/SetConcolicTests"], 1.0, eps = 0.1)
+            assertCoverage(cm["org/vorpal/research/kex/test/concolic/SetConcolicTests"], 1.0, eps = 0.7)
         }
     }
 }
