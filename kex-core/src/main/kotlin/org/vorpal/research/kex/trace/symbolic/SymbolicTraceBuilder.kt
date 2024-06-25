@@ -45,6 +45,7 @@ class SymbolicTraceBuilder(
         private const val MAX_ARRAY_LENGTH = 10000
         private var killSwitch: Boolean = false
 
+        @JvmStatic
         fun setKillSwitch(value: Boolean) {
             killSwitch = value
         }
