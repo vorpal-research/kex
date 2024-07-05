@@ -13,7 +13,6 @@ import org.jacoco.core.instr.Instrumenter
 import org.jacoco.core.internal.analysis.PackageCoverageImpl
 import org.jacoco.core.runtime.LoggerRuntime
 import org.jacoco.core.runtime.RuntimeData
-import org.junit.runner.Result
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.minimization.GreedyTestReductionImpl
 import org.vorpal.research.kex.jacoco.minimization.TestwiseCoverageReporter
@@ -28,6 +27,7 @@ import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.deleteOnExit
+import org.vorpal.research.kex.util.getFieldByName
 import org.vorpal.research.kex.util.javaString
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ClassManager
@@ -36,6 +36,7 @@ import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
@@ -258,10 +259,15 @@ open class CoverageReporter(
             val returnValue = jcClass.getMethod("run", computerClass, Class::class.java.asArray())
                 .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
 
-            if (logJUnit && !(returnValue as? Result)?.failures.isNullOrEmpty()) {
+            val resultClass = classLoader.loadClass("org.junit.runner.Result")
+            val failures = resultClass.getFieldByName("failures")
+                .also { it.isAccessible = true }
+                .get(returnValue) as List<*>
+
+            if (logJUnit && failures.isNotEmpty()) {
                 log.debug("Failures:")
-                (returnValue as? Result)?.failures?.forEach {
-                    log.debug(it.trace)
+                failures.forEach {
+                    log.debug(it)
                 }
             }
             val executionData = ExecutionDataStore()

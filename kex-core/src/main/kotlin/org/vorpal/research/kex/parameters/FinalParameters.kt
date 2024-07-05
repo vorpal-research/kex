@@ -78,11 +78,19 @@ class FinalParameters<T> private constructor(
     }
 }
 
-inline fun <T : F, U, reified F> FinalParameters<T>.map(transform: (F) -> U): FinalParameters<U> = FinalParameters(
-    if (instance is F) transform(instance) else null,
-    args.map(transform),
-    if (returnValueUnsafe is F) transform(returnValueUnsafe) else null,
-)
+inline fun <T : F, U, reified F> FinalParameters<T>.map(transform: (F) -> U): FinalParameters<U> = when {
+    this.isSuccess -> FinalParameters(
+        if (instance is F) transform(instance) else null,
+        args.map(transform),
+        if (returnValueUnsafe is F) transform(returnValueUnsafe) else null,
+    )
+
+    else -> FinalParameters(
+        if (instance is F) transform(instance) else null,
+        args.map(transform),
+        exceptionType
+    )
+}
 
 val <T> FinalParameters<T>?.isSuccessOrFalse: Boolean get() = this?.isSuccess ?: false
 val <T> FinalParameters<T>?.isExceptionOrFalse: Boolean get() = this?.isException ?: false
