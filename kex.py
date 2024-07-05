@@ -5,7 +5,7 @@ import re
 import subprocess
 import sys
 
-KEX_VERSION = "0.0.7"
+KEX_VERSION = "0.0.8"
 HEAP_MEMORY_SIZE = "8g"
 STACK_MEMORY_SIZE = "1g"
 
