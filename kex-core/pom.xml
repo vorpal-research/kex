@@ -98,6 +98,11 @@
             <artifactId>easy-random-core</artifactId>
             <version>${easy-random.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-metadata-jvm</artifactId>
+            <version>${kotlinx-metadata.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
