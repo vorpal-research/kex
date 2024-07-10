@@ -6,7 +6,6 @@ import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kfg.ir.Method
-import kotlin.reflect.KType
 
 
 fun Class<*>.getKotlinMetadata(): KotlinClassMetadata {

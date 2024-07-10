@@ -129,11 +129,11 @@ class KotlinNullabilityTest : KexRunnerTest("kotlin-nullability") {
         var node: Descriptor = list.fields[firstName to nodeType]!!
         var accumulate: T = initialValue
         while (node is ObjectDescriptor) {
-            val itemKey = list.fields.keys.find { (name) -> name == "item" }!!
-            val item = list.fields[itemKey]!!
+            val itemKey = node.fields.keys.find { (name) -> name == "item" }!!
+            val item = node.fields[itemKey]!!
             accumulate = itemVisitor(item, accumulate)
-            val nextKey = list.fields.keys.find { (name) -> name == "next" }!!
-            val next = list.fields[nextKey]!!
+            val nextKey = node.fields.keys.find { (name) -> name == "next" }!!
+            val next = node.fields[nextKey]!!
             node = next
         }
         return accumulate
@@ -141,11 +141,11 @@ class KotlinNullabilityTest : KexRunnerTest("kotlin-nullability") {
 
     private fun <T> foldKexList(list: ObjectDescriptor, initialValue: T, itemVisitor: (Descriptor, T) -> T): T {
         require(list.klass.klass == "kex/java/util/LinkedList")
-        val innerField = list.fields.keys.find { (name) -> name == "inner" }!!
+        val innerField = list.fields.keys.find { (name) -> name == "inner" } ?: return initialValue
         val inner = list.fields[innerField]!!
         require(inner is ObjectDescriptor)
-        val elementDataKey = list.fields.keys.find { (name) -> name == "elementData" }!!
-        val elementData = list.fields[elementDataKey]!!
+        val elementDataKey = inner.fields.keys.find { (name) -> name == "elementData" } ?: return initialValue
+        val elementData = inner.fields[elementDataKey]!!
         require(elementData is ArrayDescriptor)
         return (0 until elementData.length)
             .fold(initialValue) { acc, idx -> itemVisitor(elementData.elements[idx]!!, acc) }
@@ -208,6 +208,10 @@ class KotlinNullabilityTest : KexRunnerTest("kotlin-nullability") {
                         return@traverseList
                     }
                     assertTrue(item is ObjectDescriptor)
+                    if (item.fields.isEmpty()) {
+                        nullCount++
+                        return@traverseList
+                    }
                     val itemValueKey = item.fields.keys.find { (name) -> name == "value" }!!
                     val itemValue = item[itemValueKey]!!
                     if (itemValue is ConstantDescriptor.Null) {
