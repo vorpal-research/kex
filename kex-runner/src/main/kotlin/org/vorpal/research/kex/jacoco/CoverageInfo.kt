@@ -1,15 +1,18 @@
 package org.vorpal.research.kex.jacoco
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.logging.log
 
-
-interface CoverageInfo {
+@Serializable
+sealed interface CoverageInfo {
     val covered: Int
     val total: Int
     val ratio: Double
 }
 
+@Serializable
 enum class CoverageUnit(unit: String) {
     INSTRUCTION("instructions"),
     BRANCH("branches"),
@@ -33,6 +36,7 @@ enum class CoverageUnit(unit: String) {
     }
 }
 
+@Serializable
 enum class AnalysisUnit(unit: String) {
     METHOD("method"),
     CLASS("class"),
@@ -54,6 +58,8 @@ enum class AnalysisUnit(unit: String) {
     }
 }
 
+@Serializable
+@SerialName("genericCoverage")
 data class GenericCoverageInfo(
     override val covered: Int,
     override val total: Int,
@@ -74,7 +80,8 @@ data class GenericCoverageInfo(
     }
 }
 
-abstract class CommonCoverageInfo(
+@Serializable
+sealed class CommonCoverageInfo(
     val name: String,
     val level: AnalysisUnit,
     val instructionCoverage: CoverageInfo,
@@ -103,7 +110,8 @@ abstract class CommonCoverageInfo(
         return name.hashCode()
     }
 }
-
+@Serializable(with = MethodCoverageInfoSerializer::class)
+@SerialName("method")
 class MethodCoverageInfo(
     name: String,
     instructionCoverage: CoverageInfo,
@@ -119,6 +127,8 @@ class MethodCoverageInfo(
     complexityCoverage
 )
 
+@Serializable(with = ClassCoverageInfoSerializer::class)
+@SerialName("class")
 class ClassCoverageInfo(
     name: String,
     instructionCoverage: CoverageInfo,
@@ -146,6 +156,8 @@ class ClassCoverageInfo(
     }
 }
 
+@Serializable(with = PackageCoverageInfoSerializer::class)
+@SerialName("package")
 class PackageCoverageInfo(
     name: String,
     instructionCoverage: CoverageInfo,

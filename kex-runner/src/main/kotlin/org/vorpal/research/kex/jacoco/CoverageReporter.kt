@@ -2,6 +2,8 @@
 
 package org.vorpal.research.kex.jacoco
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.ICounter
@@ -44,12 +46,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
-import kotlin.io.path.inputStream
-import kotlin.io.path.name
-import kotlin.io.path.readBytes
-import kotlin.io.path.relativeTo
-import kotlin.io.path.writeBytes
-import kotlin.streams.toList
+import kotlin.io.path.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -394,6 +391,8 @@ fun reportCoverage(
 
             else -> coverageReporter.computeCoverage(analysisLevel, testClasses)
         }
+        kexConfig.getPathValue("kex", "coverageJsonLocation")
+            ?.writeText(Json.encodeToString(coverageInfo))
 
         log.info(
             coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
