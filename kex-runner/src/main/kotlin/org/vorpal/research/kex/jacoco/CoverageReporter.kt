@@ -46,6 +46,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import java.util.stream.Collectors
 import kotlin.io.path.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -156,18 +157,19 @@ open class CoverageReporter(
             .toList()
 
         is ClassLevel -> {
-            if (kexConfig.getBooleanValue("kex", "collectWholeCoverage", false)) {
-                Files.walk(jacocoInstrumentedDir)
-                    .filter { it.isClass }
-                    // filter stdlib-specific things
-                    .filter { !it.fullyQualifiedName(jacocoInstrumentedDir).asmString.startsWith("java")}
-                    .filter { !it.fullyQualifiedName(jacocoInstrumentedDir).asmString.startsWith("kotlin")}
-                    .filter { !it.fullyQualifiedName(jacocoInstrumentedDir).asmString.startsWith("kex")}
-                    .toList()
-            } else {
-                val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-                listOf(jacocoInstrumentedDir.resolve("$klass.class"))
-            }
+            val additionalValues = kexConfig
+                .getStringValue("kex", "collectAdditionalCoverage")
+                ?.split(",")
+                ?.map { Package.parse(it.trim().asmString) }
+                ?.toSet()
+                ?: emptySet()
+            val targetKlass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
+            val targetFiles = listOf(jacocoInstrumentedDir.resolve("$targetKlass.class"))
+            val additionalFiles = Files.walk(jacocoInstrumentedDir)
+                .filter { it.isClass }
+                .filter { additionalValues.any { value -> value.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).asmString) } }
+                .collect(Collectors.toList())
+            targetFiles + additionalFiles
         }
 
         is MethodLevel -> {
