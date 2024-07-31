@@ -105,7 +105,7 @@ open class CoverageReporter(
     open fun computeCoverage(
         analysisLevel: AnalysisLevel,
         testClasses: Set<Path> = this.allTestClasses
-    ): CommonCoverageInfo {
+    ): Set<CommonCoverageInfo> {
         ktassert(this.allTestClasses.containsAll(testClasses)) {
             log.error("Unexpected set of test classes")
         }
@@ -114,9 +114,9 @@ open class CoverageReporter(
         val coverageBuilder = getCoverageBuilderAndCleanup(classes, testClasses)
 
         return when (analysisLevel) {
-            is PackageLevel -> getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
-            is ClassLevel -> getClassCoverage(cm, coverageBuilder).first()
-            is MethodLevel -> getMethodCoverage(coverageBuilder, analysisLevel.method)!!
+            is PackageLevel -> setOf(getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder))
+            is ClassLevel -> getClassCoverage(cm, coverageBuilder)
+            is MethodLevel -> setOf(getMethodCoverage(coverageBuilder, analysisLevel.method)!!)
         }
     }
 
@@ -156,8 +156,18 @@ open class CoverageReporter(
             .toList()
 
         is ClassLevel -> {
-            val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-            listOf(jacocoInstrumentedDir.resolve("$klass.class"))
+            if (kexConfig.getBooleanValue("kex", "collectWholeCoverage", false)) {
+                Files.walk(jacocoInstrumentedDir)
+                    .filter { it.isClass }
+                    // filter stdlib-specific things
+                    .filter { !it.fullyQualifiedName(jacocoInstrumentedDir).asmString.startsWith("java")}
+                    .filter { !it.fullyQualifiedName(jacocoInstrumentedDir).asmString.startsWith("kotlin")}
+                    .filter { !it.fullyQualifiedName(jacocoInstrumentedDir).asmString.startsWith("kex")}
+                    .toList()
+            } else {
+                val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
+                listOf(jacocoInstrumentedDir.resolve("$klass.class"))
+            }
         }
 
         is MethodLevel -> {
@@ -386,7 +396,7 @@ fun reportCoverage(
                     coverageSaturation.toList()
                 )
                 PermanentSaturationCoverageInfo.emit()
-                coverageSaturation[coverageSaturation.lastKey()]!!
+                setOf(coverageSaturation[coverageSaturation.lastKey()]!!)
             }
 
             else -> coverageReporter.computeCoverage(analysisLevel, testClasses)
@@ -395,10 +405,12 @@ fun reportCoverage(
             ?.writeText(Json.encodeToString(coverageInfo))
 
         log.info(
-            coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
+            coverageInfo.joinToString(System.lineSeparator()) {
+                it.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
+            }
         )
 
-        PermanentCoverageInfo.putNewInfo(mode, analysisLevel.toString(), coverageInfo)
+        PermanentCoverageInfo.putNewInfo(mode, analysisLevel.toString(), coverageInfo.first())
         PermanentCoverageInfo.emit()
     }
 }
