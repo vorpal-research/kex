@@ -90,7 +90,7 @@ open class CoverageReporter(
     }.also {
         deleteOnExit(it)
     }
-    val allTestClasses: Set<Path> by lazy { Files.walk(compileDir).filter { it.isClass }.toList().toSet() }
+    val allTestClasses: Set<Path> by lazy { Files.walk(compileDir).filter { it.isClass }.collect(Collectors.toSet()) }
     protected val compileDir = kexConfig.compiledCodeDirectory
     protected lateinit var coverageContext: CoverageContext
     protected lateinit var executionData: Map<Path, ExecutionDataStore>
@@ -154,7 +154,7 @@ open class CoverageReporter(
         is PackageLevel -> Files.walk(jacocoInstrumentedDir)
             .filter { it.isClass }
             .filter { analysisLevel.pkg.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).asmString) }
-            .toList()
+            .collect(Collectors.toList())
 
         is ClassLevel -> {
             val additionalValues = kexConfig
