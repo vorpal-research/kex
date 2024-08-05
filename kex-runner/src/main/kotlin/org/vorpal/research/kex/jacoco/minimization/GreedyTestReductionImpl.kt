@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.jacoco.minimization
 
+import org.vorpal.research.kex.config.kexConfig
 import java.nio.file.Path
 
 private class Test(
@@ -39,7 +40,8 @@ class GreedyTestReductionImpl : TestSuiteMinimizer {
 
         var satisfiedReq = 0
         val importantTests = mutableSetOf<Path>()
-        while (satisfiedReq < requestSet.size) {
+        val maxTests = kexConfig.getIntValue("testGen", "maxTests", Integer.MAX_VALUE)
+        while (satisfiedReq < requestSet.size && importantTests.size < maxTests) {
             val (maxTestPath, maxTest) = tests.maxByOrNull { it.value.power } ?: break
             if (maxTest.power == 0) break
 
