@@ -1,5 +1,7 @@
 package org.vorpal.research.kex.state.transformer
 
+import kotlinx.metadata.isNullable
+import kotlinx.metadata.jvm.KotlinClassMetadata
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.ktype.KexArray
 import org.vorpal.research.kex.ktype.KexClass
@@ -19,16 +21,13 @@ import org.vorpal.research.kex.state.term.CallTerm
 import org.vorpal.research.kex.state.term.FieldLoadTerm
 import org.vorpal.research.kex.state.term.FieldTerm
 import org.vorpal.research.kex.state.term.Term
-import org.vorpal.research.kex.util.getKFunction
-import org.vorpal.research.kex.util.getKProperty
-import org.vorpal.research.kex.util.isElementNullable
-import org.vorpal.research.kex.util.isNonNullable
-import org.vorpal.research.kex.util.loadKClass
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kfg.type.ArrayType
 import org.vorpal.research.kthelper.collection.dequeOf
 import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
+import kotlin.collections.dropLast
 
 class ReflectionInfoAdapter(
     val method: Method,
@@ -50,20 +49,18 @@ class ReflectionInfoAdapter(
 
         val (_, arguments) = collectArguments(ps)
         val methodClassType = KexClass(method.klass.fullName).getKfgType(types)
-        val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
-        val kFunction = klass.getKFunction(method) ?: return super.apply(ps)
+        val clazz = `try` { loader.loadClass(methodClassType) }.getOrNull() ?: return super.apply(ps)
+        val kMetadata = `try` { clazz.getKotlinMetadata() }.getOrNull() ?: return super.apply(ps)
+        if (kMetadata !is KotlinClassMetadata.Class) return super.apply(ps)
+        val kFunction = kMetadata.kmClass.getKFunction(method) ?: return super.apply(ps)
 
-        val parameters = when {
-            method.isAbstract -> kFunction.parameters.map { it.index to it }
-            method.isConstructor -> kFunction.parameters.map { it.index to it }
-            else -> kFunction.parameters.drop(1).map { it.index - 1 to it }
-        }
+        val parameters = kFunction.valueParameters.mapIndexed { index, param -> index to param }
 
         for ((param, type) in parameters.zip(method.argTypes)) {
             val arg = arguments[param.first] ?: continue
             if (arg in ignores) continue
 
-            if (arg.type.isNonNullable(param.second.type)) {
+            if (!param.second.type.isNullable) {
                 currentBuilder += assume { arg inequality null }
             }
 
@@ -79,9 +76,12 @@ class ReflectionInfoAdapter(
         val call = predicate.call as CallTerm
 
         val methodClassType = KexClass(call.method.klass.fullName).getKfgType(types)
-        val klass = `try` { loader.loadKClass(methodClassType) }.getOrNull() ?: return predicate
-        val kFunction = klass.getKFunction(call.method)
-        if (!predicate.hasLhv || kFunction == null) return predicate
+        val clazz = `try` { loader.loadClass(methodClassType) }.getOrNull() ?: return predicate
+        val kMetadata = `try` { clazz.getKotlinMetadata() }.getOrNull() ?: return predicate
+        if (kMetadata !is KotlinClassMetadata.Class) return predicate
+        val kFunction = kMetadata.kmClass.getKFunction(method) ?: return predicate
+
+        if (!predicate.hasLhv) return predicate
 
         currentBuilder += predicate
         val lhv = predicate.lhv
@@ -108,6 +108,7 @@ class ReflectionInfoAdapter(
     }
 
     private fun adaptFieldLoad(predicate: EqualityPredicate): List<Predicate> {
+        // TODO: refactor with kotlinx-metadata
         val result = arrayListOf<Predicate>()
         result += predicate
 
