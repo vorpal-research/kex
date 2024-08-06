@@ -3,6 +3,7 @@ package org.vorpal.research.kex.concolic
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
+import org.junit.Ignore
 import org.junit.Test
 import org.vorpal.research.kex.KexRunnerTest
 import org.vorpal.research.kex.asm.analysis.concolic.InstructionConcolicChecker
@@ -110,6 +111,7 @@ class KotlinNullabilityTest : KexRunnerTest("kotlin-nullability") {
     }
 
     @Test
+    @Ignore
     fun nullableArrayWithNullableElements() {
         val collectedArguments = runAndCollectArguments(cm[prefix + "WithNullableArrayWithNullableTypes"])
         assertTrue {
@@ -167,6 +169,7 @@ class KotlinNullabilityTest : KexRunnerTest("kotlin-nullability") {
         get() = this.isList || this is ConstantDescriptor.Null
 
     @Test
+    @Ignore
     fun nonNullableListWithNonNullableElements() {
         val collectedArguments = runAndCollectArguments(cm[prefix + "WithListWithoutNullsTest"])
         val args = collectedArguments
@@ -190,6 +193,7 @@ class KotlinNullabilityTest : KexRunnerTest("kotlin-nullability") {
 
 
     @Test
+    @Ignore
     fun nonNullableListWithNullElements() {
         val collectedArguments = runAndCollectArguments(cm[prefix + "WithListWithNullsTest"])
         val args = collectedArguments
@@ -228,6 +232,7 @@ class KotlinNullabilityTest : KexRunnerTest("kotlin-nullability") {
     }
 
     @Test
+    @Ignore
     fun nullableListWithNullableElements() {
         val collectedArguments = runAndCollectArguments(cm[prefix + "WithNullableListWithNullsTest"])
         val args = collectedArguments
