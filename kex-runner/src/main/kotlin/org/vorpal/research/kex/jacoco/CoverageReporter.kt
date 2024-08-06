@@ -2,6 +2,8 @@
 
 package org.vorpal.research.kex.jacoco
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.ICounter
@@ -13,7 +15,6 @@ import org.jacoco.core.instr.Instrumenter
 import org.jacoco.core.internal.analysis.PackageCoverageImpl
 import org.jacoco.core.runtime.LoggerRuntime
 import org.jacoco.core.runtime.RuntimeData
-import org.junit.runner.Result
 import org.vorpal.research.kex.config.kexConfig
 import org.vorpal.research.kex.jacoco.minimization.GreedyTestReductionImpl
 import org.vorpal.research.kex.jacoco.minimization.TestwiseCoverageReporter
@@ -28,6 +29,7 @@ import org.vorpal.research.kex.util.asArray
 import org.vorpal.research.kex.util.asmString
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.deleteOnExit
+import org.vorpal.research.kex.util.getFieldByName
 import org.vorpal.research.kex.util.javaString
 import org.vorpal.research.kex.util.outputDirectory
 import org.vorpal.research.kfg.ClassManager
@@ -36,6 +38,7 @@ import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.ktassert
 import org.vorpal.research.kthelper.assert.unreachable
+import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
@@ -43,12 +46,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
-import kotlin.io.path.inputStream
-import kotlin.io.path.name
-import kotlin.io.path.readBytes
-import kotlin.io.path.relativeTo
-import kotlin.io.path.writeBytes
-import kotlin.streams.toList
+import java.util.stream.Collectors
+import kotlin.io.path.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -91,7 +90,7 @@ open class CoverageReporter(
     }.also {
         deleteOnExit(it)
     }
-    val allTestClasses: Set<Path> by lazy { Files.walk(compileDir).filter { it.isClass }.toList().toSet() }
+    val allTestClasses: Set<Path> by lazy { Files.walk(compileDir).filter { it.isClass }.collect(Collectors.toSet()) }
     protected val compileDir = kexConfig.compiledCodeDirectory
     protected lateinit var coverageContext: CoverageContext
     protected lateinit var executionData: Map<Path, ExecutionDataStore>
@@ -107,7 +106,7 @@ open class CoverageReporter(
     open fun computeCoverage(
         analysisLevel: AnalysisLevel,
         testClasses: Set<Path> = this.allTestClasses
-    ): CommonCoverageInfo {
+    ): Set<CommonCoverageInfo> {
         ktassert(this.allTestClasses.containsAll(testClasses)) {
             log.error("Unexpected set of test classes")
         }
@@ -116,9 +115,9 @@ open class CoverageReporter(
         val coverageBuilder = getCoverageBuilderAndCleanup(classes, testClasses)
 
         return when (analysisLevel) {
-            is PackageLevel -> getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder)
-            is ClassLevel -> getClassCoverage(cm, coverageBuilder).first()
-            is MethodLevel -> getMethodCoverage(coverageBuilder, analysisLevel.method)!!
+            is PackageLevel -> setOf(getPackageCoverage(analysisLevel.pkg, cm, coverageBuilder))
+            is ClassLevel -> getClassCoverage(cm, coverageBuilder)
+            is MethodLevel -> setOf(getMethodCoverage(coverageBuilder, analysisLevel.method)!!)
         }
     }
 
@@ -155,11 +154,22 @@ open class CoverageReporter(
         is PackageLevel -> Files.walk(jacocoInstrumentedDir)
             .filter { it.isClass }
             .filter { analysisLevel.pkg.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).asmString) }
-            .toList()
+            .collect(Collectors.toList())
 
         is ClassLevel -> {
-            val klass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
-            listOf(jacocoInstrumentedDir.resolve("$klass.class"))
+            val additionalValues = kexConfig
+                .getStringValue("kex", "collectAdditionalCoverage")
+                ?.split(",")
+                ?.map { Package.parse(it.trim().asmString) }
+                ?.toSet()
+                ?: emptySet()
+            val targetKlass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
+            val targetFiles = listOf(jacocoInstrumentedDir.resolve("$targetKlass.class"))
+            val additionalFiles = Files.walk(jacocoInstrumentedDir)
+                .filter { it.isClass }
+                .filter { additionalValues.any { value -> value.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).asmString) } }
+                .collect(Collectors.toList())
+            targetFiles + additionalFiles
         }
 
         is MethodLevel -> {
@@ -258,10 +268,15 @@ open class CoverageReporter(
             val returnValue = jcClass.getMethod("run", computerClass, Class::class.java.asArray())
                 .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
 
-            if (logJUnit && !(returnValue as? Result)?.failures.isNullOrEmpty()) {
+            val resultClass = classLoader.loadClass("org.junit.runner.Result")
+            val failures = resultClass.getFieldByName("failures")
+                .also { it.isAccessible = true }
+                .get(returnValue) as List<*>
+
+            if (logJUnit && failures.isNotEmpty()) {
                 log.debug("Failures:")
-                (returnValue as? Result)?.failures?.forEach {
-                    log.debug(it.trace)
+                failures.forEach {
+                    log.debug(it)
                 }
             }
             val executionData = ExecutionDataStore()
@@ -383,17 +398,21 @@ fun reportCoverage(
                     coverageSaturation.toList()
                 )
                 PermanentSaturationCoverageInfo.emit()
-                coverageSaturation[coverageSaturation.lastKey()]!!
+                setOf(coverageSaturation[coverageSaturation.lastKey()]!!)
             }
 
             else -> coverageReporter.computeCoverage(analysisLevel, testClasses)
         }
+        kexConfig.getPathValue("kex", "coverageJsonLocation")
+            ?.writeText(Json.encodeToString(coverageInfo))
 
         log.info(
-            coverageInfo.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
+            coverageInfo.joinToString(System.lineSeparator()) {
+                it.print(kexConfig.getBooleanValue("kex", "printDetailedCoverage", false))
+            }
         )
 
-        PermanentCoverageInfo.putNewInfo(mode, analysisLevel.toString(), coverageInfo)
+        PermanentCoverageInfo.putNewInfo(mode, analysisLevel.toString(), coverageInfo.first())
         PermanentCoverageInfo.emit()
     }
 }
