@@ -1,5 +1,6 @@
 package org.vorpal.research.kex.jacoco.minimization
 
+import com.jetbrains.rd.util.first
 import org.vorpal.research.kex.config.kexConfig
 import java.nio.file.Path
 
@@ -49,6 +50,8 @@ class GreedyTestReductionImpl : TestSuiteMinimizer {
             maxTest.reqs.forEach { requirements[it]!!.visit(tests) }
             importantTests.add(maxTestPath)
         }
+        // TODO don't use fragile string comparisons
+        importantTests.addAll(listOf("EqualityUtils.class", "ReflectionUtils.class").map {it.getPath()})
 
         val allTests = tests.keys.toList()
         val reducedTests = allTests.subtract(importantTests.toSet()).toSet()
@@ -58,4 +61,7 @@ class GreedyTestReductionImpl : TestSuiteMinimizer {
 
         return importantTests
     }
+   private fun String.getPath(): Path {
+        return tests.map { it.key }.first { it.toString().contains(this)}
+   }
 }
