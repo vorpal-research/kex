@@ -39,6 +39,8 @@ class EqualityUtilsPrinter(
             }
         }
 
+        fun equalityUtilsClasses(): Set<Path> = equalityUtilsInstances.mapTo(mutableSetOf()) { it.key.first }
+
         @Suppress("unused")
         fun invalidateAll() {
             equalityUtilsInstances.clear()
