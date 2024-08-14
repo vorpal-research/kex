@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.jacoco.minimization
 
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.reanimator.codegen.javagen.EqualityUtilsPrinter
 import org.vorpal.research.kex.reanimator.codegen.javagen.ReflectionUtilsPrinter
 import org.vorpal.research.kex.util.compiledCodeDirectory
 import org.vorpal.research.kex.util.testcaseDirectory
@@ -20,7 +21,9 @@ interface TestSuiteMinimizer {
 
     companion object {
         // there will be more
-        private fun protectedFiles(): Set<Path> = ReflectionUtilsPrinter.reflectionUtilsClasses()
+        private fun protectedFiles(): Set<Path> =
+            ReflectionUtilsPrinter.reflectionUtilsClasses() + EqualityUtilsPrinter.equalityUtilsClasses()
+
         fun deleteTestCases(compiledTests: Set<Path>) {
             val protectedFiles = protectedFiles()
             for (compiledTestPath in compiledTests) {

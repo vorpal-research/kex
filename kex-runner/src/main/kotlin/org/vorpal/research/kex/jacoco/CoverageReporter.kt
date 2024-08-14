@@ -47,7 +47,13 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.stream.Collectors
-import kotlin.io.path.*
+import kotlin.io.path.inputStream
+import kotlin.io.path.name
+import kotlin.io.path.readBytes
+import kotlin.io.path.relativeTo
+import kotlin.io.path.writeBytes
+import kotlin.io.path.writeText
+import kotlin.streams.toList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -154,21 +160,20 @@ open class CoverageReporter(
         is PackageLevel -> Files.walk(jacocoInstrumentedDir)
             .filter { it.isClass }
             .filter { analysisLevel.pkg.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).asmString) }
-            .collect(Collectors.toList())
+            .toList()
 
         is ClassLevel -> {
-            val additionalValues = kexConfig
-                .getStringValue("kex", "collectAdditionalCoverage")
-                ?.split(",")
-                ?.map { Package.parse(it.trim().asmString) }
-                ?.toSet()
-                ?: emptySet()
             val targetKlass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
             val targetFiles = listOf(jacocoInstrumentedDir.resolve("$targetKlass.class"))
+
+            val additionalValues = kexConfig
+                .getMultipleStringValue("kex", "collectAdditionalCoverage", delimiter = ",")
+                .mapTo(mutableSetOf()) { Package.parse(it.trim().asmString) }
             val additionalFiles = Files.walk(jacocoInstrumentedDir)
                 .filter { it.isClass }
                 .filter { additionalValues.any { value -> value.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).asmString) } }
-                .collect(Collectors.toList())
+                .toList()
+
             targetFiles + additionalFiles
         }
 
