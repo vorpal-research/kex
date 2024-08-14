@@ -38,7 +38,7 @@ import org.vorpal.research.kex.trace.symbolic.SymbolicState
 import org.vorpal.research.kex.trace.symbolic.persistentSymbolicState
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionCompletedResult
 import org.vorpal.research.kex.trace.symbolic.protocol.ExecutionResult
-import org.vorpal.research.kex.util.newFixedThreadPoolContextWithMDC
+import org.vorpal.research.kex.util.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.ir.Method
 import org.vorpal.research.kthelper.assert.unreachable
@@ -49,6 +49,7 @@ import org.vorpal.research.kthelper.tryOrNull
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.relativeTo
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -171,8 +172,12 @@ class InstructionConcolicChecker(
                         testWithAssertions = testWithAssertionsGenerator.emit()
                         compilerHelper.compileFile(testWithAssertions)
 
-                        // delete the original test in the end, only if there were no errors with assertions
+                        // delete the original test in the end (.java file), only if there were no errors with assertions
                         testFile.deleteIfExists()
+                        // deleting .class file
+                        val classFqnPath =
+                            testFile.relativeTo(kexConfig.testcaseDirectory).toString().replaceAfterLast('.', "class")
+                        kexConfig.compiledCodeDirectory.resolve(classFqnPath).deleteIfExists()
                     }
                 } catch (e: Throwable) {
                     testWithAssertions?.deleteIfExists()

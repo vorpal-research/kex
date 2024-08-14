@@ -378,6 +378,7 @@ fun reportCoverage(
     val coverageReporter: CoverageReporter
     val testClasses: Set<Path>
     if (kexConfig.getBooleanValue("kex", "minimizeTestSuite", false)) {
+
         coverageReporter = TestwiseCoverageReporter(cm, containers)
         val testCoverage = coverageReporter.computeTestwiseCoverageInfo(analysisLevel)
         testClasses = GreedyTestReductionImpl().minimize(testCoverage)
