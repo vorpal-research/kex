@@ -1,6 +1,5 @@
 package org.vorpal.research.kex.jacoco.minimization
 
-import com.jetbrains.rd.util.first
 import org.vorpal.research.kex.config.kexConfig
 import java.nio.file.Path
 
@@ -59,7 +58,4 @@ class GreedyTestReductionImpl : TestSuiteMinimizer {
 
         return importantTests
     }
-   private fun String.getPath(): Path {
-        return tests.map { it.key }.first { it.toString().contains(this)}
-   }
 }
