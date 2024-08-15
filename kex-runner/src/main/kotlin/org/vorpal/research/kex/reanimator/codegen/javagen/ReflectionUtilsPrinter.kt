@@ -38,7 +38,7 @@ class ReflectionUtilsPrinter(
             val testDirectory = kexConfig.testcaseDirectory
             return reflectionUtilsInstances.getOrPut(testDirectory to packageName) {
                 val utils = ReflectionUtilsPrinter(packageName)
-                val targetFileName = "ReflectionUtils.java"
+                val targetFileName = "$REFLECTION_UTILS_CLASS.java"
                 val targetFile = testDirectory
                     .resolve(packageName.asmString)
                     .resolve(targetFileName)
@@ -49,7 +49,11 @@ class ReflectionUtilsPrinter(
             }
         }
 
-        fun reflectionUtilsClasses(): Set<Path> = reflectionUtilsInstances.mapTo(mutableSetOf()) { it.key.first }
+        fun reflectionUtilsClasses(): Set<Path> = reflectionUtilsInstances.mapTo(mutableSetOf()) {
+            it.key.first.resolve(it.key.second.asmString).resolve(
+                "$REFLECTION_UTILS_CLASS.java"
+            )
+        }
 
         @Suppress("unused")
         fun invalidateAll() {

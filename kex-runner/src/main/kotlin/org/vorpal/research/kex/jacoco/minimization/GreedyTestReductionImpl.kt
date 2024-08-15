@@ -50,8 +50,6 @@ class GreedyTestReductionImpl : TestSuiteMinimizer {
             maxTest.reqs.forEach { requirements[it]!!.visit(tests) }
             importantTests.add(maxTestPath)
         }
-        // TODO don't use fragile string comparisons
-        importantTests.addAll(listOf("EqualityUtils.class", "ReflectionUtils.class").map {it.getPath()})
 
         val allTests = tests.keys.toList()
         val reducedTests = allTests.subtract(importantTests.toSet()).toSet()

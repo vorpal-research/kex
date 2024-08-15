@@ -28,7 +28,7 @@ class EqualityUtilsPrinter(
             val testDirectory = kexConfig.testcaseDirectory
             return equalityUtilsInstances.getOrPut(testDirectory to packageName) {
                 val utils = EqualityUtilsPrinter(packageName)
-                val targetFileName = "EqualityUtils.java"
+                val targetFileName = "$EQUALITY_UTILS_CLASS.java"
                 val targetFile = testDirectory
                     .resolve(packageName.asmString)
                     .resolve(targetFileName)
@@ -39,7 +39,11 @@ class EqualityUtilsPrinter(
             }
         }
 
-        fun equalityUtilsClasses(): Set<Path> = equalityUtilsInstances.mapTo(mutableSetOf()) { it.key.first }
+        fun equalityUtilsClasses(): Set<Path> = equalityUtilsInstances.mapTo(mutableSetOf()) {
+            it.key.first.resolve(it.key.second.asmString).resolve(
+                "$EQUALITY_UTILS_CLASS.java"
+            )
+        }
 
         @Suppress("unused")
         fun invalidateAll() {
