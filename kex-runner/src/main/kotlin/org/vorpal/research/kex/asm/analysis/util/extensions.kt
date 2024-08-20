@@ -78,7 +78,7 @@ suspend fun Method.checkAsync(
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
             .let {
                 if (!kexConfig.getBooleanValue("kex", "generateNulls", true))
-                    it.replaceNullsWithDefaultValues(this)
+                    it.replaceNullsWithDefaultValues(this, ctx.cm)
                 else
                     it
             }

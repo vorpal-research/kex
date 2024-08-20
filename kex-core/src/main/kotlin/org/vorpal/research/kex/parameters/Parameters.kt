@@ -96,41 +96,57 @@ fun Parameters<Descriptor>.filterIgnoredStatic(): Parameters<Descriptor> {
     return Parameters(instance, arguments, filteredStatics)
 }
 
-fun Parameters<Descriptor>.replaceNullsWithDefaultValues(method: Method): Parameters<Descriptor> {
+fun Parameters<Descriptor>.replaceNullsWithDefaultValues(method: Method, cm: ClassManager): Parameters<Descriptor> {
     val parametersWithoutNulls = arguments
         .zip(method.argTypes)
-        .map { (descriptor, type) -> transformExistingDescriptor(descriptor, type.kexType) }
+        .map { (descriptor, type) -> transformExistingDescriptor(descriptor, type.kexType, cm) }
     return Parameters(instance, parametersWithoutNulls, statics)
 }
 
-private fun transformExistingDescriptor(descriptor: Descriptor, type: KexType): Descriptor {
+private fun transformExistingDescriptor(descriptor: Descriptor, type: KexType, cm: ClassManager): Descriptor {
     return when (descriptor) {
-        // TODO: Should object here be initialized properly?
-        is ConstantDescriptor.Null -> descriptor { default(type, nullable = false) }
+        is ConstantDescriptor.Null -> type.newInstance(cm)
         is ConstantDescriptor -> descriptor
         is ArrayDescriptor -> ArrayDescriptor(descriptor.elementType, descriptor.length)
             .apply {
                 descriptor.elements.forEach { (index, value) ->
-                    this[index] = transformExistingDescriptor(value, descriptor.elementType)
+                    this[index] = transformExistingDescriptor(value, descriptor.elementType, cm)
                 }
             }
+
         is ObjectDescriptor -> ObjectDescriptor(descriptor.klass).apply {
             descriptor.fields.forEach { (key, desc) ->
                 val (name, fieldType) = key
-                set(name to fieldType, transformExistingDescriptor(desc, fieldType))
+                set(name to fieldType, transformExistingDescriptor(desc, fieldType, cm))
             }
         }
+
         is ClassDescriptor -> ClassDescriptor(descriptor.klass).apply {
             descriptor.fields.forEach { (key, desc) ->
                 val (name, fieldType) = key
-                set(name to fieldType, transformExistingDescriptor(desc, fieldType))
+                set(name to fieldType, transformExistingDescriptor(desc, fieldType, cm))
             }
         }
+
         is MockDescriptor -> MockDescriptor(descriptor.klass).apply {
             descriptor.fields.forEach { (key, desc) ->
                 val (name, fieldType) = key
-                set(name to fieldType, transformExistingDescriptor(desc, fieldType))
+                set(name to fieldType, transformExistingDescriptor(desc, fieldType, cm))
             }
         }
     }
+}
+
+private fun KexType.newInstance(cm: ClassManager): Descriptor {
+    val descriptor = descriptor { default(this@newInstance, nullable = false) }
+    if (descriptor !is ClassDescriptor) return descriptor
+    val kfgClass = (this as KexClass).kfgClass(cm.type)
+    kfgClass
+        .fields
+        .filterNot { it.isStatic}
+        .forEach {
+        if (!it.isStatic)
+            descriptor[it.name to this] = it.type.kexType.newInstance(cm)
+    }
+    return descriptor
 }

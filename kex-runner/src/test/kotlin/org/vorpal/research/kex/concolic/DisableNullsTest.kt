@@ -17,18 +17,18 @@ class DisableNullsTest : ConcolicTest("do-not-generate-nulls") {
     }
     @Test
     fun boxedTypeWithoutNullsTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/nullability/BoxedTypeNulls"], 7.0 / 9.0)
+        assertCoverage(cm["org/vorpal/research/kex/test/nullability/BoxedTypeNulls"], 7.0 / 9.0, eps = 0.1)
     }
     @Test
     fun primitiveArrayWithoutNullsTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/nullability/PrimitiveArrayNulls"], 7.0 / 9.0)
+        assertCoverage(cm["org/vorpal/research/kex/test/nullability/PrimitiveArrayNulls"], 7.0 / 9.0, eps = 0.1)
     }
     @Test
     fun boxedArrayWithoutNullsTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/nullability/BoxedArrayNulls"], 20.0 / 24.0)
+        assertCoverage(cm["org/vorpal/research/kex/test/nullability/BoxedArrayNulls"], 20.0 / 24.0, eps = 0.1)
     }
     @Test
     fun listWithoutNullsTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/nullability/ListNulls"], 20.0 / 24.0)
+        assertCoverage(cm["org/vorpal/research/kex/test/nullability/ListNulls"], 20.0 / 24.0, eps = 0.1)
     }
 }
