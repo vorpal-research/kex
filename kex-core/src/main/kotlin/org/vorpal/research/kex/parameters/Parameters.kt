@@ -103,35 +103,45 @@ fun Parameters<Descriptor>.replaceNullsWithDefaultValues(method: Method, cm: Cla
     return Parameters(instance, parametersWithoutNulls, statics)
 }
 
-private fun transformExistingDescriptor(descriptor: Descriptor, type: KexType, cm: ClassManager): Descriptor {
+private fun transformExistingDescriptor(descriptor: Descriptor, type: KexType, cm: ClassManager, alreadyCopied: MutableMap<Descriptor, Descriptor> = mutableMapOf()): Descriptor {
+    if (descriptor in alreadyCopied) return alreadyCopied[descriptor]!!
     return when (descriptor) {
-        is ConstantDescriptor.Null -> type.newInstance(cm)
-        is ConstantDescriptor -> descriptor
+        is ConstantDescriptor.Null -> type.newInstance(cm).also { alreadyCopied[descriptor] = it }
+        is ConstantDescriptor -> descriptor.also { alreadyCopied[descriptor] = it }
         is ArrayDescriptor -> ArrayDescriptor(descriptor.elementType, descriptor.length)
             .apply {
-                descriptor.elements.forEach { (index, value) ->
-                    this[index] = transformExistingDescriptor(value, descriptor.elementType, cm)
+                alreadyCopied[descriptor] = this
+                (0 until descriptor.length).forEach { index ->
+                    this[index] = transformExistingDescriptor(
+                        descriptor[index] ?: ConstantDescriptor.Null,
+                        descriptor.elementType,
+                        cm,
+                        alreadyCopied
+                    )
                 }
             }
 
         is ObjectDescriptor -> ObjectDescriptor(descriptor.klass).apply {
+            alreadyCopied[descriptor] = this
             descriptor.fields.forEach { (key, desc) ->
                 val (name, fieldType) = key
-                set(name to fieldType, transformExistingDescriptor(desc, fieldType, cm))
+                set(name to fieldType, transformExistingDescriptor(desc, fieldType, cm, alreadyCopied))
             }
         }
 
         is ClassDescriptor -> ClassDescriptor(descriptor.klass).apply {
+            alreadyCopied[descriptor] = this
             descriptor.fields.forEach { (key, desc) ->
                 val (name, fieldType) = key
-                set(name to fieldType, transformExistingDescriptor(desc, fieldType, cm))
+                set(name to fieldType, transformExistingDescriptor(desc, fieldType, cm, alreadyCopied))
             }
         }
 
         is MockDescriptor -> MockDescriptor(descriptor.klass).apply {
+            alreadyCopied[descriptor] = this
             descriptor.fields.forEach { (key, desc) ->
                 val (name, fieldType) = key
-                set(name to fieldType, transformExistingDescriptor(desc, fieldType, cm))
+                set(name to fieldType, transformExistingDescriptor(desc, fieldType, cm, alreadyCopied))
             }
         }
     }
@@ -143,10 +153,10 @@ private fun KexType.newInstance(cm: ClassManager): Descriptor {
     val kfgClass = (this as KexClass).kfgClass(cm.type)
     kfgClass
         .fields
-        .filterNot { it.isStatic}
+        .filterNot { it.isStatic }
         .forEach {
-        if (!it.isStatic)
-            descriptor[it.name to this] = it.type.kexType.newInstance(cm)
-    }
+            if (!it.isStatic)
+                descriptor[it.name to this] = it.type.kexType.newInstance(cm)
+        }
     return descriptor
 }
