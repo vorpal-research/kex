@@ -25,10 +25,10 @@ class DisableNullsTest : ConcolicTest("do-not-generate-nulls") {
     }
     @Test
     fun boxedArrayWithoutNullsTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/nullability/BoxedArrayNulls"], 20.0 / 24.0, eps = 0.1)
+        assertCoverage(cm["org/vorpal/research/kex/test/nullability/BoxedArrayNulls"], 26.0 / 30.0, eps = 0.1)
     }
     @Test
     fun listWithoutNullsTest() {
-        assertCoverage(cm["org/vorpal/research/kex/test/nullability/ListNulls"], 20.0 / 24.0, eps = 0.1)
+        assertCoverage(cm["org/vorpal/research/kex/test/nullability/ListNulls"], 26.0 / 30.0, eps = 0.1)
     }
 }
