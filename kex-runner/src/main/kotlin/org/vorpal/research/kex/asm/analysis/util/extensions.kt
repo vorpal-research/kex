@@ -14,10 +14,7 @@ import org.vorpal.research.kex.ktype.KexRtManager.rtMapped
 import org.vorpal.research.kex.ktype.kexType
 import org.vorpal.research.kex.mocking.performMocking
 import org.vorpal.research.kex.mocking.withoutMocksOrNull
-import org.vorpal.research.kex.parameters.Parameters
-import org.vorpal.research.kex.parameters.concreteParameters
-import org.vorpal.research.kex.parameters.filterIgnoredStatic
-import org.vorpal.research.kex.parameters.filterStaticFinals
+import org.vorpal.research.kex.parameters.*
 import org.vorpal.research.kex.smt.AsyncChecker
 import org.vorpal.research.kex.smt.AsyncIncrementalChecker
 import org.vorpal.research.kex.smt.Result
@@ -79,6 +76,12 @@ suspend fun Method.checkAsync(
             .parameters
             .filterStaticFinals(ctx.cm)
             .concreteParameters(ctx.cm, ctx.accessLevel, ctx.random)
+            .let {
+                if (!kexConfig.getBooleanValue("kex", "generateNulls", true))
+                    it.replaceNullsWithDefaultValues(this, ctx.cm)
+                else
+                    it
+            }
             .also { log.debug { "Generated params:\n$it" } }
             .filterIgnoredStatic()
     } catch (e: Throwable) {
