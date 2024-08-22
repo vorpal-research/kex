@@ -7,6 +7,9 @@ public class ListNulls {
         if (x == null) {
             return -1;
         }
+        if (x.size() > 10) {
+            return 11;
+        }
         for (int i = 0; i < x.size(); i++) {
             if (x.get(i) == null) {
                 return i;
