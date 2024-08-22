@@ -53,7 +53,7 @@ class EqualityUtilsPrinter(
 
     init {
         with(builder) {
-            import("java.util.*;")
+            import("java.util.*")
             import("java.lang.reflect.Field")
 
             with(klass) {
