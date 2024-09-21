@@ -1,6 +1,7 @@
 package org.vorpal.research.kex.state.transformer
 
 import org.vorpal.research.kex.config.kexConfig
+import org.vorpal.research.kex.ktype.KexPointer
 import org.vorpal.research.kex.ktype.KexType
 import org.vorpal.research.kex.state.predicate.ArrayInitializerPredicate
 import org.vorpal.research.kex.state.predicate.ArrayStorePredicate
@@ -53,7 +54,10 @@ class StensgaardAA : Transformer<StensgaardAA>, AliasAnalysis, Viewable {
     private val nonFreeTerms = hashSetOf<Term>()
 
     private fun pointsTo(token: Token?) = pointsTo.getOrPut(token) { null }
-    private fun spaces(type: KexType) = spaces.getOrPut(type) { null }
+    private fun spaces(type: KexType): Token? {
+        if (type is KexPointer) spaces.getOrPut(type) { null }
+        return null
+    }
 
     private fun quasi(): Token = relations.emplace(null)
     private fun join(lhv: Token?, rhv: Token?): Token? = when {
