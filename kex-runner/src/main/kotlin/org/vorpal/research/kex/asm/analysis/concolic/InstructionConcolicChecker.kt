@@ -79,6 +79,14 @@ class InstructionConcolicChecker(
 
     private val compilerHelper = CompilerHelper(ctx)
 
+    private val constructedArguments: MutableList<Parameters<Descriptor>> = mutableListOf()
+
+    private fun collectArguments(params: Parameters<Descriptor>) {
+        if (!kexConfig.getBooleanValue("test", "collectArgumentFromTraces", false))
+            return
+        constructedArguments.add(params)
+    }
+
     companion object {
 
         private fun buildSelectorManager(
@@ -95,7 +103,7 @@ class InstructionConcolicChecker(
 
         @ExperimentalTime
         @DelicateCoroutinesApi
-        fun run(context: ExecutionContext, targets: Set<Method>) {
+        fun run(context: ExecutionContext, targets: Set<Method>): Map<Method, List<Parameters<Descriptor>>> { // FIXME
             val executors = kexConfig.getIntValue("concolic", "numberOfExecutors", 8)
             val timeLimit = kexConfig.getIntValue("concolic", "timeLimit", 100)
             val searchStrategy = kexConfig.getStringValue("concolic", "searchStrategy", "bfs")
@@ -105,20 +113,24 @@ class InstructionConcolicChecker(
 
             val selectorManager = buildSelectorManager(context, targets, searchStrategy)
             val testNameGenerator = TestNameGeneratorImpl()
+            val collectedArguments = mutableMapOf<Method, List<Parameters<Descriptor>>>()
 
             runBlocking(coroutineContext) {
                 withTimeoutOrNull(timeLimit.seconds) {
                     targets.map {
                         async {
-                            InstructionConcolicChecker(
+                            val instructionConcolicChecker = InstructionConcolicChecker(
                                 context,
                                 selectorManager.createPathSelectorFor(it),
                                 testNameGenerator
-                            ).start(it)
+                            )
+                            instructionConcolicChecker.start(it)
+                            collectedArguments[it] = instructionConcolicChecker.constructedArguments
                         }
                     }.awaitAll()
                 }
             }
+            return collectedArguments
         }
     }
 
@@ -146,8 +158,10 @@ class InstructionConcolicChecker(
 
     private suspend fun collectTraceFromAny(method: Method, parameters: Parameters<Any?>): ExecutionResult? =
         collectTrace(method, parameters.asDescriptors)
+            .also { collectArguments(parameters.asDescriptors) }
 
     private suspend fun collectTrace(method: Method, parameters: Parameters<Descriptor>): ExecutionResult? = tryOrNull {
+        collectArguments(parameters)
         val generator = UnsafeGenerator(ctx, method, testNameGenerator.generateName(method, parameters))
         generator.generate(parameters)
         val testFile = generator.emit()

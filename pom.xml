@@ -27,6 +27,7 @@
         <kotlin.version>2.0.0</kotlin.version>
         <kotlin.code.style>official</kotlin.code.style>
         <serialization.version>1.7.0-RC</serialization.version>
+        <kotlinx-metadata.version>0.9.0</kotlinx-metadata.version>
         <coroutines.version>1.8.1</coroutines.version>
         <collections.version>0.3.5</collections.version>
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
