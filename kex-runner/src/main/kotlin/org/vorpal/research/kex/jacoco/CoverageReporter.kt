@@ -53,7 +53,6 @@ import kotlin.io.path.readBytes
 import kotlin.io.path.relativeTo
 import kotlin.io.path.writeBytes
 import kotlin.io.path.writeText
-import kotlin.streams.toList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -160,7 +159,7 @@ open class CoverageReporter(
         is PackageLevel -> Files.walk(jacocoInstrumentedDir)
             .filter { it.isClass }
             .filter { analysisLevel.pkg.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).asmString) }
-            .toList()
+            .collect(Collectors.toList())
 
         is ClassLevel -> {
             val targetKlass = analysisLevel.klass.fullName.replace(Package.SEPARATOR, File.separatorChar)
@@ -172,7 +171,7 @@ open class CoverageReporter(
             val additionalFiles = Files.walk(jacocoInstrumentedDir)
                 .filter { it.isClass }
                 .filter { additionalValues.any { value -> value.isParent(it.fullyQualifiedName(jacocoInstrumentedDir).asmString) } }
-                .toList()
+                .collect(Collectors.toList())
 
             targetFiles + additionalFiles
         }
@@ -251,6 +250,7 @@ open class CoverageReporter(
         return coverageBuilder
     }
 
+    @Suppress("DEPRECATION")
     protected fun computeExecutionData(
         context: CoverageContext,
         testClasses: Set<Path>,
@@ -264,7 +264,12 @@ open class CoverageReporter(
         val classLoader = PathClassLoader(listOf(jacocoInstrumentedDir, compileDir))
         for (testPath in testClasses) {
             val testClassName = testPath.fullyQualifiedName(compileDir)
-            val testClass = classLoader.loadClass(testClassName)
+            val testClass = try {
+                classLoader.loadClass(testClassName)
+            } catch (e: Throwable) {
+                log.warn("Warning: could not load test class $testClassName, exception:\n", e)
+                continue
+            }
             if (logProgress) log.debug("Running test $testClassName")
 
             val jcClass = classLoader.loadClass("org.junit.runner.JUnitCore")
